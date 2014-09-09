@@ -1,71 +1,104 @@
-var Vec2 = {
-	length: function( vec ){
-		return Math.sqrt( Vec2.lengthSqr( vec ) )
-	},
+var Vec2 = function( x, y ){
+	this[0] = x || 0
+	this[1] = y || 0
+}
 
-	lengthSqr: function( vec ){
-		return vec[0] * vec[0] + vec[1] * vec[1]
+Vec2.prototype = {
+	
+	get x(){
+		return this[0]
 	},
 	
-	isNull: function( vec ){
-		return vec[0] == 0 && vec[1] == 0
+	get y(){
+		return this[1]
 	},
 	
-	setComponents: function( vec, x, y ){
-		vec[0] = x
-		vec[1] = y
-		return vec
-	},
-
-	normalize: function( vec ){
-		if( !Vec2.isNull( vec ) )
-			Vec2.scale( vec, 1 / Vec2.length( vec ) )
-		return vec
-	},
-
-	add: function( vec, vec2 ){
-		vec[0] += vec2[0]
-		vec[1] += vec2[1]
-		return vec
-	},
-
-	subtract: function( vec, vec2 ){
-		return Vec2.add( vec, Vec2.reverse( vec2 ) )
+	set x( val ){
+		this[0] = val
 	},
 	
-	scale: function( vec, s ){
-		vec[0] *= s
-		vec[1] *= s
-		return vec
+	set y( val ){
+		this[1] = val
 	},
 	
-	resize: function( vec, s ){
-		Vec2.normalize( vec )
-		Vec2.scale( vec, s )
-		return vec
-	},
-	
-	reverse: function( vec ){
-		return Vec2.scale( vec, -1 )
+	get length(){
+		return Math.sqrt( this.lengthSqr )
 	},
 
-	rotate: function( vec, angle ){
-		var xOffset = Math.cos( angle )
-		var yOffset = Math.sin( angle )
-		var xt = vec[0] * xOffset + vec[1] * yOffset
-		var yt = vec[1] * xOffset - vec[0] * yOffset
-		vec[0] = xt
-		vec[1] = yt
-		return vec
+	get lengthSqr(){
+		return this.x * this.x + this.y * this.y
 	},
 	
-	copy: function( vec, vec2 ){
-		vec2[0] = vec[0]
-		vec2[1] = vec[1]
-		return vec2
+	get isNull(){
+		return this.x == 0 && this.y == 0
+	},
+	
+	setComponents: function( x, y ){
+		this.x = x
+		this.y = y
+		return this
 	},
 
-	toString: function( vec ){
-		return "⟨" + vec[0] + ", " + vec[1] + "⟩"
+	normalize: function(){
+		if( !this.isNull )
+			this.scale( 1 / this.length )
+		return this
+	},
+
+	add: function( vec ){
+		this.x += vec.x
+		this.y += vec.y
+		return this
+	},
+
+	subtract: function( vec ){
+		this.x -= vec.x
+		this.y -= vec.y
+		return this
+	},
+	
+	scale: function( s ){
+		this.x *= s
+		this.y *= s
+		return this
+	},
+	
+	resize: function( s ){
+		this.normalize()
+		this.scale( s )
+		return this
+	},
+	
+	reverse: function(){
+		return this.scale( -1 )
+	},
+
+	rotate: function( modAngle ){
+		/*
+		var modAngle = angle % (2 * Math.PI)
+		if( modAngle < 0 )
+			modAngle += 2 * Math.PI
+		
+		if( modAngle == 0 )
+			return this
+		else if( modAngle == Math.PI )
+			return this.reverse()
+		else if( modAngle == Math.PI / 2 )
+			return this.setComponents( -this.y, this.x )
+		else if( modAngle == 3 * Math.PI / 2 )
+			return this.setComponents( this.y, -this.x )
+		else {*/
+			var xOffset = Math.cos( modAngle )
+			var yOffset = Math.sin( modAngle )
+			var xt = this.x * xOffset + this.y * yOffset
+			var yt = this.y * xOffset - this.x * yOffset
+			this.x = xt
+			this.y = yt
+			return this
+		//}
+	},
+
+	toString: function(){
+		return "⟨" + this.x + ", " + this.y + "⟩"
 	}
 }

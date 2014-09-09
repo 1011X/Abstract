@@ -6,3 +6,53 @@
 body {
 	overflow: hidden;
 }
+
+#options {
+	position: absolute;
+	top: -290px;
+	left: 0;
+	/* float: left; */
+	padding: 5px;
+	transition: top 0.5s ease 0.1s;
+	
+	background: rgba( 16, 16, 16, 0.8 );
+	color: white;
+	font-family: monospace;
+	max-width: 250px;
+}
+
+#options:hover {
+	top: 0;
+}
+
+#options > * {
+	padding: 5px;
+}
+
+h2 {
+	font-size: 1.25em;
+	margin: 3px;
+}
+
+.vertexTypeOption {
+	margin: 5px;
+}
+
+input {
+	margin-right: 0;
+	vertical-align: middle;
+	max-width: 100px;
+	margin: 3px;
+}
+
+.option {
+	padding: 5px;
+}
+
+label {
+	font-weight: bold;
+}
+
+#arcWeight {
+	width: 80px;
+}

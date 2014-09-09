@@ -1,14 +1,51 @@
 <!doctype html>
 <html>
 	<head>
-		<title>Abstract</title>
+		<title>abstract</title>
 		<meta charset="utf-8"/>
 		<link rel="stylesheet" href="main.css"/>
 		<script src="Vec2.js"></script>
-		<script src="Graph.js"></script>
+		<script src="lib/Graph.js"></script>
 		<script src="Vertex.js"></script>
 	</head>
 	<body>
+	<div id="options">
+			<form name="options">
+				<div>
+					<h2>Vertex</h2>
+					<div class="option">
+						<h3>Type:</h3>
+						<div class="vertexTypeOption">
+							<label><input type="radio" name="vertexType" value="input" checked/>Input</label>
+							<br/>
+						</div>
+						<div class="vertexTypeOption">
+							<label><input id="vertexTypeNeuron" type="radio" name="vertexType" value="neuron"/>Neuron</label>
+							<br/>
+						</div>
+						<div class="vertexTypeOption">
+							<input id="vertexTypeOutput" type="radio" name="vertexType" value="output"/>
+							<label for="vertexTypeOutput">Output</label>
+							<br/>
+						</div>
+					</div>
+				</div>
+				<div>
+					<h2>Edge</h2>
+					<div class="option">
+						
+					</div>
+				</div>
+				<div>
+					<h2>Arc</h2>
+					<div class="option">
+						<label for="arcWeight">Weight:</label>
+						<input id="arcWeight" type="number" min="-1" max="1" step="any" value="1" required/>
+					</div>
+				</div>
+			</form>
+			<h1>Options</h1>
+		</div>
 		<canvas id="c"></canvas>
 		<script src="main.js"></script>
 	</body>
