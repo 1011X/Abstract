@@ -8,18 +8,17 @@ var Vertex = function( graph ){
 	this.motionX = 0
 	this.motionY = 0
 	
-	this.color = "purple"
-	this.border = "black"
 	// this.borderStart = 0
 	// this.borderLength = 2*Math.PI
 	this.symbol = ""
-	
-	this.energy = 0
 	
 	this.graph = graph
 }
 
 Vertex.prototype = {
+	
+	color: "purple",
+	border: "black",
 	
 	setPosition: function( x, y ){
 		this.prevPosX = this.posX
@@ -44,10 +43,11 @@ Vertex.prototype = {
 
 var VertexBlank = function( graph ){
 	Vertex.call( this, graph )
-	this.color = "white"
 }
 
-VertexBlank.prototype = Vertex.prototype
+VertexBlank.prototype = Object.create( Vertex.prototype )
+
+VertexBlank.prototype.color = "white"
 
 
 var VertexRotator = function( graph ){
