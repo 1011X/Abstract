@@ -2,12 +2,12 @@
 
 var Vec2 = {
 	
-	length: function( vec ){
-		return Math.sqrt( Vec2.lengthSqr( vec ) )
+	length: function( x, y ){
+		return Math.sqrt( Vec2.lengthSqr( x, y ) )
 	},
 
-	lengthSqr: function( vec ){
-		return vec[0] * vec[0] + vec[1] * vec[1]
+	lengthSqr: function( x, y ){
+		return x * x + y * y
 	},
 	
 	setComponents: function( vec, x, y ){

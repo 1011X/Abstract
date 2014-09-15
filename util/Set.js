@@ -1,10 +1,12 @@
 "use strict"
 
-Set = Set || function( values ){
-	this.values = values
+var Set = Set || (function(){
+
+var Set = function( values ){
+	this.values = values || []
 }
 
-Set.prototype = Set.prototype || {
+Set.prototype = {
 	
 	get size(){
 		return this.values.length
@@ -56,3 +58,7 @@ Set.prototype = Set.prototype || {
 		}
 	}
 }
+
+return Set
+
+})()

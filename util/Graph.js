@@ -1,20 +1,24 @@
 "use strict"
 
-// import "Map.js"
+// import "util/Map.js"
 
-function Arc( from, to ){
-	this.first = from
-	this.second = to
+function Arc( a, b ){
+	this.from = a
+	this.to = b
 }
 
 Arc.prototype = {
 	
+	get values(){
+		return [ this.from, this.to ]
+	},
+	
 	has: function( x ){
-		return this.first === x || this.second === x
+		return this.from === x || this.to === x
 	},
 	
 	equals: function( x, y ){
-		return this.first === x && this.second === y
+		return this.from === x && this.to === y
 	}
 }
 
@@ -26,8 +30,12 @@ function Edge( a, b ){
 
 Edge.prototype = {
 	
+	get values(){
+		return [ this._a, this._b ]
+	},
+	
 	has: function( x ){
-		return this._a === element || this._b === element
+		return this._a === x || this._b === x
 	},
 	
 	equals: function( x, y ){
@@ -35,9 +43,7 @@ Edge.prototype = {
 	},
 	
 	complement: function( x ){
-		if( !this.has( x ) )
-			throw new Error( "Edge#complement: vertex isn't in edge." )
-		return v === this._a ? this._b : this._a
+		return ( x === this._a ) ? this._b : ( x === this._b ) ? this._a : null
 	}
 }
 
@@ -75,18 +81,18 @@ Graph._base.prototype = {
 		return this.vertices.length
 	},
 	
-	has: function( vertex ){
-		return this.vertices.indexOf( vertex ) !== -1
+	has: function( x ){
+		return this.vertices.indexOf( x ) !== -1
 	},
 	
-	add: function( vertex ){
-		if( !this.has( vertex ) )
-			this.vertices.push( vertex )
+	add: function( x ){
+		if( !this.has( x ) )
+			this.vertices.push( x )
 	},
 	
-	delete: function( vertex ){
+	delete: function( x ){
 		for( var i = 0; i < this.order; ++i )
-			if( this.vertices[ i ] === vertex ){
+			if( this.vertices[ i ] === x ){
 				this.vertices.splice( i, 1 )
 				return true
 			}
@@ -178,36 +184,36 @@ Graph.Mixed.prototype.disconnectArc = function( u, v ){
 	}
 }
 
-Graph.Mixed.prototype.neighborsByEdge = function( vertex ){
+Graph.Mixed.prototype.neighborsByEdge = function( x ){
 	var neighbors = []
 	for( var i = 0; i < this.edges.length; ++i ){
 		var edge = this.edges[ i ]
-		if( edge.has( vertex ) )
-			neighbors.push( edge.complement( vertex ) )
+		if( edge.has( x ) )
+			neighbors.push( edge.complement( x ) )
 	}
 	return neighbors
 }
 
-Graph.Mixed.prototype.neighborsByArc = function( vertex ){
+Graph.Mixed.prototype.neighborsByArc = function( x ){
 	var neighbors = []
 	for( var i = 0; i < this.arcs.length; ++i ){
 		var arc = this.arcs[ i ]
-		if( arc.first === vertex )
-			neighbors.push( arc.second )
+		if( arc.from === x )
+			neighbors.push( arc.to )
 	}
 	return neighbors
 }
 
-Graph.Mixed.prototype.delete = function( vertex ){
-	Graph._base.prototype.delete.call( this, vertex )
+Graph.Mixed.prototype.delete = function( x ){
+	Graph._base.prototype.delete.call( this, x )
 	for( var i = 0; i < this.arcs.length; ++i ){
 		var arc = this.arcs[ i ]
-		if( arc.has( vertex ) )
+		if( arc.has( x ) )
 			this.arcs.splice( i--, 1 )
 	}
 	for( var i = 0; i < this.edges.length; ++i ){
 		var edge = this.edges[ i ]
-		if( edge.has( vertex ) )
+		if( edge.has( x ) )
 			this.edges.splice( i--, 1 )
 	}
 }
@@ -224,11 +230,11 @@ Graph.Undirected.prototype.disconnect = Graph.Mixed.prototype.disconnectEdge
 
 Graph.Undirected.prototype.neighbors = Graph.Mixed.prototype.neighborsByEdge
 
-Graph.Undirected.prototype.delete = function( vertex ){
-	Graph._base.prototype.delete.call( this, vertex )
+Graph.Undirected.prototype.delete = function( x ){
+	Graph._base.prototype.delete.call( this, x )
 	for( var i = 0; i < this.edges.length; ++i ){
 		var edge = this.edges[ i ]
-		if( edge.has( vertex ) )
+		if( edge.has( x ) )
 			this.edges.splice( i--, 1 )
 	}
 }
@@ -245,11 +251,11 @@ Graph.Directed.prototype.disconnect = Graph.Mixed.prototype.disconnectArc
 
 Graph.Directed.prototype.neighbors = Graph.Mixed.prototype.neighborsByArc
 
-Graph.Directed.prototype.delete = function( vertex ){
-	Graph._base.prototype.delete.call( this, vertex )
+Graph.Directed.prototype.delete = function( x ){
+	Graph._base.prototype.delete.call( this, x )
 	for( var i = 0; i < this.arcs.length; ++i ){
 		var arc = this.arcs[ i ]
-		if( arc.has( vertex ) )
+		if( arc.has( x ) )
 			this.arcs.splice( i--, 1 )
 	}
 }
