@@ -1,3 +1,7 @@
+"use strict"
+
+// import "lib/Map.js"
+
 function RegistryWithDefault( name ){
 	this.key = name
 	this.value = null
@@ -12,7 +16,7 @@ RegistryWithDefault.prototype = {
 	},
 	
 	add: function( id, name, object ){
-		if( name == this.key )
+		if( this.key === name )
 			this.value = object
 		this.idMap.set( id, object )
 		this.nameMap.set( name, object )
@@ -20,11 +24,11 @@ RegistryWithDefault.prototype = {
 	
 	get: function( name ){
 		var object = this.nameMap.get( name )
-		return object == undefined ? this.value : object
+		return ( object === undefined ) ? this.value : object
 	},
 	
 	getByID: function( id ){
 		var object = this.idMap.get( id )
-		return object == undefined ? this.value : object
-	},
+		return ( object === undefined ) ? this.value : object
+	}
 }
