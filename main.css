@@ -28,11 +28,7 @@ body {
 form[name=options] > div {
 	padding: 5px;
 }
-/*
-#options > * {
-	padding: 5px;
-}
-*/
+
 h1 {
 	margin: 4px;
 }
@@ -57,4 +53,8 @@ input[type=text]{
 
 label {
 	font-weight: bold;
+}
+
+canvas {
+	cursor: default;
 }

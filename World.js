@@ -1,44 +1,44 @@
-var World = function(){
+// import "util/Vec2.js"
+
+function World(){
+	this.RAD = 16
 	this.vertices = []
-	this.graph = new Graph( this.vertices )
-	this.RAD = 15
-	// this.COORDINATE_SCALE = 8
-	this.camX = 0
-	this.camY = 0
+	this.graph = new Graph.Mixed( this.vertices )
+	this.cam = Vec2.create64()
 }
 
 World.prototype = {
 	
 	vertexAtPoint: function( x, y ){
-		
-		var xPos = x + this.camX
-		var yPos = y + this.camY
-		
-		for( var i = this.graph.order - 1, vertex; vertex = this.graph.vertices[ i ]; --i ){
-			// search backwards because last node is always drawn on top
-			var d = [ vertex.posX - xPos, vertex.posY - yPos ]
-			
-			if( d[0] * d[0] + d[1] * d[1] <= this.RAD * this.RAD )
+		// search backwards because last node is drawn on top
+		for( var i = this.graph.order - 1; i >= 0; --i ){
+			var vertex = this.vertices[ i ]
+			var distance = Vec2.create64()
+			Vec2.subtract( vertex.pos, [ x, y ], distance )
+			if( Vec2.lengthSqr( distance ) <= 1 )
 				return vertex
 		}
-	
 		return null
 	},
 	
-	spawnVertex: function( v ){
-		this.vertices.push( v )
+	spawn: function( vertex ){
+		this.graph.add( vertex )
 	},
 	
-	removeVertex: function( v ){
-		this.vertices.splice( this.vertices.indexOf( v ), 1 )
-		for( var i = 0, arc; arc = this.graph.arcs[ i ]; ++i )
-			if( arc.tail === v || arc.head === v )
-				this.graph.disconnect( arc.tail, arc.head )
+	despawn: function( vertex ){
+		this.graph.delete( vertex )
 	},
 	
-	moveCamera: function( dx, dy ){
-		this.camX += dx
-		this.camY += dy
+	connect: function( u, v, value, byArc ){
+		if( byArc )
+			this.graph.connectArc( u, v, value )
+		else
+			this.graph.connectEdge( u, v, value )
+	},
+	
+	moveCameraTo: function( x, y ){
+		this.camX = x
+		this.camY = y
 	},
 	
 	broadcast: function( vertex, value ){
@@ -53,8 +53,10 @@ World.prototype = {
 	},
 	
 	tick: function(){
-		for( var i = 0, vertex; vertex = this.graph.vertices[ i ]; ++i )
+		for( var i = 0; i < this.graph.order; ++i ){
+			var vertex = this.vertices[ i ]
 			if( vertex.needsUpdate )
 				vertex.update()
+		}
 	}
 }

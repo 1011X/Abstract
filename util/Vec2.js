@@ -2,67 +2,61 @@
 
 var Vec2 = {
 	
-	length: function( x, y ){
-		return Math.sqrt( Vec2.lengthSqr( x, y ) )
-	},
-
-	lengthSqr: function( x, y ){
-		return x * x + y * y
+	create32: function( x, y ){
+		return new Float32Array( [ x || 0, y || 0 ] )
 	},
 	
-	setComponents: function( vec, x, y ){
-		vec[0] = x
-		vec[1] = y
-		return vec
-	},
-
-	add: function( vec1, vec2, reuse ){
-		var x = vec1[0] + vec2[0]
-		var y = vec1[1] + vec2[1]
-		return reuse ? Vec2.setComponents( vec1, x, y ) : [ x, y ]
-	},
-
-	subtract: function( vec1, vec2, reuse ){
-		var x = vec1[0] - vec2[0]
-		var y = vec1[1] - vec2[1]
-		return reuse ? Vec2.setComponents( vec1, x, y ) : [ x, y ]
+	create64: function( x, y ){
+	    return new Float64Array( [ x || 0, y || 0 ] )
 	},
 	
-	scale: function( vec, s, reuse ){
-		var x = vec[0] * s
-		var y = vec[1] * s
-		return reuse ? Vec2.setComponents( vec, x, y ) : [ x, y ]
+	add: function( a, b, out ){
+	    out[0] = a[0] + b[0]
+	    out[1] = a[1] + b[1]
 	},
 	
-	resize: function( vec, s ){
-		return Vec2.scale( vec, s / Vec2.length( vec ), true )
+	subtract: function( a, b, out ){
+	    out[0] = a[0] - b[0]
+	    out[1] = a[1] - b[1]
+	},
+	
+	scale: function( a, s, out ){
+	    out[0] = a[0] * s
+	    out[1] = a[1] * s
+	},
+	
+	dot: function( a, b ){
+		return a[0] * b[0] + a[1] * b[1]
+	},
+	
+	resize: function( a, s, out ){
+		Vec2.scale( a, s / Vec2.length( a ), out )
 	},
 
-	normal: function( vec ){
-		return Vec2.scale( vec, 1 / Vec2.length( vec ), false )
-	},
-	
-	normalize: function( vec ){
-		Vec2.scale( vec, 1 / Vec2.length( vec ), true )
-	},
-	
-	reverse: function( vec ){
-		return Vec2.scale( vec, -1 )
+	normalize: function( a, out ){
+		Vec2.resize( a, 1, out )
 	},
 
-	rotate: function( vec, angle ){
+	lengthSqr: function( a ){
+		return Vec2.dot( a, a )
+	},
+	
+	length: function( a ){
+		return Math.sqrt( Vec2.lengthSqr( a ) )
+	},
+	
+	reverse: function( a, out ){
+		Vec2.scale( a, -1, out )
+	},
+
+	rotate: function( a, angle, out ){
 		var xOffset = Math.cos( angle )
 		var yOffset = Math.sin( angle )
-		var xt = vec[0] * xOffset + vec[1] * yOffset
-		var yt = vec[1] * xOffset - vec[0] * yOffset
-		return Vec2.setComponents( vec, xt, yt )
-	},
-	
-	dot: function( vec1, vec2 ){
-		return vec1[0] * vec2[0] + vec1[1] * vec2[1]
+		out[0] = a[0] * xOffset + a[1] * yOffset
+		out[1] = a[1] * xOffset - a[0] * yOffset
 	},
 
-	toString: function( vec ){
-		return "<" + vec[0] + ", " + vec[0] + ">"
+	toString: function( a ){
+		return "<" + a[0] + ", " + a[1] + ">"
 	}
 }
