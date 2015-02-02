@@ -1,301 +1,323 @@
-(function(){
+(function main(){
+"use strict"
 
-var canvas = document.getElementById( "c" )
-var context = canvas.getContext( "2d" )
+// register vertex types
+var Vertices = new RegistryWithDefault("blank")
+Vertices.add(0, "blank", Vertex)
+Vertices.add(1, "rotator", VertexRotator)
+Vertices.add(2, "source", VertexEnergy)
+Vertices.add(3, "neuron", VertexNeuron)
+Vertices.add(4, "feedback", VertexFeedback)
+Vertices.add(5, "switch", VertexSwitch)
+Vertices.add(6, "nor", VertexNOR)
+
+var canvas = document.getElementById("c")
+var ctx = canvas.getContext("2d")
+
+var load = function(){
+	var data = JSON.parse(localStorage["abstractWorldData"])
+	world.cam = data.cam
+	
+	var vertices = []
+	for(var vertObj of data.vertices){
+		var vertexClass = Vertices.get(vertObj.type)
+		var vertex = new vertexClass(world.graph)
+		vertex.pos = vertObj.pos
+		vertex.motion = vertObj.motion
+		vertex.energy = vertObj.energy
+		vertices.push(vertex)
+		world.graph.add(vertex)
+	}
+	
+	var needsUpdate = []
+	for(var vertObj of data.needsUpdate)
+		needsUpdate.push(vertices[vertObj])
+	
+	world.needsUpdate = new Set(needsUpdate)
+	
+	var arcs = []
+	for(var arcObj of data.arcs){
+		var from = vertices[arcObj.from]
+		var to = vertices[arcObj.to]
+		var arc = new Arc(from, to)
+		arc.weight = arcObj.value.weight
+		arc.delay = arcObj.value.delay
+		arcs.push(arc)
+		world.graph.setArc(from, to, arc)
+	}
+}
+
+var save = function(){
+	localStorage["abstractWorldData"] = JSON.stringify(world, null, "\t")
+}
 
 var world = new World
-var selected = []
-var input = document.forms.options
-var vectorPool = new ObjectPool( Vec2.create64, 5 )
-var selectedType = 1
-var dragPoint = null // used only when creating edges
-var stopTime = false
-var arcMode = false
+// load world data, if there is any
+if(localStorage["abstractWorldData"])
+	load()
 
-var uaHas = function( subs ){
+setInterval(save, 10000)
+
+var selected = null
+var currType = 0
+// var input = document.forms.options.elements
+// var vectorPool = new ObjectPool(Vec2.create64, 10)
+var pointerPos = null
+var hasDragged = false
+
+var uaHas = function(subs){
 	return navigator.userAgent.indexOf( subs ) !== -1
 }
 
-var dragAction = function( e ){
-	var pos = [ e.pageX, e.pageY ]
-	if( dragPoint ){
-		dragPoint[0] = pos[0]
-		dragPoint[1] = pos[1]
-	} else 
-		dragPoint = Vec2.create32( pos[0], pos[1] )
+// If mouse is down and dragged, record position in pointerPos, and also handle
+// moving of vertex if one is selected and dragged.
+var dragAction = function(evt){
+	hasDragged = true
+	if(!pointerPos)
+		pointerPos = []
+	pointerPos[0] = evt.pageX
+	pointerPos[1] = evt.pageY
 	
-	if( selected[0] )
-		// Helps to differentiate between mouse buttons in different
-		// browsers... somehow.
-		if( uaHas( "Firefox" ) && e.buttons == 1 || uaHas( "Chrome" ) && e.button == 0 )
-			canvasToWorld( pos, selected[0].pos )
+	if(selected)
+		// Helps to differentiate between mouse buttons in different browsers.
+		// The reason it works is because the mouseup event for Firefox has the
+		// releasing button information in the "buttons" attribute, but Chrome
+		// has it on the "button" attribute.
+		if(uaHas("Firefox") && evt.buttons == 1 || uaHas("Chrome") && evt.button == 0)
+			selected.pos = canvasToWorld(pointerPos)
 }
 
-var mouseWheelHandler = function( e ){
+var _mouseWheelHandler = function(evt){
 	var ticks
-	if( e.type == "DOMMouseScroll" )
-		ticks = -e.detail / 3
+	if(evt.type == "DOMMouseScroll")
+		ticks = -evt.detail / 3
 	else
-		ticks = e.wheelDelta / 120
-}
-
-var canvasToWorld = function( pos, out ){
-	out[0] = pos[0]
-	out[1] = -pos[1]
-	Vec2.add( out, world.cam, out )
-	Vec2.scale( out, 1 / world.RAD, out )
-}
-
-var worldToCanvas = function( pos, out ){
-	out[0] = pos[0]
-	out[1] = -pos[1]
-	Vec2.subtract( out, world.cam, out )
-	Vec2.scale( out, world.RAD, out )
-}
-
-var Vertices = new RegistryWithDefault( "broken" )
-Vertices.add( 0, "broken", Vertex )
-Vertices.add( 1, "blank", VertexBlank )
-Vertices.add( 2, "rotator", VertexRotator )
-Vertices.add( 3, "gravitator", VertexGravity )
-Vertices.add( 4, "positiveParticle", VertexChargedPositive )
-Vertices.add( 5, "negativeParticle", VertexChargedNegative )
-Vertices.add( 6, "source", VertexEnergy )
-Vertices.add( 7, "extend", VertexExtend )
-Vertices.add( 8, "neuron", VertexNeuron )
-
-
-
-canvas.addEventListener( "DOMMouseScroll", mouseWheelHandler )
-
-canvas.addEventListener( "mousewheel", mouseWheelHandler )
-
-canvas.addEventListener( "mousedown", function( e ){
-	canvas.addEventListener( "mousemove", dragAction )
+		ticks = evt.wheelDelta / 120
 	
-	var pos = [ e.pageX, e.pageY ]
-	canvasToWorld( pos, pos )
+	mouseWheelHandler(ticks)
+}
+
+var mouseWheelHandler = function(ticks){
+	currType += ticks
+	if(currType < 0)
+		currType += Vertices.size
+	else if(currType >= Vertices.size)
+		currType -= Vertices.size
+}
+
+// Vector coordinate conversion functions
+var canvasToWorld = function(pos){
+	return [
+		world.cam[0] + pos[0] / world.RAD,
+		world.cam[1] - pos[1] / world.RAD
+	]
+}
+var worldToCanvas = function(pos){
+	return [
+		(pos[0] - world.cam[0]) * world.RAD,
+		(world.cam[1] - pos[1]) * world.RAD
+	]
+}
+
+// register event handlers
+canvas.addEventListener("DOMMouseScroll", _mouseWheelHandler)
+canvas.addEventListener("mousewheel",     _mouseWheelHandler)
+
+canvas.addEventListener("mousedown", function(evt){
+	canvas.addEventListener("mousemove", dragAction)
 	
-	selected[0] = world.vertexAtPoint( pos[0], pos[1] )
+	var pos = canvasToWorld([evt.pageX, evt.pageY])
+	
+	selected = world.vertexAt(pos[0], pos[1])
 })
 
-canvas.addEventListener( "mouseup", function( e ){
-	canvas.removeEventListener( "mousemove", dragAction )
+canvas.addEventListener("mouseup", function(evt){
+	canvas.removeEventListener("mousemove", dragAction)
 	
-	var pos = [ e.pageX, e.pageY ]
-	canvasToWorld( pos, pos )
+	var pos = canvasToWorld([evt.pageX, evt.pageY])
 	
-	selected[1] = world.vertexAtPoint( pos[0], pos[1] )
-	
-	if( e.button == 0 ){
-	
-		if( selected[0] && !dragPoint )
-			world.despawn( selected[0] )
-			
-	} else if( e.button == 2 ){
-	
-		if( selected[0] && selected[1] ){
-		
-			if( arcMode )
-				world.connect( selected[0], selected[1], { weight: 1 }, true )
-			else
-				world.connect( selected[0], selected[1], undefined, false )
-				
-		} else if( !selected[0] && !selected[1] ){
-			
-			var vertex = new ( Vertices.getByID( selectedType ) )( world.graph )
-			vertex.setPosition( pos[0], pos[1] )
-			world.spawn( vertex )
-			
+	// left release
+	if(evt.button == 0){
+		// remove if there's a vertex and there was no dragging
+		if(selected && !hasDragged)
+			world.despawn(selected)
+	}
+	// right release
+	else if(evt.button == 2){
+		var next = world.vertexAt(pos[0], pos[1])
+		// a vertex was present on mousedown and on mouseup
+		if(selected && next){
+			// connect vertices if let go on another (different) vertex
+			if(selected !== next){
+				var arc = new Arc(selected, next)
+				world.connect(selected, next, arc)
+			}
+			// TODO: implement some sort of context menu with this
+			else if(selected === next){
+				// alert("Hello!")
+				selected.action()
+			}
+		}
+		// make new vertex if release in blank area
+		else if(!selected && !next){
+			var vertex = new (Vertices.getById(currType))(world.graph)
+			vertex.pos = pos
+			world.spawn(vertex)
 		}
 	}
 	// reset EVERYTHING
-	selected.length = 0
-	dragPoint = null
+	hasDragged = false
+	selected = null
+	pointerPos = null
 })
 
-addEventListener( "keydown", function( e ){
-	if( e.keyCode == 16 )
-		arcMode = !arcMode
+addEventListener("keydown", function(evt){
+	// if 's' is pressed
+	if(evt.keyCode == 83)
+		save()
 })
 
-addEventListener( "keyup", function( e ){
+addEventListener("keyup", function(evt){
 	
 })
 
-canvas.addEventListener( "contextmenu", function( e ){
-	e.preventDefault()
+canvas.addEventListener("contextmenu", function(evt){
+	evt.preventDefault()
 })
 
-addEventListener( "resize", function( e ){
+addEventListener("resize", function(evt){
 	canvas.width = innerWidth
 	canvas.height = innerHeight
 })
-var r = new Event( "resize" )
-dispatchEvent( r )
+dispatchEvent(new Event("resize"))
 
 
 var updateLoop = function(){
-	for( var i = 0; i < world.graph.order; ++i ){
-		var vertex = world.graph.vertices[ i ]
-		vertex.update()
-	}
+	world.tick(selected)
 }
-
-
-var drawHead = function( pos1, pos2, attached ){
-	
-	// AH = arrow head
-	var baseAH = vectorPool.request()
-	var arrowTip = vectorPool.request()
-	var rotatedAH = vectorPool.request()
-	
-	// Points towards arc's tail to make drawing arrow-head easier.
-	Vec2.subtract( pos1, pos2, baseAH )
-	
-	// Resize vector to arrow-head length
-	Vec2.resize( baseAH, 3 * world.RAD / 4, baseAH )
-	
-	arrowTip[0] = pos2[0]
-	arrowTip[1] = pos2[1]
-	
-	if( attached ){
-		var temp = vectorPool.request()
-		// If attached to vertex, adjust position of where arrow tip is
-		// supposed to be.
-		Vec2.resize( baseAH, world.RAD, temp )
-		Vec2.add( arrowTip, temp, arrowTip )
-		vectorPool.return( temp )
-	}
-	
-	rotatedAH[0] = Math.SQRT1_2 * ( baseAH[0] + baseAH[1] )
-	rotatedAH[1] = Math.SQRT1_2 * ( baseAH[1] - baseAH[0] )
-	
-	vectorPool.return( baseAH )
-	
-	context.beginPath()
-	
-	context.moveTo( arrowTip[0], arrowTip[1] )
-	
-	context.lineTo( arrowTip[0] + rotatedAH[0], arrowTip[1] + rotatedAH[1] )
-	context.moveTo( arrowTip[0], arrowTip[1] )
-	
-	// Because math.
-	context.lineTo( arrowTip[0] - rotatedAH[1], arrowTip[1] + rotatedAH[0] )
-	
-	context.moveTo( 0, 0 )
-	
-	context.closePath()
-	context.stroke()
-	
-	vectorPool.return( arrowTip )
-	vectorPool.return( rotatedAH )
-}
-
-var drawLine = function( pos1, pos2, attached ){
-	var offset = vectorPool.request()
-	var start = vectorPool.request()
-	
-	// Get offset from center of vertex to its rim.
-	Vec2.subtract( pos2, pos1, offset )
-	Vec2.resize( offset, world.RAD, offset )
-	
-	// Adjust line start and edge positions.
-	Vec2.add( pos1, offset, start )
-	
-	context.beginPath()
-	
-	context.moveTo( start[0], start[1] )
-	
-	if( attached ){
-		var end = vectorPool.request()
-		Vec2.subtract( pos2, offset, end )
-		context.lineTo( end[0], end[1] )
-		vectorPool.return( end )
-	} else
-		context.lineTo( pos2[0], pos2[1] )
-	
-	context.moveTo( 0, 0 )
-	context.closePath()
-	
-	context.stroke()
-	
-	vectorPool.return( offset )
-	vectorPool.return( start )
-}
-
 
 var drawLoop = function(){
-	context.clearRect( 0, 0, canvas.width, canvas.height )
-	context.lineWidth = 3
-	context.lineCap = "square"
+	ctx.clearRect(0, 0, canvas.width, canvas.height)
+	ctx.lineWidth = 3
+	ctx.lineCap = "square"
 	
-	if( selected[0] && dragPoint ){
-		var pos = vectorPool.request()
-		worldToCanvas( selected[0].pos, pos )
-		context.beginPath()
-		drawLine( pos, dragPoint )
-		if( arcMode )
-			drawHead( pos, dragPoint, false )
-		context.closePath()
-		context.stroke()
-		vectorPool.return( pos )
+	for(var arc of world.graph.arcs){
+		var pos1 = worldToCanvas(arc.from.pos)
+		var pos2 = worldToCanvas(arc.to.pos)
+		ctx.save()
+		
+		// get offset from center of vertex to its edge
+		var offset = Vec2.resize(Vec2.subtract(pos2, pos1), world.RAD)
+		
+		// adjust line start and edge positions
+		var tail = Vec2.add(pos1, offset)
+		var head = Vec2.subtract(pos2, offset)
+		
+		// used to calculate positions of both arrowheads
+		var arrowHead = Vec2.resize(Vec2.subtract(head, tail), 3 * world.RAD / 4)
+		var tipl = Vec2.add(head, Vec2.rotate(arrowHead, 5 * Math.PI / 6))
+		var tipr = Vec2.add(head, Vec2.rotate(arrowHead, -5 * Math.PI / 6))
+		
+		ctx.beginPath()
+		
+		ctx.moveTo(tail[0], tail[1])
+		ctx.lineTo(head[0], head[1])
+		ctx.lineTo(tipl[0], tipl[1])
+		ctx.moveTo(head[0], head[1])
+		ctx.lineTo(tipr[0], tipr[1])
+		ctx.moveTo(head[0], head[1])
+		
+		ctx.closePath()
+		ctx.stroke()
+		
+		ctx.restore()
 	}
 	
-	for( var i = 0; i < world.graph.edges.length; ++i ){
-		var edge = world.graph.edges[ i ].values
-		var pos1 = vectorPool.request()
-		var pos2 = vectorPool.request()
-		worldToCanvas( edge[0].pos, pos1 )
-		worldToCanvas( edge[1].pos, pos2 )
-		context.save()
-		drawLine( pos1, pos2 )
-		context.restore()
-		vectorPool.return( pos1 )
-		vectorPool.return( pos2 )
-	}
-	
-	for( var i = 0; i < world.graph.arcs.length; ++i ){
-		var arc = world.graph.arcs[ i ].values
-		var pos1 = vectorPool.request()
-		var pos2 = vectorPool.request()
-		worldToCanvas( arc[0].pos, pos1 )
-		worldToCanvas( arc[1].pos, pos2 )
-		context.save()
-		drawLine( pos1, pos2 )
-		drawHead( pos1, pos2, true )
-		context.restore()
-		vectorPool.return( pos1 )
-		vectorPool.return( pos2 )
-	}
-	
-	for( var i = 0; i < world.graph.order; ++i ){
-		var vertex = world.graph.vertices[ i ]
-		var pos = vectorPool.request()
-		worldToCanvas( vertex.pos, pos )
-		context.save()
-		context.fillStyle = vertex.color
-		context.strokeStyle = vertex.border
-		context.beginPath()
-		context.arc( pos[0], pos[1], world.RAD, 0, 2*Math.PI )
-		context.closePath()
-		context.fill()
-		context.stroke()
-		if( vertex.text ){
-			context.fillStyle = "black"
-			context.textAlign = "center"
-			context.textBaseline = "middle"
-			context.font = "15px sans-serif"
-			context.fillText( vertex.text, pos[0], pos[1] )
+	for(var vertex of world.vertices){
+		var pos1 = worldToCanvas(vertex.pos)
+		ctx.save()
+		
+		ctx.fillStyle = vertex.color
+		ctx.strokeStyle = vertex.border
+		
+		ctx.beginPath()
+		
+		ctx.arc(pos1[0], pos1[1], world.RAD, 0, 2 * Math.PI, true)
+		
+		ctx.closePath()
+		ctx.fill()
+		ctx.stroke()
+		
+		if(vertex.icon){
+			pos1 = [
+				vertex.pos[0] - Math.SQRT1_2,
+				vertex.pos[1] + Math.SQRT1_2
+			]
+			pos1 = worldToCanvas(pos1)
+			var pos2 = []
+			pos2[0] = vertex.pos[0] + Math.SQRT1_2
+			pos2[1] = vertex.pos[1] - Math.SQRT1_2
+			worldToCanvas(pos2, pos2)
+			Vec2.subtract(pos2, pos1, pos2)
+			ctx.drawImage(vertex.icon, pos1[0], pos1[1], pos2[0], pos2[1])
 		}
-		context.restore()
-		vectorPool.return( pos )
+		else if(vertex.symbol){
+			ctx.fillStyle = vertex.textColor
+			ctx.textAlign = "center"
+			ctx.textBaseline = "middle"
+			ctx.font = "16px sans-serif"
+			ctx.fillText(vertex.symbol, pos1[0], pos1[1])
+		}
+		
+		ctx.restore()
 	}
 	
-	requestAnimationFrame( drawLoop )
+	ctx.save()
+	
+	var vertexClass = Vertices.getById(currType).prototype
+	var pos1 = [
+		world.RAD + 10,
+		innerHeight - world.RAD - 10
+	]
+	
+	ctx.fillStyle = vertexClass.color
+	ctx.strokeStyle = vertexClass.border
+	
+	ctx.beginPath()
+	
+	ctx.arc(pos1[0], pos1[1], world.RAD, 0, 2 * Math.PI, true)
+	
+	ctx.closePath()
+	ctx.fill()
+	ctx.stroke()
+	
+	if(vertexClass.icon){
+		pos1 = [
+			pos1[0] - Math.SQRT1_2,
+			pos1[1] + Math.SQRT1_2
+		]
+		pos1 = worldToCanvas(pos1)
+		var pos2 = []
+		pos2[0] = pos1[0] + Math.SQRT1_2
+		pos2[1] = pos1[1] - Math.SQRT1_2
+		worldToCanvas(pos2, pos2)
+		Vec2.subtract(pos2, pos1, pos2)
+		ctx.drawImage(vertexClass.icon, pos1[0], pos1[1], pos2[0], pos2[1])
+	}
+	else if(vertexClass.symbol){
+		ctx.fillStyle = vertexClass.textColor
+		ctx.textAlign = "center"
+		ctx.textBaseline = "middle"
+		ctx.font = "16px sans-serif"
+		ctx.fillText(vertexClass.symbol, pos1[0], pos1[1])
+	}
+	
+	ctx.restore()
+	
+	requestAnimationFrame(drawLoop)
 }
 
-setInterval( updateLoop, 50/3 )
-requestAnimationFrame( drawLoop )
+setInterval(updateLoop, 50/3)
+requestAnimationFrame(drawLoop)
 
 })()

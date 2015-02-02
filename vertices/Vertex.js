@@ -1,41 +1,37 @@
 "use strict"
 
-var Vertex = function( graph ){
-	this.pos = Vec2.create64()
-	this.prevPos = Vec2.create64()
-	this.motion = Vec2.create32()
-	
-	// this.borderStart = 0
-	// this.borderLength = 2*Math.PI
-	this.text = ""
-	this.id = Vertex.id++
+var Vertex = function(graph){
+	this.pos = [0, 0]
+	this.motion = [0, 0]
+	this.energy = 0
 	
 	this.graph = graph
 }
 
-Vertex.id = 0
-
 Vertex.prototype = {
 	
-	color: "purple",
+	type: "blank",
+	
+	icon: null,
+	symbol: "",
+	color: "white",
+	textColor: "black",
 	border: "black",
-	
-	setPosition: function( x, y ){
-		this.prevPos[0] = this.pos[0]
-		this.prevPos[1] = this.pos[1]
-		this.pos[0] = x
-		this.pos[1] = y
-	},
-	
-	setVelocity: function( x, y ){
-		this.motion[0] = x
-		this.motion[1] = y
-	},
-	
-	resetPosition: function(){
-		this.pos[0] = this.prevPos[0]
-		this.pos[1] = this.prevPos[1]
-	},
+	// this.borderStart = 0
+	// this.borderEnd = 2*Math.PI
 	
 	update: function(){},
+	
+	get neighbors(){
+		return this.graph.neighbors(this)
+	},
+	
+	toJSON: function(){
+		return {
+			type: this.type,
+			pos: this.pos,
+			motion: this.motion,
+			energy: this.energy,
+		}
+	},
 }

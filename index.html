@@ -4,25 +4,23 @@
 	<title>abstract</title>
 	<meta charset="utf-8"/>
 	<link rel="stylesheet" href="main.css"/>
-	<script src="util/Map.js"></script>
-	<script src="util/Set.js"></script>
 	<script src="util/ObjectPool.js"></script>
 	<script src="util/RegistryWithDefault.js"></script>
-	<script src="util/Graph.js"></script>
+	<script src="util/DirectedGraph.js"></script>
 	<script src="util/Vec2.js"></script>
+	<script src="Arc.js"></script>
 	<script src="World.js"></script>
 	<script src="vertices/Vertex.js"></script>
-	<script src="vertices/VertexBlank.js"></script>
 	<script src="vertices/VertexRotator.js"></script>
 	<script src="vertices/VertexGravity.js"></script>
-	<script src="vertices/VertexCharged.js"></script>
-	<script src="vertices/VertexChargedPositive.js"></script>
-	<script src="vertices/VertexChargedNegative.js"></script>
 	<script src="vertices/VertexEnergy.js"></script>
 	<script src="vertices/VertexForward.js"></script>
 	<script src="vertices/VertexNeuron.js"></script>
+	<script src="vertices/VertexFeedback.js"></script>
+	<script src="vertices/VertexSwitch.js"></script>
+	<script src="vertices/VertexNOR.js"></script>
 </head>
-<body>
+<body><!--
 	<div id="options">
 		<form name="options">
 			<div id="vertexType">
@@ -34,11 +32,6 @@
 				<label><input type="radio" name="vertexType" value="extend">Extend</label><br>
 				<label><input type="radio" name="vertexType" value="gravitator">Gravitator</label><br>
 				<label><input type="radio" name="vertexType" value="neuron">Neuron</label>
-			</div>
-			<div id="connectMode">
-				<h2>Connect Mode:</h2>
-				<label><input type="radio" name="connectMode" value="edge" checked>Edge</label><br>
-				<label><input type="radio" name="connectMode" value="arc">Arc</label>
 			</div>
 			<div id="arcValue" hidden>
 				<h2>Arc Value:</h2>
@@ -61,7 +54,7 @@
 			</div>
 		</form>
 		<h1>Options</h1>
-	</div>
+	</div>-->
 	<canvas id="c"></canvas>
 	<script src="main.js"></script>
 </body>

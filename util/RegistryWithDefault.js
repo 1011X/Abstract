@@ -27,7 +27,7 @@ RegistryWithDefault.prototype = {
 		return ( object === undefined ) ? this.value : object
 	},
 	
-	getByID: function( id ){
+	getById: function( id ){
 		var object = this.idMap.get( id )
 		return ( object === undefined ) ? this.value : object
 	}
