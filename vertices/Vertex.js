@@ -20,11 +20,13 @@ Vertex.prototype = {
 	// this.borderStart = 0
 	// this.borderEnd = 2*Math.PI
 	
-	update: function(){},
-	
 	get neighbors(){
 		return this.graph.neighbors(this)
 	},
+	
+	update: function(){},
+	
+	action: function(){},
 	
 	toJSON: function(){
 		return {

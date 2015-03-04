@@ -1,4 +1,4 @@
-(function main(){
+//(function main(){
 "use strict"
 
 // register vertex types
@@ -29,11 +29,11 @@ var load = function(){
 		world.graph.add(vertex)
 	}
 	
-	var needsUpdate = []
-	for(var vertObj of data.needsUpdate)
-		needsUpdate.push(vertices[vertObj])
+	var markedForUpdates = []
+	for(var vertObj of data.markedForUpdates)
+		markedForUpdates.push(vertices[vertObj])
 	
-	world.needsUpdate = new Set(needsUpdate)
+	world.markedForUpdates = new Set(markedForUpdates)
 	
 	var arcs = []
 	for(var arcObj of data.arcs){
@@ -52,39 +52,60 @@ var save = function(){
 }
 
 var world = new World
-// load world data, if there is any
+// Load world data, if there is any
 if(localStorage["abstractWorldData"])
 	load()
 
-setInterval(save, 10000)
+// Save every 5 seconds
+setInterval(save, 5000)
 
 var selected = null
 var currType = 0
 // var input = document.forms.options.elements
 // var vectorPool = new ObjectPool(Vec2.create64, 10)
-var pointerPos = null
+
+/*
+	Future me:
+	You're gonna want to update everything to do with vectors. Remember you
+	changed the Vec2 class?
+*/
+
+var canvasPosition = null
+var prevCanvasPosition = null
+
+var worldPosition = null
+var prevWorldPosition = null
 var hasDragged = false
 
 var uaHas = function(subs){
-	return navigator.userAgent.indexOf( subs ) !== -1
+	return navigator.userAgent.indexOf(subs) !== -1
 }
 
-// If mouse is down and dragged, record position in pointerPos, and also handle
-// moving of vertex if one is selected and dragged.
+// If mouse is down and dragged, record position in worldPosition.
+// Also handles moving of vertex if one is selected and dragged.
 var dragAction = function(evt){
 	hasDragged = true
-	if(!pointerPos)
-		pointerPos = []
-	pointerPos[0] = evt.pageX
-	pointerPos[1] = evt.pageY
 	
-	if(selected)
+	prevCanvasPosition = canvasPosition
+	prevWorldPosition = worldPosition
+	
+	canvasPosition = [evt.pageX, evt.pageY]
+	worldPosition = Vec2.add(canvasPosition, world.cam)
+	
+	if(selected){
 		// Helps to differentiate between mouse buttons in different browsers.
 		// The reason it works is because the mouseup event for Firefox has the
 		// releasing button information in the "buttons" attribute, but Chrome
 		// has it on the "button" attribute.
-		if(uaHas("Firefox") && evt.buttons == 1 || uaHas("Chrome") && evt.button == 0)
-			selected.pos = canvasToWorld(pointerPos)
+		if(uaHas("Firefox") && evt.buttons == 1 || uaHas("Chrome") && evt.button == 0){
+			Vec2.copy(worldPosition, selected.pos)
+		}
+	}
+	else {
+		var canvasMovement = Vec2.subtract(canvasPosition, prevCanvasPosition)
+		Vec2.reverse(canvasMovement, canvasMovement)
+		Vec2.add(world.cam, canvasMovement, world.cam)
+	}
 }
 
 var _mouseWheelHandler = function(evt){
@@ -105,36 +126,26 @@ var mouseWheelHandler = function(ticks){
 		currType -= Vertices.size
 }
 
-// Vector coordinate conversion functions
-var canvasToWorld = function(pos){
-	return [
-		world.cam[0] + pos[0] / world.RAD,
-		world.cam[1] - pos[1] / world.RAD
-	]
-}
-var worldToCanvas = function(pos){
-	return [
-		(pos[0] - world.cam[0]) * world.RAD,
-		(world.cam[1] - pos[1]) * world.RAD
-	]
-}
-
 // register event handlers
 canvas.addEventListener("DOMMouseScroll", _mouseWheelHandler)
 canvas.addEventListener("mousewheel",     _mouseWheelHandler)
 
 canvas.addEventListener("mousedown", function(evt){
 	canvas.addEventListener("mousemove", dragAction)
+	// something in here is wrong...
+	canvasPosition = [evt.pageX, evt.pageY]
+	worldPosition = Vec2.add(canvasPosition, world.cam)
+	console.log("Mousedown on " + Vec2.toString(worldPosition) + ", " + Vec2.toString(canvasPosition) + " relative to canvas.")
 	
-	var pos = canvasToWorld([evt.pageX, evt.pageY])
-	
-	selected = world.vertexAt(pos[0], pos[1])
+	selected = world.vertexAt(worldPosition)
+	if(selected)
+		console.log("Vertex found")
+	else
+		console.log("No vertex found")
 })
 
 canvas.addEventListener("mouseup", function(evt){
 	canvas.removeEventListener("mousemove", dragAction)
-	
-	var pos = canvasToWorld([evt.pageX, evt.pageY])
 	
 	// left release
 	if(evt.button == 0){
@@ -144,7 +155,7 @@ canvas.addEventListener("mouseup", function(evt){
 	}
 	// right release
 	else if(evt.button == 2){
-		var next = world.vertexAt(pos[0], pos[1])
+		var next = world.vertexAt(worldPosition)
 		// a vertex was present on mousedown and on mouseup
 		if(selected && next){
 			// connect vertices if let go on another (different) vertex
@@ -152,29 +163,38 @@ canvas.addEventListener("mouseup", function(evt){
 				var arc = new Arc(selected, next)
 				world.connect(selected, next, arc)
 			}
-			// TODO: implement some sort of context menu with this
+			// TODO: implement some sort of context menu here
 			else if(selected === next){
-				// alert("Hello!")
 				selected.action()
 			}
 		}
 		// make new vertex if release in blank area
 		else if(!selected && !next){
 			var vertex = new (Vertices.getById(currType))(world.graph)
-			vertex.pos = pos
+			vertex.pos = Vec2.copy(worldPosition)
 			world.spawn(vertex)
+			console.log("Vertex placed at " + Vec2.toString(worldPosition))
 		}
 	}
 	// reset EVERYTHING
 	hasDragged = false
 	selected = null
-	pointerPos = null
+	
+	prevCanvasPosition = null
+	canvasPosition = null
+	prevWorldPosition = null
+	worldPosition = null
 })
 
 addEventListener("keydown", function(evt){
-	// if 's' is pressed
+	// 's' is pressed
 	if(evt.keyCode == 83)
 		save()
+	// 'r' is pressed
+	if(evt.keyCode == 82){
+		localStorage["abstractWorldData"] = JSON.stringify(new World, null, "\t")
+		console.log("World reset! I think...")
+	}
 })
 
 addEventListener("keyup", function(evt){
@@ -202,16 +222,19 @@ var drawLoop = function(){
 	ctx.lineCap = "square"
 	
 	for(var arc of world.graph.arcs){
-		var pos1 = worldToCanvas(arc.from.pos)
-		var pos2 = worldToCanvas(arc.to.pos)
-		ctx.save()
+		var from = Vec2.copy(arc.from.pos)
+		var to = Vec2.copy(arc.to.pos)
+		
+		// Offset relative to world camera.
+		Vec2.add(from, world.cam, from)
+		Vec2.add(to, world.cam, to)
 		
 		// get offset from center of vertex to its edge
-		var offset = Vec2.resize(Vec2.subtract(pos2, pos1), world.RAD)
+		var offset = Vec2.resize(Vec2.subtract(to, from), world.RAD)
 		
-		// adjust line start and edge positions
-		var tail = Vec2.add(pos1, offset)
-		var head = Vec2.subtract(pos2, offset)
+		// adjust line start and end positions
+		var tail = Vec2.add(from, offset)
+		var head = Vec2.subtract(to, offset)
 		
 		// used to calculate positions of both arrowheads
 		var arrowHead = Vec2.resize(Vec2.subtract(head, tail), 3 * world.RAD / 4)
@@ -229,12 +252,10 @@ var drawLoop = function(){
 		
 		ctx.closePath()
 		ctx.stroke()
-		
-		ctx.restore()
 	}
 	
 	for(var vertex of world.vertices){
-		var pos1 = worldToCanvas(vertex.pos)
+		var pos1 = Vec2.subtract(vertex.pos, world.cam)
 		ctx.save()
 		
 		ctx.fillStyle = vertex.color
@@ -250,14 +271,16 @@ var drawLoop = function(){
 		
 		if(vertex.icon){
 			pos1 = [
-				vertex.pos[0] - Math.SQRT1_2,
-				vertex.pos[1] + Math.SQRT1_2
+				vertex.pos[0] - Math.SQRT1_2 * world.RAD,
+				vertex.pos[1] + Math.SQRT1_2 * world.RAD
 			]
-			pos1 = worldToCanvas(pos1)
+			Vec2.add(pos1, world.cam, pos1)
+			pos1 = Vec2.copy(pos1)
 			var pos2 = []
-			pos2[0] = vertex.pos[0] + Math.SQRT1_2
-			pos2[1] = vertex.pos[1] - Math.SQRT1_2
-			worldToCanvas(pos2, pos2)
+			pos2[0] = vertex.pos[0] + Math.SQRT1_2 * world.RAD,
+			pos2[1] = vertex.pos[1] - Math.SQRT1_2 * world.RAD
+			Vec2.add(pos2, world.cam, pos2)
+			Vec2.copy(pos2, pos2)
 			Vec2.subtract(pos2, pos1, pos2)
 			ctx.drawImage(vertex.icon, pos1[0], pos1[1], pos2[0], pos2[1])
 		}
@@ -293,14 +316,14 @@ var drawLoop = function(){
 	
 	if(vertexClass.icon){
 		pos1 = [
-			pos1[0] - Math.SQRT1_2,
-			pos1[1] + Math.SQRT1_2
+			pos1[0] - Math.SQRT1_2 * world.RAD,
+			pos1[1] + Math.SQRT1_2 * world.RAD
 		]
-		pos1 = worldToCanvas(pos1)
+		pos1 = Vec2.copy(pos1)
 		var pos2 = []
-		pos2[0] = pos1[0] + Math.SQRT1_2
-		pos2[1] = pos1[1] - Math.SQRT1_2
-		worldToCanvas(pos2, pos2)
+		pos2[0] = pos1[0] + Math.SQRT1_2 * world.RAD,
+		pos2[1] = pos1[1] - Math.SQRT1_2 * world.RAD
+		Vec2.copy(pos2, pos2)
 		Vec2.subtract(pos2, pos1, pos2)
 		ctx.drawImage(vertexClass.icon, pos1[0], pos1[1], pos2[0], pos2[1])
 	}
@@ -320,4 +343,4 @@ var drawLoop = function(){
 setInterval(updateLoop, 50/3)
 requestAnimationFrame(drawLoop)
 
-})()
+//})()

@@ -2,7 +2,7 @@ function World(){
 	this.RAD = 20
 	this.graph = new DirectedGraph
 	this.cam = [0, 0]
-	this.needsUpdate = new Set
+	this.markedForUpdates = new Set
 }
 
 World.prototype = {
@@ -15,19 +15,18 @@ World.prototype = {
 		return this.graph.order
 	},
 	
-	vertexAt: function(x, y){
+	vertexAt: function(pos){
 		var vertices = []
 		for(var v of this.vertices)
 			vertices.push(v)
+		vertices.reverse()
 		// search backwards because last node is drawn on top
-		for(var i = this.count - 1; i >= 0; --i){
-			var vertex = vertices[i]
+		for(var vertex of vertices){
 			var d = [0, 0]
-			Vec2.subtract(vertex.pos, [x, y], d)
-			if(Vec2.lengthSqr(d) <= 1)
+			Vec2.subtract(vertex.pos, pos, d)
+			if(Vec2.length(d) <= world.RAD)
 				return vertex
 		}
-		
 		return null
 	},
 	
@@ -47,21 +46,23 @@ World.prototype = {
 		this.graph.deleteArc(u, v)
 	},
 	/*
-	moveCamTo: function(x, y){
-		this.cam[0] = x
-		this.cam[1] = y
+	moveCamTo: function(pos){
+		this.cam[0] = pos[0]
+		this.cam[1] = pos[1]
 	},
 	*/
 	tick: function(selected){
+		// Loops through all vertices. Don't do this!
+		// .markedForUpdates is there for a reason!
 		for(var vertex of this.graph.vertices){
 			var self = this
-			this.needsUpdate.delete(vertex)
+			this.markedForUpdates.delete(vertex)
 			vertex.update({
 				selected: selected,
 				send: function(vert, value){
 					if(self.graph.adjacent(vertex, vert)){
 						vert.energy += value
-						self.needsUpdate.add(vert)
+						self.markedForUpdates.add(vert)
 					}
 				}
 			})
@@ -71,13 +72,13 @@ World.prototype = {
 	toJSON: function(){
 		var vertices = []
 		var arcs = []
-		var needsUpdate = []
+		var markedForUpdates = []
 		// list vertices in world
 		for(var vert of this.graph.vertices)
 			vertices.push(vert)
 		// list vertices that need updates by index of above list
-		for(var vert of this.needsUpdate)
-			needsUpdate.push(vertices.indexOf(vert))
+		for(var vert of this.markedForUpdates)
+			markedForUpdates.push(vertices.indexOf(vert))
 		
 		for(var arc of this.graph.arcs){
 			var from = vertices.indexOf(arc.from)
@@ -92,7 +93,7 @@ World.prototype = {
 			cam: this.cam,
 			vertices: vertices,
 			arcs: arcs,
-			needsUpdate: needsUpdate,
+			markedForUpdates: markedForUpdates,
 		}
 	},
 }

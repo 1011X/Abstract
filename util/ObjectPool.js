@@ -1,7 +1,7 @@
 "use strict"
 
-function ObjectPool( creator, amount ){
-	this.creator = creator
+function ObjectPool( objType, amount ){
+	this.objType = objType
 	this.checkedOut = new Set
 	this.pool = []
 	
@@ -16,7 +16,7 @@ ObjectPool.prototype = {
 	},
 	
 	_create: function(){
-		var obj = this.creator()
+		var obj = new this.objType
 		this.pool.push( obj )
 		return obj
 	},
