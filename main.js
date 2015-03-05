@@ -135,13 +135,8 @@ canvas.addEventListener("mousedown", function(evt){
 	// something in here is wrong...
 	canvasPosition = [evt.pageX, evt.pageY]
 	worldPosition = Vec2.add(canvasPosition, world.cam)
-	console.log("Mousedown on " + Vec2.toString(worldPosition) + ", " + Vec2.toString(canvasPosition) + " relative to canvas.")
 	
 	selected = world.vertexAt(worldPosition)
-	if(selected)
-		console.log("Vertex found")
-	else
-		console.log("No vertex found")
 })
 
 canvas.addEventListener("mouseup", function(evt){
@@ -160,6 +155,7 @@ canvas.addEventListener("mouseup", function(evt){
 		if(selected && next){
 			// connect vertices if let go on another (different) vertex
 			if(selected !== next){
+				console.log("Yep, you're here")
 				var arc = new Arc(selected, next)
 				world.connect(selected, next, arc)
 			}
@@ -221,13 +217,14 @@ var drawLoop = function(){
 	ctx.lineWidth = 3
 	ctx.lineCap = "square"
 	
+	// arc drawing procedure
 	for(var arc of world.graph.arcs){
 		var from = Vec2.copy(arc.from.pos)
 		var to = Vec2.copy(arc.to.pos)
 		
-		// Offset relative to world camera.
-		Vec2.add(from, world.cam, from)
-		Vec2.add(to, world.cam, to)
+		// To canvas coordinates
+		Vec2.subtract(from, world.cam, from)
+		Vec2.subtract(to, world.cam, to)
 		
 		// get offset from center of vertex to its edge
 		var offset = Vec2.resize(Vec2.subtract(to, from), world.RAD)
@@ -237,9 +234,10 @@ var drawLoop = function(){
 		var head = Vec2.subtract(to, offset)
 		
 		// used to calculate positions of both arrowheads
+		var angle = 5 * Math.PI / 6
 		var arrowHead = Vec2.resize(Vec2.subtract(head, tail), 3 * world.RAD / 4)
-		var tipl = Vec2.add(head, Vec2.rotate(arrowHead, 5 * Math.PI / 6))
-		var tipr = Vec2.add(head, Vec2.rotate(arrowHead, -5 * Math.PI / 6))
+		var tipl = Vec2.add(head, Vec2.rotate(arrowHead, angle))
+		var tipr = Vec2.add(head, Vec2.rotate(arrowHead, -angle))
 		
 		ctx.beginPath()
 		
@@ -254,6 +252,7 @@ var drawLoop = function(){
 		ctx.stroke()
 	}
 	
+	// vertex drawing procedure
 	for(var vertex of world.vertices){
 		var pos1 = Vec2.subtract(vertex.pos, world.cam)
 		ctx.save()
@@ -275,12 +274,11 @@ var drawLoop = function(){
 				vertex.pos[1] + Math.SQRT1_2 * world.RAD
 			]
 			Vec2.add(pos1, world.cam, pos1)
-			pos1 = Vec2.copy(pos1)
-			var pos2 = []
-			pos2[0] = vertex.pos[0] + Math.SQRT1_2 * world.RAD,
-			pos2[1] = vertex.pos[1] - Math.SQRT1_2 * world.RAD
+			var pos2 = [
+				vertex.pos[0] + Math.SQRT1_2 * world.RAD,
+				vertex.pos[1] - Math.SQRT1_2 * world.RAD
+			]
 			Vec2.add(pos2, world.cam, pos2)
-			Vec2.copy(pos2, pos2)
 			Vec2.subtract(pos2, pos1, pos2)
 			ctx.drawImage(vertex.icon, pos1[0], pos1[1], pos2[0], pos2[1])
 		}
@@ -319,11 +317,10 @@ var drawLoop = function(){
 			pos1[0] - Math.SQRT1_2 * world.RAD,
 			pos1[1] + Math.SQRT1_2 * world.RAD
 		]
-		pos1 = Vec2.copy(pos1)
-		var pos2 = []
-		pos2[0] = pos1[0] + Math.SQRT1_2 * world.RAD,
-		pos2[1] = pos1[1] - Math.SQRT1_2 * world.RAD
-		Vec2.copy(pos2, pos2)
+		var pos2 = [
+			pos1[0] + Math.SQRT1_2 * world.RAD,
+			pos1[1] - Math.SQRT1_2 * world.RAD
+		]
 		Vec2.subtract(pos2, pos1, pos2)
 		ctx.drawImage(vertexClass.icon, pos1[0], pos1[1], pos2[0], pos2[1])
 	}
