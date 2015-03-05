@@ -1,8 +1,8 @@
 function World(){
 	this.RAD = 20
 	this.graph = new DirectedGraph
-	this.cam = [0, 0]
-	this.markedForUpdates = new Set
+	this.cam = new Vec2
+	this.markedForUpdate = new Set
 }
 
 World.prototype = {
@@ -22,9 +22,9 @@ World.prototype = {
 		vertices.reverse()
 		// search backwards because last node is drawn on top
 		for(var vertex of vertices){
-			var d = [0, 0]
-			Vec2.subtract(vertex.pos, pos, d)
-			if(Vec2.length(d) <= world.RAD)
+			var distance = new Vec2
+			vertex.pos.subtract(pos, distance)
+			if(distance.length <= world.RAD)
 				return vertex
 		}
 		return null
@@ -56,13 +56,13 @@ World.prototype = {
 		// .markedForUpdates is there for a reason!
 		for(var vertex of this.graph.vertices){
 			var self = this
-			this.markedForUpdates.delete(vertex)
+			this.markedForUpdate.delete(vertex)
 			vertex.update({
 				selected: selected,
 				send: function(vert, value){
 					if(self.graph.adjacent(vertex, vert)){
 						vert.energy += value
-						self.markedForUpdates.add(vert)
+						self.markedForUpdate.add(vert)
 					}
 				}
 			})
@@ -72,13 +72,13 @@ World.prototype = {
 	toJSON: function(){
 		var vertices = []
 		var arcs = []
-		var markedForUpdates = []
+		var markedForUpdate = []
 		// list vertices in world
 		for(var vert of this.graph.vertices)
 			vertices.push(vert)
 		// list vertices that need updates by index of above list
-		for(var vert of this.markedForUpdates)
-			markedForUpdates.push(vertices.indexOf(vert))
+		for(var vert of this.markedForUpdate)
+			markedForUpdate.push(vertices.indexOf(vert))
 		
 		for(var arc of this.graph.arcs){
 			var from = vertices.indexOf(arc.from)
@@ -93,7 +93,7 @@ World.prototype = {
 			cam: this.cam,
 			vertices: vertices,
 			arcs: arcs,
-			markedForUpdates: markedForUpdates,
+			markedForUpdate: markedForUpdate,
 		}
 	},
 }
