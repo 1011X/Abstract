@@ -56,19 +56,11 @@ var world = new World
 if(localStorage["abstractWorldData"])
 	load()
 
-// Save every 5 seconds
-setInterval(save, 5000)
-
 var selected = null
 var currType = 0
+var doDrawing = true
 // var input = document.forms.options.elements
 // var vectorPool = new ObjectPool(Vec2.create64, 10)
-
-/*
-	Future me:
-	You're gonna want to update everything to do with vectors. Remember you
-	changed the Vec2 class?
-*/
 
 var canvasPosition = null
 var prevCanvasPosition = null
@@ -132,7 +124,7 @@ canvas.addEventListener("mousewheel",     _mouseWheelHandler)
 
 canvas.addEventListener("mousedown", function(evt){
 	canvas.addEventListener("mousemove", dragAction)
-	// something in here is wrong...
+	
 	canvasPosition = [evt.pageX, evt.pageY]
 	worldPosition = Vec2.add(canvasPosition, world.cam)
 	
@@ -155,7 +147,6 @@ canvas.addEventListener("mouseup", function(evt){
 		if(selected && next){
 			// connect vertices if let go on another (different) vertex
 			if(selected !== next){
-				console.log("Yep, you're here")
 				var arc = new Arc(selected, next)
 				world.connect(selected, next, arc)
 			}
@@ -188,8 +179,8 @@ addEventListener("keydown", function(evt){
 		save()
 	// 'r' is pressed
 	if(evt.keyCode == 82){
-		localStorage["abstractWorldData"] = JSON.stringify(new World, null, "\t")
-		console.log("World reset! I think...")
+		localStorage["abstractWorldData"] = ""
+		console.log("World *might* have been reset, not sure. Try hitting the button a few more times, just in case.")
 	}
 })
 
@@ -213,6 +204,8 @@ var updateLoop = function(){
 }
 
 var drawLoop = function(){
+	if(!doDrawing)
+		return
 	ctx.clearRect(0, 0, canvas.width, canvas.height)
 	ctx.lineWidth = 3
 	ctx.lineCap = "square"
@@ -233,7 +226,7 @@ var drawLoop = function(){
 		var tail = Vec2.add(from, offset)
 		var head = Vec2.subtract(to, offset)
 		
-		// used to calculate positions of both arrowheads
+		// used to calculate positions of tips of both arrowheads
 		var angle = 5 * Math.PI / 6
 		var arrowHead = Vec2.resize(Vec2.subtract(head, tail), 3 * world.RAD / 4)
 		var tipl = Vec2.add(head, Vec2.rotate(arrowHead, angle))
@@ -254,6 +247,7 @@ var drawLoop = function(){
 	
 	// vertex drawing procedure
 	for(var vertex of world.vertices){
+		// get position relative to canvas
 		var pos1 = Vec2.subtract(vertex.pos, world.cam)
 		ctx.save()
 		
@@ -268,19 +262,14 @@ var drawLoop = function(){
 		ctx.fill()
 		ctx.stroke()
 		
+		// if there's an icon...
 		if(vertex.icon){
-			pos1 = [
-				vertex.pos[0] - Math.SQRT1_2 * world.RAD,
-				vertex.pos[1] + Math.SQRT1_2 * world.RAD
-			]
-			Vec2.add(pos1, world.cam, pos1)
-			var pos2 = [
-				vertex.pos[0] + Math.SQRT1_2 * world.RAD,
-				vertex.pos[1] - Math.SQRT1_2 * world.RAD
-			]
-			Vec2.add(pos2, world.cam, pos2)
-			Vec2.subtract(pos2, pos1, pos2)
-			ctx.drawImage(vertex.icon, pos1[0], pos1[1], pos2[0], pos2[1])
+			// calculate offset for most bottom-right point on circle
+			var offset = [1, 1]
+			Vec2.scale(offset, Math.SQRT1_2 * world.RAD, offset)
+			// set pos1 to most top-left point on circle
+			Vec2.subtract(pos1, offset, pos1)
+			ctx.drawImage(vertex.icon, pos1[0], pos1[1], 2 * offset[0], 2 * offset[1])
 		}
 		else if(vertex.symbol){
 			ctx.fillStyle = vertex.textColor
@@ -313,16 +302,12 @@ var drawLoop = function(){
 	ctx.stroke()
 	
 	if(vertexClass.icon){
-		pos1 = [
-			pos1[0] - Math.SQRT1_2 * world.RAD,
-			pos1[1] + Math.SQRT1_2 * world.RAD
-		]
-		var pos2 = [
-			pos1[0] + Math.SQRT1_2 * world.RAD,
-			pos1[1] - Math.SQRT1_2 * world.RAD
-		]
-		Vec2.subtract(pos2, pos1, pos2)
-		ctx.drawImage(vertexClass.icon, pos1[0], pos1[1], pos2[0], pos2[1])
+			// calculate offset for most bottom-right point on circle
+			var offset = [1, 1]
+			Vec2.scale(offset, Math.SQRT1_2 * world.RAD, offset)
+			// set pos1 to most top-left point on circle
+			Vec2.subtract(pos1, offset, pos1)
+			ctx.drawImage(vertexClass.icon, pos1[0], pos1[1], 2 * offset[0], 2 * offset[1])
 	}
 	else if(vertexClass.symbol){
 		ctx.fillStyle = vertexClass.textColor
