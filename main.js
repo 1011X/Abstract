@@ -16,14 +16,16 @@ var ctx = canvas.getContext("2d")
 
 var load = function(){
 	var data = JSON.parse(localStorage["abstractWorldData"])
-	world.cam = new Vec2().copy(data.cam)
+	console.log("Loaded world object.")
+	console.log(data)
+	world.cam = new Vec2(data.cam)
 	
 	var vertices = []
 	for(var vertObj of data.vertices){
 		var vertexClass = Vertices.get(vertObj.type)
 		var vertex = new vertexClass(world.graph)
-		vertex.pos = new Vec2().copy(vertObj.pos)
-		vertex.motion = new Vec2().copy(vertObj.motion)
+		vertex.pos = new Vec2(vertObj.pos)
+		vertex.motion = new Vec2(vertObj.motion)
 		vertex.energy = vertObj.energy
 		vertices.push(vertex)
 		world.graph.add(vertex)
@@ -49,6 +51,7 @@ var load = function(){
 
 var save = function(){
 	localStorage["abstractWorldData"] = JSON.stringify(world, null, "\t")
+	console.log(localStorage["abstractWorldData"])
 }
 
 var world = new World
@@ -59,6 +62,7 @@ if(localStorage["abstractWorldData"])
 
 var selected = null
 var currType = 0
+var doUpdate = true
 // var input = document.forms.options.elements
 // var vectorPool = new ObjectPool(Vec2.create64, 10)
 
@@ -146,7 +150,6 @@ canvas.addEventListener("mouseup", function(evt){
 		if(selected && next){
 			// connect vertices if let go on another (different) vertex
 			if(selected !== next){
-				console.log("Yep, you're here")
 				var arc = new Arc(selected, next)
 				world.connect(selected, next, arc)
 			}
@@ -204,6 +207,8 @@ var updateLoop = function(){
 }
 
 var drawLoop = function(){
+	if(!doUpdate)
+		return
 	ctx.clearRect(0, 0, canvas.width, canvas.height)
 	ctx.lineWidth = 3
 	ctx.lineCap = "square"

@@ -1,8 +1,14 @@
 "use strict"
 
 function Vec2(x, y){
-	this.x = x || 0
-	this.y = y || 0
+	if(Array.isArray(x)){
+		this.x = x[0] || 0
+		this.y = x[1] || 0
+	}
+	else {
+		this.x = x || 0
+		this.y = y || 0
+	}
 }
 
 Vec2.prototype = {
