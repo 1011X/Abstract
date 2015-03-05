@@ -1,8 +1,8 @@
 "use strict"
 
 var Vertex = function(graph){
-	this.pos = [0, 0]
-	this.motion = [0, 0]
+	this.pos = new Vec2
+	this.motion = new Vec2
 	this.energy = 0
 	
 	this.graph = graph

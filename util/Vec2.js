@@ -1,80 +1,89 @@
 "use strict"
 
-var Vec2 = {
+function Vec2(x, y){
+	this.x = x || 0
+	this.y = y || 0
+}
+
+Vec2.prototype = {
 	
-	add: function(a, b, o){
-		var r = o || new Array(2)
-		r[0] = a[0] + b[0]
-		r[1] = a[1] + b[1]
-		return r
+	add: function(vector, output){
+		var result = output || this
+		result.x = this.x + vector.x
+		result.y = this.y + vector.y
+		return result
 	},
 	
-	subtract: function(a, b, o){
-		var r = o || new Array(2)
-		r[0] = a[0] - b[0]
-		r[1] = a[1] - b[1]
-		return r
+	subtract: function(vector, output){
+		var result = output || this
+		result.x = this.x - vector.x
+		result.y = this.y - vector.y
+		return result
 	},
 	
-	scale: function(a, s, o){
-		var r = o || new Array(2)
-		r[0] = a[0] * s
-		r[1] = a[1] * s
-		return r
+	scale: function(size, output){
+		var result = output || this
+		result.x = this.x * size
+		result.y = this.y * size
+		return result
 	},
 	
-	dot: function(a, b){
-		return a[0] * b[0] + a[1] * b[1]
+	dot: function(vector){
+		return this.x * vector.x + this.y * vector.y
 	},
 	
-	resize: function(a, s, o){
-		var r = o || new Array(2)
-		Vec2.scale(a, s / Vec2.length(a), r)
-		return r
+	resize: function(size, output){
+		var result = output || this
+		return this.scale(size / this.length, result)
 	},
 
-	normalize: function(a, o){
-		var r = o || new Array(2)
-		Vec2.resize(a, 1, r)
-		return r
+	normalize: function(output){
+		var result = output || this
+		return this.resize(1, result)
 	},
 
-	lengthSqr: function(a){
-		return Vec2.dot(a, a)
+	get lengthSqr(){
+		return this.dot(this)
 	},
 	
-	length: function(a){
-		return Math.sqrt(Vec2.lengthSqr(a))
+	get length(){
+		return Math.sqrt(this.lengthSqr)
 	},
 	
-	reverse: function(a, o){
-		var r = o || new Array(2)
-		Vec2.scale(a, -1, r)
-		return r
+	reverse: function(output){
+		var result = output || this
+		return this.scale(-1, result)
+	},
+	
+	clone: function(){
+		return new Vec2(this.x, this.y)
 	},
 
-	rotate: function(a, t, o){
-		var r = o || new Array(2)
-		var temp = Vec2.copy(a)
-		var xo = Math.cos(t)
-		var yo = Math.sin(t)
-		r[0] = temp[0] * xo + temp[1] * yo
-		r[1] = temp[1] * xo - temp[0] * yo
-		return r
+	rotate: function(angle, output){
+		var result = output || this
+		var temp = this.clone()
+		var xOffset = Math.cos(angle)
+		var yOffset = Math.sin(angle)
+		result.x = temp.x * xOffset + temp.y * yOffset
+		result.y = temp.y * xOffset - temp.x * yOffset
+		return result
 	},
 	
-	equal: function(a, b){
-		return a[0] == b[0] && a[1] == b[1]
+	equal: function(vector){
+		return this.x === vector.x && this.y === vector.y
 	},
 	
-	copy: function(src, dst){
-		var r = dst || new Array(2)
-		r[0] = src[0]
-		r[1] = src[1]
-		return r
+	copy: function(source){
+		this.x = source.x
+		this.y = source.y
+		return this
 	},
 
-	toString: function(a){
-		return "<" + a[0] + ", " + a[1] + ">"
+	toString: function(){
+		return "<" + this.x + ", " + this.y + ">"
+	},
+	
+	toJSON: function(){
+		return [this.x, this.y]
 	}
 }

@@ -16,24 +16,24 @@ var ctx = canvas.getContext("2d")
 
 var load = function(){
 	var data = JSON.parse(localStorage["abstractWorldData"])
-	world.cam = data.cam
+	world.cam = new Vec2().copy(data.cam)
 	
 	var vertices = []
 	for(var vertObj of data.vertices){
 		var vertexClass = Vertices.get(vertObj.type)
 		var vertex = new vertexClass(world.graph)
-		vertex.pos = vertObj.pos
-		vertex.motion = vertObj.motion
+		vertex.pos = new Vec2().copy(vertObj.pos)
+		vertex.motion = new Vec2().copy(vertObj.motion)
 		vertex.energy = vertObj.energy
 		vertices.push(vertex)
 		world.graph.add(vertex)
 	}
 	
-	var markedForUpdates = []
-	for(var vertObj of data.markedForUpdates)
-		markedForUpdates.push(vertices[vertObj])
+	var markedForUpdate = []
+	for(var vertObj of data.markedForUpdate)
+		markedForUpdate.push(vertices[vertObj])
 	
-	world.markedForUpdates = new Set(markedForUpdates)
+	world.markedForUpdate = new Set(markedForUpdate)
 	
 	var arcs = []
 	for(var arcObj of data.arcs){
@@ -52,23 +52,15 @@ var save = function(){
 }
 
 var world = new World
+
 // Load world data, if there is any
 if(localStorage["abstractWorldData"])
 	load()
-
-// Save every 5 seconds
-setInterval(save, 5000)
 
 var selected = null
 var currType = 0
 // var input = document.forms.options.elements
 // var vectorPool = new ObjectPool(Vec2.create64, 10)
-
-/*
-	Future me:
-	You're gonna want to update everything to do with vectors. Remember you
-	changed the Vec2 class?
-*/
 
 var canvasPosition = null
 var prevCanvasPosition = null
@@ -89,22 +81,21 @@ var dragAction = function(evt){
 	prevCanvasPosition = canvasPosition
 	prevWorldPosition = worldPosition
 	
-	canvasPosition = [evt.pageX, evt.pageY]
-	worldPosition = Vec2.add(canvasPosition, world.cam)
+	canvasPosition = new Vec2(evt.pageX, evt.pageY)
+	worldPosition = canvasPosition.add(world.cam, new Vec2)
 	
 	if(selected){
 		// Helps to differentiate between mouse buttons in different browsers.
 		// The reason it works is because the mouseup event for Firefox has the
 		// releasing button information in the "buttons" attribute, but Chrome
 		// has it on the "button" attribute.
-		if(uaHas("Firefox") && evt.buttons == 1 || uaHas("Chrome") && evt.button == 0){
-			Vec2.copy(worldPosition, selected.pos)
-		}
+		if(uaHas("Firefox") && evt.buttons == 1 || uaHas("Chrome") && evt.button == 0)
+			selected.pos.copy(worldPosition)
 	}
 	else {
-		var canvasMovement = Vec2.subtract(canvasPosition, prevCanvasPosition)
-		Vec2.reverse(canvasMovement, canvasMovement)
-		Vec2.add(world.cam, canvasMovement, world.cam)
+		var canvasMovement = canvasPosition.subtract(prevCanvasPosition, new Vec2)
+		canvasMovement.reverse()
+		world.cam.add(canvasMovement)
 	}
 }
 
@@ -132,9 +123,9 @@ canvas.addEventListener("mousewheel",     _mouseWheelHandler)
 
 canvas.addEventListener("mousedown", function(evt){
 	canvas.addEventListener("mousemove", dragAction)
-	// something in here is wrong...
-	canvasPosition = [evt.pageX, evt.pageY]
-	worldPosition = Vec2.add(canvasPosition, world.cam)
+	
+	canvasPosition = new Vec2(evt.pageX, evt.pageY)
+	worldPosition = canvasPosition.add(world.cam, new Vec2)
 	
 	selected = world.vertexAt(worldPosition)
 })
@@ -167,9 +158,9 @@ canvas.addEventListener("mouseup", function(evt){
 		// make new vertex if release in blank area
 		else if(!selected && !next){
 			var vertex = new (Vertices.getById(currType))(world.graph)
-			vertex.pos = Vec2.copy(worldPosition)
+			vertex.pos.copy(worldPosition)
 			world.spawn(vertex)
-			console.log("Vertex placed at " + Vec2.toString(worldPosition))
+			console.log("Vertex placed at " + worldPosition)
 		}
 	}
 	// reset EVERYTHING
@@ -189,7 +180,7 @@ addEventListener("keydown", function(evt){
 	// 'r' is pressed
 	if(evt.keyCode == 82){
 		localStorage["abstractWorldData"] = JSON.stringify(new World, null, "\t")
-		console.log("World reset! I think...")
+		console.log("World *might* have been reset, not sure. Try hitting the button a few more times, just in case.")
 	}
 })
 
@@ -219,34 +210,34 @@ var drawLoop = function(){
 	
 	// arc drawing procedure
 	for(var arc of world.graph.arcs){
-		var from = Vec2.copy(arc.from.pos)
-		var to = Vec2.copy(arc.to.pos)
+		var from = arc.from.pos.clone()
+		var to = arc.to.pos.clone()
 		
 		// To canvas coordinates
-		Vec2.subtract(from, world.cam, from)
-		Vec2.subtract(to, world.cam, to)
+		from.subtract(world.cam)
+		to.subtract(world.cam)
 		
 		// get offset from center of vertex to its edge
-		var offset = Vec2.resize(Vec2.subtract(to, from), world.RAD)
+		var offset = to.subtract(from, new Vec2).resize(world.RAD)
 		
 		// adjust line start and end positions
-		var tail = Vec2.add(from, offset)
-		var head = Vec2.subtract(to, offset)
+		var tail = from.add(offset, new Vec2)
+		var head = to.subtract(offset, new Vec2)
 		
 		// used to calculate positions of both arrowheads
 		var angle = 5 * Math.PI / 6
-		var arrowHead = Vec2.resize(Vec2.subtract(head, tail), 3 * world.RAD / 4)
-		var tipl = Vec2.add(head, Vec2.rotate(arrowHead, angle))
-		var tipr = Vec2.add(head, Vec2.rotate(arrowHead, -angle))
+		var arrowHead = head.subtract(tail, new Vec2).resize(3 * world.RAD / 4)
+		var tipl = arrowHead.rotate(angle, new Vec2).add(head)
+		var tipr = arrowHead.rotate(-angle, new Vec2).add(head)
 		
 		ctx.beginPath()
 		
-		ctx.moveTo(tail[0], tail[1])
-		ctx.lineTo(head[0], head[1])
-		ctx.lineTo(tipl[0], tipl[1])
-		ctx.moveTo(head[0], head[1])
-		ctx.lineTo(tipr[0], tipr[1])
-		ctx.moveTo(head[0], head[1])
+		ctx.moveTo(tail.x, tail.y)
+		ctx.lineTo(head.x, head.y)
+		ctx.lineTo(tipl.x, tipl.y)
+		ctx.moveTo(head.x, head.y)
+		ctx.lineTo(tipr.x, tipr.y)
+		ctx.moveTo(head.x, head.y)
 		
 		ctx.closePath()
 		ctx.stroke()
@@ -254,7 +245,8 @@ var drawLoop = function(){
 	
 	// vertex drawing procedure
 	for(var vertex of world.vertices){
-		var pos1 = Vec2.subtract(vertex.pos, world.cam)
+		// get position relative to canvas
+		var pos1 = vertex.pos.subtract(world.cam, new Vec2)
 		ctx.save()
 		
 		ctx.fillStyle = vertex.color
@@ -262,32 +254,26 @@ var drawLoop = function(){
 		
 		ctx.beginPath()
 		
-		ctx.arc(pos1[0], pos1[1], world.RAD, 0, 2 * Math.PI, true)
+		ctx.arc(pos1.x, pos1.y, world.RAD, 0, 2 * Math.PI, true)
 		
 		ctx.closePath()
 		ctx.fill()
 		ctx.stroke()
 		
 		if(vertex.icon){
-			pos1 = [
-				vertex.pos[0] - Math.SQRT1_2 * world.RAD,
-				vertex.pos[1] + Math.SQRT1_2 * world.RAD
-			]
-			Vec2.add(pos1, world.cam, pos1)
-			var pos2 = [
-				vertex.pos[0] + Math.SQRT1_2 * world.RAD,
-				vertex.pos[1] - Math.SQRT1_2 * world.RAD
-			]
-			Vec2.add(pos2, world.cam, pos2)
-			Vec2.subtract(pos2, pos1, pos2)
-			ctx.drawImage(vertex.icon, pos1[0], pos1[1], pos2[0], pos2[1])
+			var pos2 = pos1.clone()
+			var offset = new Vec2(1, 1).scale(-Math.SQRT1_2 * world.RAD)
+			pos1.add(offset)
+			offset.reverse()
+			pos2.add(offset)
+			ctx.drawImage(vertex.icon, pos1.x, pos1.y, pos2.x, pos2.y)
 		}
 		else if(vertex.symbol){
 			ctx.fillStyle = vertex.textColor
 			ctx.textAlign = "center"
 			ctx.textBaseline = "middle"
 			ctx.font = "16px sans-serif"
-			ctx.fillText(vertex.symbol, pos1[0], pos1[1])
+			ctx.fillText(vertex.symbol, pos1.x, pos1.y)
 		}
 		
 		ctx.restore()
@@ -296,40 +282,36 @@ var drawLoop = function(){
 	ctx.save()
 	
 	var vertexClass = Vertices.getById(currType).prototype
-	var pos1 = [
+	var pos1 = new Vec2(
 		world.RAD + 10,
 		innerHeight - world.RAD - 10
-	]
+	)
 	
 	ctx.fillStyle = vertexClass.color
 	ctx.strokeStyle = vertexClass.border
 	
 	ctx.beginPath()
 	
-	ctx.arc(pos1[0], pos1[1], world.RAD, 0, 2 * Math.PI, true)
+	ctx.arc(pos1.x, pos1.y, world.RAD, 0, 2 * Math.PI, true)
 	
 	ctx.closePath()
 	ctx.fill()
 	ctx.stroke()
 	
 	if(vertexClass.icon){
-		pos1 = [
-			pos1[0] - Math.SQRT1_2 * world.RAD,
-			pos1[1] + Math.SQRT1_2 * world.RAD
-		]
-		var pos2 = [
-			pos1[0] + Math.SQRT1_2 * world.RAD,
-			pos1[1] - Math.SQRT1_2 * world.RAD
-		]
-		Vec2.subtract(pos2, pos1, pos2)
-		ctx.drawImage(vertexClass.icon, pos1[0], pos1[1], pos2[0], pos2[1])
+		var pos2 = pos1.clone()
+		var offset = new Vec2(1, 1).scale(-Math.SQRT1_2 * world.RAD)
+		pos1.add(offset)
+		offset.reverse()
+		pos2.add(offset)
+		ctx.drawImage(vertex.icon, pos1.x, pos1.y, pos2.x, pos2.y)
 	}
 	else if(vertexClass.symbol){
 		ctx.fillStyle = vertexClass.textColor
 		ctx.textAlign = "center"
 		ctx.textBaseline = "middle"
 		ctx.font = "16px sans-serif"
-		ctx.fillText(vertexClass.symbol, pos1[0], pos1[1])
+		ctx.fillText(vertexClass.symbol, pos1.x, pos1.y)
 	}
 	
 	ctx.restore()
