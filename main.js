@@ -84,19 +84,19 @@ var dragAction = function(evt){
 	canvasPosition = [evt.pageX, evt.pageY]
 	worldPosition = Vec2.add(canvasPosition, world.cam)
 	
-	if(selected){
-		// Helps to differentiate between mouse buttons in different browsers.
-		// The reason it works is because the mouseup event for Firefox has the
-		// releasing button information in the "buttons" attribute, but Chrome
-		// has it on the "button" attribute.
-		if(uaHas("Firefox") && evt.buttons == 1 || uaHas("Chrome") && evt.button == 0){
+	// Helps to differentiate between mouse buttons in different browsers.
+	// The reason it works is because the mouseup event for Firefox has the
+	// releasing button information in the "buttons" attribute, but Chrome
+	// has it on the "button" attribute.
+	if(uaHas("Firefox") && evt.buttons == 1 || uaHas("Chrome") && evt.button == 0){
+		if(selected){
 			Vec2.copy(worldPosition, selected.pos)
 		}
-	}
-	else {
-		var canvasMovement = Vec2.subtract(canvasPosition, prevCanvasPosition)
-		Vec2.reverse(canvasMovement, canvasMovement)
-		Vec2.add(world.cam, canvasMovement, world.cam)
+		else {
+			var canvasMovement = Vec2.subtract(canvasPosition, prevCanvasPosition)
+			Vec2.reverse(canvasMovement, canvasMovement)
+			Vec2.add(world.cam, canvasMovement, world.cam)
+		}
 	}
 }
 
@@ -155,8 +155,8 @@ canvas.addEventListener("mouseup", function(evt){
 				selected.action()
 			}
 		}
-		// make new vertex if release in blank area
-		else if(!selected && !next){
+		// make new vertex if released in blank area and mouse wasn't dragged
+		else if(!selected && !next && !hasDragged){
 			var vertex = new (Vertices.getById(currType))(world.graph)
 			vertex.pos = Vec2.copy(worldPosition)
 			world.spawn(vertex)
