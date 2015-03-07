@@ -5,11 +5,10 @@
 var Vertices = new RegistryWithDefault("blank")
 Vertices.add(0, "blank", Vertex)
 Vertices.add(1, "rotator", VertexRotator)
-Vertices.add(2, "source", VertexEnergy)
-Vertices.add(3, "neuron", VertexNeuron)
-Vertices.add(4, "feedback", VertexFeedback)
-Vertices.add(5, "switch", VertexSwitch)
-Vertices.add(6, "nor", VertexNOR)
+Vertices.add(2, "neuron", VertexNeuron)
+Vertices.add(3, "feedback", VertexFeedback)
+Vertices.add(4, "switch", VertexSwitch)
+Vertices.add(5, "nor", VertexNOR)
 
 var canvas = document.getElementById("c")
 var ctx = canvas.getContext("2d")
@@ -59,7 +58,6 @@ if(localStorage["abstractWorldData"])
 var selected = null
 var currType = 0
 var doDrawing = true
-// var input = document.forms.options.elements
 // var vectorPool = new ObjectPool(Vec2.create64, 10)
 
 var canvasPosition = null
@@ -178,10 +176,8 @@ addEventListener("keydown", function(evt){
 	if(evt.keyCode == 83)
 		save()
 	// 'r' is pressed
-	if(evt.keyCode == 82){
+	if(evt.keyCode == 82)
 		localStorage["abstractWorldData"] = ""
-		console.log("World *might* have been reset, not sure. Try hitting the button a few more times, just in case.")
-	}
 })
 
 addEventListener("keyup", function(evt){
@@ -204,8 +200,6 @@ var updateLoop = function(){
 }
 
 var drawLoop = function(){
-	if(!doDrawing)
-		return
 	ctx.clearRect(0, 0, canvas.width, canvas.height)
 	ctx.lineWidth = 3
 	ctx.lineCap = "square"
