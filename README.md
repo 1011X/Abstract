@@ -3,7 +3,7 @@ Abstract
 
 Version: 2.1.1
 
-Abstract spawned from the idea of promo
+Abstract is a game that [insert game description here].
 
 
 Features
