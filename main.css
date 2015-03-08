@@ -7,54 +7,6 @@ body {
 	overflow: hidden;
 }
 
-#options {
-	position: absolute;
-	top: -260px;
-	left: 0;
-	/* float: left; */
-	padding: 5px;
-	transition: top 0.4s ease;
-	
-	background: rgba( 16, 16, 16, 0.8 );
-	color: white;
-	font-family: monospace;
-	max-width: 300px;
-}
-
-#options:hover {
-	top: 0;
-}
-
-form[name=options] > div {
-	padding: 5px;
-}
-
-h1 {
-	margin: 4px;
-}
-
-h2 {
-	font-size: 1.25em;
-	margin: 3px;
-}
-
-input[type=radio] {
-	margin: 4px;
-	vertical-align: middle;
-}
-
-input[type=text]{
-	max-width: 100px;
-}
-
-.option {
-	padding: 5px;
-}
-
-label {
-	font-weight: bold;
-}
-
 canvas {
 	cursor: default;
 }
