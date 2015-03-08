@@ -1,27 +1,19 @@
 Abstract
 ========
 
-To Do
------
+Version: 2.1.1
 
-Work on handling UI better.
-
-
-Bugs
-----
-
-None currently known.
+Abstract spawned from the idea of promo
 
 
 Features
 --------
 
-Energy vertex can power other vertices.
-
 Rotator vertex can rotate other vertices connected by an arc if powered, and the speed of rotation depends on how much power it receives.
 
-Switch vertices can be toggled by right-clicking. NOR vertices will turn on if they don't receive any power. Feedback vertices will change their shade of gray based on the power they receive between 0 and 1 (higher or lower values will currently be clamped).
-
+Switch vertices can be toggled by right-clicking.
+NOR vertices will turn on if they don't receive any power.
+Feedback vertices will change their shade of gray based on the power they receive between 0 and 1 (higher or lower values are currently clamped).
 
 
 Planned Features
@@ -31,10 +23,10 @@ Planned Features
 	* Light vertex
 	* Extend vertex
 	* Timer vertex
-
-
-Ideas
------
-
-* Checking nearby collisions using hex-grids for partitions
-* Maybe take advantage of the hex-grids and make something that uses them and makes them **visible**.
+	* Some kind of movement vertex
+		* Can move self or others or both?
+* Collision detection (?)
+* Effective drawing techniques
+	* Sort vertices to draw by type
+	* Calculate "dirty" areas to clear
+* Add something that appeals to those without computer science majors
