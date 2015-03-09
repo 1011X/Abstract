@@ -12,9 +12,10 @@ VertexNeuron.prototype.color = "darkgray"
 VertexNeuron.prototype.type = "neuron"
 
 VertexNeuron.prototype.update = function(options){
+	var energy = MathHelper.sum(this.inputs)
 	for(var neighbor of this.neighbors)
-		if(this.energy >= this.threshold)
+		if(energy >= this.threshold)
 			options.send(neighbor, 1)
 	
-	this.energy = 0
+	this.inputs = []
 }

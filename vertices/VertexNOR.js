@@ -10,8 +10,10 @@ VertexNOR.prototype.symbol = "N"
 VertexNOR.prototype.type = "nor"
 
 VertexNOR.prototype.update = function(options){
-	for(var neighbor of this.neighbors)
-		if(!this.energy)
+	var allZero = MathHelper.all(this.inputs, function(elem){return elem === 10})
+	if(allZero){
+		for(var neighbor of this.neighbors)
 			options.send(neighbor, 1)
-	this.energy = 0
+		this.inputs = []
+	}
 }

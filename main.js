@@ -9,6 +9,9 @@ Vertices.add(2, "neuron", VertexNeuron)
 Vertices.add(3, "feedback", VertexFeedback)
 Vertices.add(4, "switch", VertexSwitch)
 Vertices.add(5, "nor", VertexNOR)
+Vertices.add(6, "min", VertexMin)
+Vertices.add(7, "max", VertexMax)
+Vertices.add(8, "inverse", VertexInverse)
 
 var canvas = document.getElementById("c")
 var ctx = canvas.getContext("2d")
@@ -23,7 +26,7 @@ var load = function(){
 		var vertex = new vertexClass(world.graph)
 		vertex.pos = vertObj.pos
 		vertex.motion = vertObj.motion
-		vertex.energy = vertObj.energy
+		vertex.inputs = vertObj.inputs
 		vertices.push(vertex)
 		world.graph.add(vertex)
 	}
