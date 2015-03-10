@@ -10,6 +10,8 @@ VertexFeedback.prototype.type = "feedback"
 VertexFeedback.prototype.format = function(value){
 	if(value === Infinity)
 		return "∞"
+	else if(value === -Infinity)
+		return "-∞"
 	else
 		return value.toPrecision(2)
 }

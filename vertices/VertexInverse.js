@@ -7,12 +7,12 @@ function VertexInverse(graph){
 VertexInverse.prototype = Object.create(Vertex.prototype)
 VertexInverse.prototype.constructor = VertexInverse
 
-VertexInverse.prototype.symbol = "-"
+VertexInverse.prototype.symbol = "neg"
 VertexInverse.prototype.type = "inverse"
 
 VertexInverse.prototype.update = function(options){
-	var value = MathHelper.maxabs(this.inputs)
+	var max = Math.max.apply(null, this.inputs)
 	for(var neighbor of this.neighbors)
-		options.send(neighbor, value === Infinity ? Infinity : -value)
+		options.send(neighbor, -max)
 	this.inputs = []
 }
