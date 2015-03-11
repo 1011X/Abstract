@@ -11,7 +11,7 @@ VertexMin.prototype.symbol = "min"
 VertexMin.prototype.type = "min"
 
 VertexMin.prototype.update = function(options){
-	var closest = MathHelper.minabs(this.inputs)
+	var closest = Math.min.apply(null, this.inputs)
 	for(var neighbor of this.neighbors)
 		options.send(neighbor, closest)
 	this.inputs = []

@@ -11,7 +11,7 @@ VertexMax.prototype.symbol = "max"
 VertexMax.prototype.type = "max"
 
 VertexMax.prototype.update = function(options){
-	var furthest = MathHelper.maxabs(this.inputs)
+	var furthest = Math.max.apply(null, this.inputs)
 	for(var neighbor of this.neighbors)
 		options.send(neighbor, furthest)
 	this.inputs = []
