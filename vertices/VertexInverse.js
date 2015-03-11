@@ -7,6 +7,7 @@ function VertexInverse(graph){
 VertexInverse.prototype = Object.create(Vertex.prototype)
 VertexInverse.prototype.constructor = VertexInverse
 
+VertexInverse.prototype.color = "skyblue"
 VertexInverse.prototype.symbol = "neg"
 VertexInverse.prototype.type = "inverse"
 
