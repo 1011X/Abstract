@@ -1,7 +1,7 @@
 Abstract
 ========
 
-Version: 2.2
+Version: 0.2.2b
 
 Abstract is a game that [insert game description here].
 
