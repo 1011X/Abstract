@@ -29,5 +29,5 @@ VertexSwitch.prototype.action = function(){
 
 VertexSwitch.prototype.update = function(options){
 	for(var neighbor of this.neighbors)
-		options.send(neighbor, +this.on)
+		options.send(neighbor, Infinity * (this.on ? 1 : -1))
 }

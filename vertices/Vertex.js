@@ -3,7 +3,7 @@
 var Vertex = function(graph){
 	this.pos = [0, 0]
 	this.motion = [0, 0]
-	this.energy = 0
+	this.inputs = []
 	
 	this.graph = graph
 }
@@ -33,7 +33,7 @@ Vertex.prototype = {
 			type: this.type,
 			pos: this.pos,
 			motion: this.motion,
-			energy: this.energy,
+			inputs: this.inputs,
 		}
 	},
 }

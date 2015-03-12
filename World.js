@@ -61,7 +61,7 @@ World.prototype = {
 				selected: selected,
 				send: function(vert, value){
 					if(self.graph.adjacent(vertex, vert)){
-						vert.energy += value
+						vert.inputs.push(value)
 						self.markedForUpdates.add(vert)
 					}
 				}

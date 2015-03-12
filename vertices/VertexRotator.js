@@ -15,12 +15,13 @@ VertexRotator.prototype.update = function(options){
 		if(neighbor === options.selected)
 			continue
 		
+		var energy = MathHelper.sum(this.inputs)
 		// update() is called approx. 60 times per second, so
 		// 2*pi / 60 = pi / 30
 		var displace = Vec2.subtract(neighbor.pos, this.pos)
-		Vec2.rotate(displace, Math.PI/30 * this.energy, displace)
+		Vec2.rotate(displace, Math.PI/30 * energy, displace)
 		
 		Vec2.add(this.pos, displace, neighbor.pos)
 	}
-	this.energy = 0
+	this.inputs = []
 }
