@@ -11,6 +11,8 @@ Vertices.add(4, "switch", VertexSwitch)
 Vertices.add(5, "min", VertexMin)
 Vertices.add(6, "max", VertexMax)
 Vertices.add(7, "inverse", VertexInverse)
+Vertices.add(8, "one", VertexOne)
+Vertices.add(9, "add", VertexAdd)
 
 var canvas = document.getElementById("c")
 var ctx = canvas.getContext("2d")
@@ -224,7 +226,7 @@ var drawLoop = function(){
 		
 		// used to calculate positions of tips of both arrowheads
 		var angle = 5 * Math.PI / 6
-		var arrowHead = Vec2.resize(Vec2.subtract(head, tail), 3 * world.RAD / 4)
+		var arrowHead = Vec2.resize(Vec2.subtract(head, tail), 2 * world.RAD / 3)
 		var tipl = Vec2.add(head, Vec2.rotate(arrowHead, angle))
 		var tipr = Vec2.add(head, Vec2.rotate(arrowHead, -angle))
 		
