@@ -197,14 +197,52 @@ addEventListener("resize", function(evt){
 dispatchEvent(new Event("resize"))
 
 
+function calculateComponents(graph){
+	var components = []
+	var unvisited = new Set
+	var visited = new Set
+	
+	for(var vertex of graph.vertices){
+		if(visited.has(vertex))
+			continue
+		
+		var component = new DirectedGraph
+		component.add(vertex)
+		
+		// add neighbors to set of vertices to visit
+		// add neighbors and arcs to component
+		for(var neighbor of graph.neighbors(vertex)){
+			if(visited.has(neighbor))
+				continue
+			unvisited.add(neighbor)
+			component.add(neighbor)
+			component.setArc(vertex, neighbor, graph.getArc(vertex, neighbor))
+		}
+		
+		visited.add(vertex)
+		
+		for(var v of unvisited){
+			for(var neighbor of graph.neighbors(v))
+				unvisited.add(neighbor)
+			
+			component.add(v)
+			visited.add(v)
+		}
+		
+		components.push(component)
+	}
+}
+
 var updateLoop = function(){
 	world.tick(selected)
 }
 
 var drawLoop = function(){
-	ctx.clearRect(0, 0, canvas.width, canvas.height)
 	ctx.lineWidth = 3
 	ctx.lineCap = "square"
+	
+	// clearing process
+	ctx.clearRect(0, 0, canvas.width, canvas.height)
 	
 	// arc drawing procedure
 	for(var arc of world.graph.arcs){
@@ -212,8 +250,8 @@ var drawLoop = function(){
 		var to = Vec2.copy(arc.to.pos)
 		
 		// To canvas coordinates
-		Vec2.subtract(from, world.cam, from)
-		Vec2.subtract(to, world.cam, to)
+		world.toCanvasCoords(from, from)
+		world.toCanvasCoords(to, to)
 		
 		// get offset from center of vertex to its edge
 		var offset = Vec2.resize(Vec2.subtract(to, from), world.RAD)
@@ -244,7 +282,7 @@ var drawLoop = function(){
 	// vertex drawing procedure
 	for(var vertex of world.vertices){
 		// get position relative to canvas
-		var pos1 = Vec2.subtract(vertex.pos, world.cam)
+		var pos1 = world.toCanvasCoords(vertex.pos)
 		ctx.save()
 		
 		ctx.fillStyle = vertex.color

@@ -45,6 +45,14 @@ World.prototype = {
 	disconnect: function(u, v){
 		this.graph.deleteArc(u, v)
 	},
+	
+	toCanvasCoords: function(wpos, out){
+		return Vec2.subtract(wpos, this.cam, out)
+	},
+	
+	toWorldCoords: function(cpos, out){
+		return Vec2.add(cpos, this.cam, out)
+	},
 	/*
 	moveCamTo: function(pos){
 		this.cam[0] = pos[0]
