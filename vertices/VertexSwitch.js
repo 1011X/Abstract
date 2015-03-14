@@ -1,3 +1,5 @@
+"use strict"
+
 function VertexSwitch(graph){
 	Vertex.call(this, graph)
 	this.on = false
@@ -6,10 +8,13 @@ function VertexSwitch(graph){
 VertexSwitch.prototype = Object.create(Vertex.prototype)
 VertexSwitch.prototype.constructor = VertexSwitch
 
-VertexSwitch.prototype.color = "black"
-VertexSwitch.prototype.textColor = "white"
 VertexSwitch.prototype.type = "switch"
-VertexSwitch.prototype.symbol = "S"
+
+VertexSwitch.prototype.style = new Style({
+	color: "black",
+	textColor: "white",
+	symbol: "S",
+})
 
 VertexSwitch.prototype.toggle = function(){
 	this.on = !this.on

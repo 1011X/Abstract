@@ -12,13 +12,7 @@ Vertex.prototype = {
 	
 	type: "blank",
 	
-	icon: null,
-	symbol: "",
-	color: "white",
-	textColor: "black",
-	border: "black",
-	// this.borderStart = 0
-	// this.borderEnd = 2*Math.PI
+	style: new Style,
 	
 	get neighbors(){
 		return this.graph.neighbors(this)

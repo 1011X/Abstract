@@ -1,19 +1,21 @@
 function VertexFeedback(graph){
 	Vertex.call(this, graph)
 	// not really necessary, but for completeness's sake
-	this.color = "gray"
-	this.textColor = "black"
+	this.style = new Style({
+		color: "gray",
+		symbol: "0",
+	})
 }
 
 VertexFeedback.prototype = Object.create(Vertex.prototype)
 VertexFeedback.prototype.constructor = VertexFeedback
 
-// for when drawing vertex in gui
-VertexFeedback.prototype.color = "gray"
-VertexFeedback.prototype.textColor = "black"
-
-VertexFeedback.prototype.symbol = "0"
 VertexFeedback.prototype.type = "feedback"
+// for when drawing vertex in gui
+VertexFeedback.prototype.style = new Style({
+	color: "gray",
+	symbol: "0",
+})
 
 VertexFeedback.prototype.format = function(value){
 	if(value === Infinity)
@@ -26,22 +28,22 @@ VertexFeedback.prototype.format = function(value){
 
 VertexFeedback.prototype.setColor = function(value){
 	if(value === Infinity){
-		this.color = "white"
-		this.textColor = "black"
+		this.style.color = "white"
+		this.style.textColor = "black"
 	}
 	else if(value === -Infinity){
-		this.color = "black"
-		this.textColor = "white"
+		this.style.color = "black"
+		this.style.textColor = "white"
 	}
 	else {
-		this.color = "gray"
-		this.textColor = "black"
+		this.style.color = "gray"
+		this.style.textColor = "black"
 	}
 }
 
 VertexFeedback.prototype.update = function(options){
 	var energy = MathHelper.sum(this.inputs)
 	this.setColor(energy)
-	this.symbol = this.format(energy)
+	this.style.symbol = this.format(energy)
 	this.inputs = []
 }

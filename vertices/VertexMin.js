@@ -7,8 +7,11 @@ function VertexMin(graph){
 VertexMin.prototype = Object.create(Vertex.prototype)
 VertexMin.prototype.constructor = VertexMin
 
-VertexMin.prototype.symbol = "min"
 VertexMin.prototype.type = "min"
+
+VertexMin.prototype.style = new Style({
+	symbol: "min",
+})
 
 VertexMin.prototype.update = function(options){
 	var closest = Math.min.apply(null, this.inputs)

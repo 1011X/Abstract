@@ -7,8 +7,11 @@ function VertexRotator(graph){
 VertexRotator.prototype = Object.create(Vertex.prototype)
 VertexRotator.prototype.constructor = VertexRotator
 
-VertexRotator.prototype.color = "lightgreen"
 VertexRotator.prototype.type = "rotator"
+
+VertexRotator.prototype.style = new Style({
+	color: "lightgreen",
+})
 
 VertexRotator.prototype.update = function(options){
 	for(var neighbor of this.neighbors){

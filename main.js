@@ -12,6 +12,9 @@ Vertices.add(5, "min", VertexMin)
 Vertices.add(6, "max", VertexMax)
 Vertices.add(7, "inverse", VertexInverse)
 
+var Renders = new RegistryWithDefault("blank")
+//Renders.add(0, "blank", )
+
 var canvas = document.getElementById("c")
 var ctx = canvas.getContext("2d")
 
@@ -197,6 +200,51 @@ addEventListener("resize", function(evt){
 dispatchEvent(new Event("resize"))
 
 
+function drawVertex(ctx, style, pos){
+	// NOTE: modifies pos parameter!
+	ctx.save()
+	
+	ctx.fillStyle = style.color
+	ctx.strokeStyle = style.borderColor
+	
+	ctx.beginPath()
+	
+	ctx.arc(pos[0], pos[1], world.RAD, 0, 2 * Math.PI, true)
+	
+	ctx.fill()
+	ctx.stroke()
+	
+	// if there's an icon...
+	if(style.icon){
+		// calculate offset for most bottom-right point on circle
+		var offset = [1, 1]
+		Vec2.scale(offset, Math.SQRT2 * world.RAD, offset)
+		// set pos1 to most top-left point on circle
+		Vec2.subtract(pos, offset, pos)
+		ctx.drawImage(style.icon, pos[0], pos[1], 2 * offset[0], 2 * offset[1])
+	}
+	else if(style.symbol){
+		ctx.fillStyle = style.textColor
+		ctx.textAlign = "center"
+		ctx.textBaseline = "middle"
+		ctx.font = "15px sans-serif"
+		ctx.fillText(style.symbol, pos[0], pos[1])
+	}
+	
+	ctx.closePath()
+	ctx.restore()
+}
+
+function Render(style){
+	var canvas = document.createElement("canvas")
+	canvas.width = canvas.height = 2 * (world.RAD + 2)
+	var context = canvas.getContext("2d")
+	
+	drawVertex(context, style, [canvas.width / 2, canvas.height / 2])
+	
+	return canvas
+}
+
 var updateLoop = function(){
 	world.tick(selected)
 }
@@ -245,40 +293,8 @@ var drawLoop = function(){
 	for(var vertex of world.vertices){
 		// get position relative to canvas
 		var pos1 = Vec2.subtract(vertex.pos, world.cam)
-		ctx.save()
-		
-		ctx.fillStyle = vertex.color
-		ctx.strokeStyle = vertex.border
-		
-		ctx.beginPath()
-		
-		ctx.arc(pos1[0], pos1[1], world.RAD, 0, 2 * Math.PI, true)
-		
-		ctx.closePath()
-		ctx.fill()
-		ctx.stroke()
-		
-		// if there's an icon...
-		if(vertex.icon){
-			// calculate offset for most bottom-right point on circle
-			var offset = [1, 1]
-			Vec2.scale(offset, Math.SQRT1_2 * world.RAD, offset)
-			// set pos1 to most top-left point on circle
-			Vec2.subtract(pos1, offset, pos1)
-			ctx.drawImage(vertex.icon, pos1[0], pos1[1], 2 * offset[0], 2 * offset[1])
-		}
-		else if(vertex.symbol){
-			ctx.fillStyle = vertex.textColor
-			ctx.textAlign = "center"
-			ctx.textBaseline = "middle"
-			ctx.font = "16px sans-serif"
-			ctx.fillText(vertex.symbol, pos1[0], pos1[1])
-		}
-		
-		ctx.restore()
+		drawVertex(ctx, vertex.style, pos1)
 	}
-	
-	ctx.save()
 	
 	var vertexClass = Vertices.getById(currType).prototype
 	var pos1 = [
@@ -286,34 +302,7 @@ var drawLoop = function(){
 		innerHeight - world.RAD - 10
 	]
 	
-	ctx.fillStyle = vertexClass.color
-	ctx.strokeStyle = vertexClass.border
-	
-	ctx.beginPath()
-	
-	ctx.arc(pos1[0], pos1[1], world.RAD, 0, 2 * Math.PI, true)
-	
-	ctx.closePath()
-	ctx.fill()
-	ctx.stroke()
-	
-	if(vertexClass.icon){
-			// calculate offset for most bottom-right point on circle
-			var offset = [1, 1]
-			Vec2.scale(offset, Math.SQRT1_2 * world.RAD, offset)
-			// set pos1 to most top-left point on circle
-			Vec2.subtract(pos1, offset, pos1)
-			ctx.drawImage(vertexClass.icon, pos1[0], pos1[1], 2 * offset[0], 2 * offset[1])
-	}
-	else if(vertexClass.symbol){
-		ctx.fillStyle = vertexClass.textColor
-		ctx.textAlign = "center"
-		ctx.textBaseline = "middle"
-		ctx.font = "16px sans-serif"
-		ctx.fillText(vertexClass.symbol, pos1[0], pos1[1])
-	}
-	
-	ctx.restore()
+	drawVertex(ctx, vertexClass.style, pos1)
 	
 	requestAnimationFrame(drawLoop)
 }

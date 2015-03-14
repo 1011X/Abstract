@@ -7,8 +7,11 @@ function VertexMax(graph){
 VertexMax.prototype = Object.create(Vertex.prototype)
 VertexMax.prototype.constructor = VertexMax
 
-VertexMax.prototype.symbol = "max"
 VertexMax.prototype.type = "max"
+
+VertexMax.prototype.style = new Style({
+	symbol: "max",
+})
 
 VertexMax.prototype.update = function(options){
 	var furthest = Math.max.apply(null, this.inputs)
