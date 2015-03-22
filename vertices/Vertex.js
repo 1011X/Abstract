@@ -6,6 +6,7 @@ var Vertex = function(graph){
 	this.inputs = []
 	
 	this.graph = graph
+	this.id = Vertex.id++
 }
 
 Vertex.prototype = {
@@ -37,3 +38,5 @@ Vertex.prototype = {
 		}
 	},
 }
+
+Vertex.id = 0

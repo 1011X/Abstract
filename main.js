@@ -198,53 +198,57 @@ addEventListener("resize", function(evt){
 })
 dispatchEvent(new Event("resize"))
 
-
-function calculateComponents(graph){
-	var components = []
-	var unvisited = new Set
-	var visited = new Set
+function calculateClearRects(){
+	var rects = []
 	
-	for(var vertex of graph.vertices){
-		if(visited.has(vertex))
-			continue
+	for(var component of world.graph.components){
+		var min = [Infinity, Infinity]
+		var max = [-Infinity, -Infinity]
 		
-		var component = new DirectedGraph
-		component.add(vertex)
-		
-		// add neighbors to set of vertices to visit
-		// add neighbors and arcs to component
-		for(var neighbor of graph.neighbors(vertex)){
-			if(visited.has(neighbor))
-				continue
-			unvisited.add(neighbor)
-			component.add(neighbor)
-			component.setArc(vertex, neighbor, graph.getArc(vertex, neighbor))
-		}
-		
-		visited.add(vertex)
-		
-		for(var v of unvisited){
-			for(var neighbor of graph.neighbors(v))
-				unvisited.add(neighbor)
+		for(var vertex of component.vertices){
+			var pos = world.toCanvasCoords(vertex.pos)
 			
-			component.add(v)
-			visited.add(v)
+			if(pos[0] < min[0])
+				min[0] = pos[0]
+			if(pos[0] > max[0])
+				max[0] = pos[0]
+			
+			if(pos[1] < min[1])
+				min[1] = pos[1]
+			if(pos[1] > max[1])
+				max[1] = pos[1]
 		}
 		
-		components.push(component)
+		min[0] -= world.RAD + 2
+		min[1] -= world.RAD + 2
+		max[0] += world.RAD + 2
+		max[1] += world.RAD + 2
+		
+		var dim = Vec2.subtract(max, min)
+		
+		rects.push([min, dim])
 	}
+	
+	return rects
 }
+
+var lastFrameRects = calculateClearRects()
+
 
 var updateLoop = function(){
 	world.tick(selected)
 }
 
+
+ctx.lineWidth = 3
+ctx.lineCap = "square"
+
 var drawLoop = function(){
-	ctx.lineWidth = 3
-	ctx.lineCap = "square"
-	
 	// clearing process
-	ctx.clearRect(0, 0, canvas.width, canvas.height)
+	for(var rect of lastFrameRects)
+		ctx.clearRect(rect[0][0], rect[0][1], rect[1][0], rect[1][1])
+	
+	ctx.clearRect(0, innerHeight - 10 - 2 * (world.RAD + 2), 10 + 2 * (world.RAD + 2), 10 + 2 * (world.RAD + 2))
 	
 	// arc drawing procedure
 	for(var arc of world.graph.arcs){
@@ -354,6 +358,8 @@ var drawLoop = function(){
 	}
 	
 	ctx.restore()
+	
+	lastFrameRects = calculateClearRects()
 	
 	requestAnimationFrame(drawLoop)
 }
