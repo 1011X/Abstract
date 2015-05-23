@@ -1,8 +1,8 @@
-//(function main(){
+(function main(){
 "use strict"
 
 // register vertex types
-var Vertices = new RegistryWithDefault("blank")
+const Vertices = new RegistryWithDefault("blank")
 Vertices.add(0, "blank", Vertex)
 Vertices.add(1, "rotator", VertexRotator)
 Vertices.add(2, "neuron", VertexNeuron)
@@ -11,14 +11,16 @@ Vertices.add(4, "switch", VertexSwitch)
 Vertices.add(5, "min", VertexMin)
 Vertices.add(6, "max", VertexMax)
 Vertices.add(7, "inverse", VertexInverse)
+Vertices.add(8, "one", VertexOne)
+Vertices.add(9, "add", VertexAdd)
 
 var Renders = new RegistryWithDefault("blank")
 //Renders.add(0, "blank", )
 
-var canvas = document.getElementById("c")
-var ctx = canvas.getContext("2d")
+const canvas = document.getElementById("c")
+const ctx = canvas.getContext("2d")
 
-var load = function(){
+function load(){
 	var data = JSON.parse(localStorage["abstractWorldData"])
 	world.cam = data.cam
 	
@@ -51,7 +53,7 @@ var load = function(){
 	}
 }
 
-var save = function(){
+function save(){
 	localStorage["abstractWorldData"] = JSON.stringify(world, null, "\t")
 }
 
@@ -72,13 +74,13 @@ var worldPosition = null
 var prevWorldPosition = null
 var hasDragged = false
 
-var uaHas = function(subs){
+function uaHas(subs){
 	return navigator.userAgent.indexOf(subs) !== -1
 }
 
 // If mouse is down and dragged, record position in worldPosition.
 // Also handles moving of vertex if one is selected and dragged.
-var dragAction = function(evt){
+function dragAction(evt){
 	hasDragged = true
 	
 	prevCanvasPosition = canvasPosition
@@ -103,27 +105,15 @@ var dragAction = function(evt){
 	}
 }
 
-var _mouseWheelHandler = function(evt){
-	var ticks
-	if(evt.type == "DOMMouseScroll")
-		ticks = -evt.detail / 3
-	else
-		ticks = evt.wheelDelta / 120
-	
-	mouseWheelHandler(ticks)
-}
 
-var mouseWheelHandler = function(ticks){
-	currType += ticks
+// register event handlers
+canvas.addEventListener("wheel", function(evt){
+	currType += evt.deltaY
 	if(currType < 0)
 		currType += Vertices.size
 	else if(currType >= Vertices.size)
 		currType -= Vertices.size
-}
-
-// register event handlers
-canvas.addEventListener("DOMMouseScroll", _mouseWheelHandler)
-canvas.addEventListener("mousewheel",     _mouseWheelHandler)
+})
 
 canvas.addEventListener("mousedown", function(evt){
 	canvas.addEventListener("mousemove", dragAction)
@@ -176,7 +166,7 @@ canvas.addEventListener("mouseup", function(evt){
 	worldPosition = null
 })
 
-addEventListener("keydown", function(evt){
+window.addEventListener("keydown", function(evt){
 	// 's' is pressed
 	if(evt.keyCode == 83)
 		save()
@@ -185,7 +175,7 @@ addEventListener("keydown", function(evt){
 		localStorage["abstractWorldData"] = ""
 })
 
-addEventListener("keyup", function(evt){
+window.addEventListener("keyup", function(evt){
 	
 })
 
@@ -193,13 +183,14 @@ canvas.addEventListener("contextmenu", function(evt){
 	evt.preventDefault()
 })
 
-addEventListener("resize", function(evt){
+window.addEventListener("resize", function(evt){
 	canvas.width = innerWidth
 	canvas.height = innerHeight
 })
 dispatchEvent(new Event("resize"))
 
 
+<<<<<<< HEAD
 function drawVertex(ctx, style, pos){
 	// NOTE: modifies pos parameter!
 	ctx.save()
@@ -246,10 +237,13 @@ function Render(style){
 }
 
 var updateLoop = function(){
+=======
+function updateLoop(){
+>>>>>>> a615b528ac273a8cee681e37e9df97a1740815a3
 	world.tick(selected)
 }
 
-var drawLoop = function(){
+function drawLoop(){
 	ctx.clearRect(0, 0, canvas.width, canvas.height)
 	ctx.lineWidth = 3
 	ctx.lineCap = "square"
@@ -272,7 +266,7 @@ var drawLoop = function(){
 		
 		// used to calculate positions of tips of both arrowheads
 		var angle = 5 * Math.PI / 6
-		var arrowHead = Vec2.resize(Vec2.subtract(head, tail), 3 * world.RAD / 4)
+		var arrowHead = Vec2.resize(Vec2.subtract(head, tail), 2 * world.RAD / 3)
 		var tipl = Vec2.add(head, Vec2.rotate(arrowHead, angle))
 		var tipr = Vec2.add(head, Vec2.rotate(arrowHead, -angle))
 		
@@ -310,4 +304,4 @@ var drawLoop = function(){
 setInterval(updateLoop, 50/3)
 requestAnimationFrame(drawLoop)
 
-//})()
+})()

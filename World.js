@@ -24,7 +24,7 @@ World.prototype = {
 		for(var vertex of vertices){
 			var d = [0, 0]
 			Vec2.subtract(vertex.pos, pos, d)
-			if(Vec2.length(d) <= world.RAD)
+			if(Vec2.length(d) <= this.RAD)
 				return vertex
 		}
 		return null

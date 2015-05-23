@@ -16,8 +16,8 @@ VertexNeuron.prototype.style = new Style({
 
 VertexNeuron.prototype.update = function(options){
 	var energy = MathHelper.sum(this.inputs)
-	for(var neighbor of this.neighbors)
-		if(energy >= this.threshold)
+	if(energy >= this.threshold)
+		for(var neighbor of this.neighbors)
 			options.send(neighbor, 1)
 	this.inputs = []
 }
