@@ -3,16 +3,15 @@
 
 // register vertex types
 const Vertices = new RegistryWithDefault("blank")
-Vertices.add(0, "blank", Vertex)
-Vertices.add(1, "rotator", VertexRotator)
-Vertices.add(2, "neuron", VertexNeuron)
+Vertices.add(0, "blank",    Vertex)
+Vertices.add(1, "rotator",  VertexRotator)
+Vertices.add(2, "neuron",   VertexNeuron)
 Vertices.add(3, "feedback", VertexFeedback)
-Vertices.add(4, "switch", VertexSwitch)
-Vertices.add(5, "min", VertexMin)
-Vertices.add(6, "max", VertexMax)
-Vertices.add(7, "inverse", VertexInverse)
-Vertices.add(8, "one", VertexOne)
-Vertices.add(9, "add", VertexAdd)
+Vertices.add(4, "switch",   VertexSwitch)
+Vertices.add(5, "min",      VertexMin)
+Vertices.add(6, "max",      VertexMax)
+Vertices.add(7, "inverse",  VertexInverse)
+Vertices.add(9, "add",      VertexAdd)
 
 var Renders = new RegistryWithDefault("blank")
 //Renders.add(0, "blank", )
@@ -108,6 +107,7 @@ function dragAction(evt){
 
 // register event handlers
 canvas.addEventListener("wheel", function(evt){
+	debugger
 	currType += evt.deltaY
 	if(currType < 0)
 		currType += Vertices.size
@@ -205,15 +205,16 @@ function drawVertex(ctx, style, pos){
 	ctx.stroke()
 	
 	// if there's an icon...
-	if(style.icon){
+	if(style.symbol == null || style.symbol == ""){}
+	else if(typeof style.symbol == "object"){
 		// calculate offset for most bottom-right point on circle
 		var offset = [1, 1]
 		Vec2.scale(offset, Math.SQRT2 * world.RAD, offset)
 		// set pos1 to most top-left point on circle
 		Vec2.subtract(pos, offset, pos)
-		ctx.drawImage(style.icon, pos[0], pos[1], 2 * offset[0], 2 * offset[1])
+		ctx.drawImage(style.symbol, pos[0], pos[1], 2 * offset[0], 2 * offset[1])
 	}
-	else if(style.symbol){
+	else if(typeof style.symbol == "string"){
 		ctx.fillStyle = style.textColor
 		ctx.textAlign = "center"
 		ctx.textBaseline = "middle"
@@ -225,21 +226,12 @@ function drawVertex(ctx, style, pos){
 	ctx.restore()
 }
 
-function Render(style){
-	var canvas = document.createElement("canvas")
-	canvas.width = canvas.height = 2 * (world.RAD + 2)
-	var context = canvas.getContext("2d")
-	
-	drawVertex(context, style, [canvas.width / 2, canvas.height / 2])
-	
-	return canvas
-}
-
 function updateLoop(){
 	world.tick(selected)
 }
 
 function drawLoop(){
+	
 	ctx.clearRect(0, 0, canvas.width, canvas.height)
 	ctx.lineWidth = 3
 	ctx.lineCap = "square"

@@ -3,43 +3,63 @@
 function Style(options){
 	this.updated = false
 	
+	options = options || {}
+	
 	this._color = options.color || "white"
 	this._borderColor = options.borderColor || "black"
-	this._icon = null
-	this._symbol = options.symbol || ""
+	this._symbol = null
 	this._textColor = options.textColor || "black"
 	
-	if(options.icon){
+	if(typeof options.symbol == "object"){
 		var img = new Image
-		img.src = options.icon
-		this._icon = img
+		img.src = options.symbol
+		this._symbol = img
 	}
+	else if(typeof options.symbol == "string")
+		this._symbol = options.symbol
 }
 
 Style.prototype = {
 	
 	get color(){
-		this.updated = true
 		return this._color
 	},
 	
-	get borderColor(){
+	set color(val){
 		this.updated = true
+		this._color = val
+	},
+	
+	get borderColor(){
 		return this._borderColor
 	},
 	
-	get icon(){
+	set borderColor(val){
 		this.updated = true
-		return this._icon
+		this._borderColor = val
 	},
 	
 	get symbol(){
-		this.updated = true
 		return this._symbol
 	},
 	
-	get textColor(){
+	set symbol(val){
 		this.updated = true
+		if(typeof val == "object"){
+			var img = new Image
+			img.src = val
+			this._symbol = img
+		}
+		else if(typeof val == "string")
+			this._symbol = val
+	},
+	
+	get textColor(){
 		return this._textColor
-	}
+	},
+	
+	set textColor(val){
+		this.updated = true
+		this._textColor = val
+	},
 }

@@ -1,17 +1,12 @@
 function VertexFeedback(graph){
 	Vertex.call(this, graph)
-	// not really necessary, but for completeness's sake
-	this.style = new Style({
-		color: "gray",
-		symbol: "0",
-	})
 }
 
 VertexFeedback.prototype = Object.create(Vertex.prototype)
 VertexFeedback.prototype.constructor = VertexFeedback
 
 VertexFeedback.prototype.type = "feedback"
-// for when drawing vertex in gui
+
 VertexFeedback.prototype.style = new Style({
 	color: "gray",
 	symbol: "0",
