@@ -190,7 +190,6 @@ window.addEventListener("resize", function(evt){
 dispatchEvent(new Event("resize"))
 
 
-<<<<<<< HEAD
 function drawVertex(ctx, style, pos){
 	// NOTE: modifies pos parameter!
 	ctx.save()
@@ -236,10 +235,7 @@ function Render(style){
 	return canvas
 }
 
-var updateLoop = function(){
-=======
 function updateLoop(){
->>>>>>> a615b528ac273a8cee681e37e9df97a1740815a3
 	world.tick(selected)
 }
 
