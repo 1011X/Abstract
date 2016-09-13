@@ -1,20 +1,20 @@
 class Gear {
 	constructor(s, outerRadius, teeth, speed) {
-		this.s = s;
-		this.outerRadius = outerRadius;
-		this.innerRadius = 4 * outerRadius / 5;
-		this.teeth = teeth;
-		this.theta = 0;
-		this.speed = Math.TAU / 60 * speed;
+		this.s = s
+		this.outerRadius = outerRadius
+		this.innerRadius = 4 * outerRadius / 5
+		this.teeth = teeth
+		this.theta = 0
+		this.speed = Math.TAU / 60 * speed
 		if(this.speed >= Math.TAU)
-			this.speed -= Math.round(this.speed / Math.TAU) * Math.TAU;
+			this.speed -= Math.round(this.speed / Math.TAU) * Math.TAU
 
-		this.connections = [];
+		this.connections = []
 	}
 
 	draw(c) {
-		c.fillStyle = "darkgray";
-		c.strokeStyle = "black";
+		c.fillStyle = "darkgray"
+		c.strokeStyle = "black"
 		/*
 		function draw(teeth, depth, radius, width, line){
 			var x = canvas.width / 2;
@@ -42,25 +42,25 @@ class Gear {
 			c.stroke();
 		}
 		*/
-		let sectionArc = Math.TAU / this.teeth;
-		c.beginPath();
+		let sectionArc = Math.TAU / this.teeth
+		c.beginPath()
 		
 		for(let i = 0; i < this.teeth; ++i) {
 			// switches back and forth between drawing the furthest radius (what makes the "teeth"), and the
 			// innermost radius (the gaps between the teeth).
-			c.arc(this.s.x, this.s.y, this.outerRadius, sectionArc * i + this.theta, sectionArc * (i + 0.5) + this.theta);
-			c.arc(this.s.x, this.s.y, this.innerRadius, sectionArc * (i + 0.5) + this.theta, sectionArc * (i + 1) + this.theta);
+			c.arc(...this.s, this.outerRadius, sectionArc * i + this.theta, sectionArc * (i + 0.5) + this.theta)
+			c.arc(...this.s, this.innerRadius, sectionArc * (i + 0.5) + this.theta, sectionArc * (i + 1) + this.theta)
 		}
 		
-		c.closePath();
-		c.fill();
-		c.stroke();
+		c.closePath()
+		c.fill()
+		c.stroke()
 	}
 
 	update(field) {
-		this.theta += this.speed;
+		this.theta += this.speed
 		
 		if(this.theta >= Math.TAU)
-			this.theta -= Math.floor(this.theta / Math.TAU) * Math.TAU;
+			this.theta -= Math.floor(this.theta / Math.TAU) * Math.TAU
 	}
 }

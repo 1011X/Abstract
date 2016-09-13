@@ -1,7 +1,5 @@
 "use strict"
 
-(function main(){
-
 // register vertex types
 const Vertices = new RegistryWithDefault("blank")
 Vertices.add(0, "blank", Vertex)
@@ -21,7 +19,7 @@ function load(){
 	world.cam = data.cam
 	
 	var vertices = []
-	for(var vertObj of data.vertices){
+	for(let vertObj of data.vertices) {
 		var vertexClass = Vertices.get(vertObj.type)
 		var vertex = new vertexClass(world.graph)
 		vertex.pos = vertObj.pos
@@ -32,13 +30,13 @@ function load(){
 	}
 	
 	var markedForUpdates = []
-	for(var vertObj of data.markedForUpdates)
+	for(let vertObj of data.markedForUpdates)
 		markedForUpdates.push(vertices[vertObj])
 	
 	world.markedForUpdates = new Set(markedForUpdates)
 	
 	var arcs = []
-	for(var arcObj of data.arcs){
+	for(let arcObj of data.arcs){
 		var from = vertices[arcObj.from]
 		var to = vertices[arcObj.to]
 		var arc = new Arc(from, to)
@@ -55,8 +53,9 @@ function save(){
 
 var world = new World
 // Load world data, if there is any
-if(localStorage["abstractWorldData"])
+if(localStorage["abstractWorldData"]) {
 	load()
+}
 
 var selected = null
 var currType = 0
@@ -70,20 +69,18 @@ var worldPosition = null
 var prevWorldPosition = null
 var hasDragged = false
 
-function uaHas(subs){
-	return navigator.userAgent.indexOf(subs) !== -1
-}
+let uaHas = subs => navigator.userAgent.indexOf(subs) !== -1
 
 // If mouse is down and dragged, record position in worldPosition.
 // Also handles moving of vertex if one is selected and dragged.
-function dragAction(evt){
+function dragAction(evt) {
 	hasDragged = true
 	
 	prevCanvasPosition = canvasPosition
 	prevWorldPosition = worldPosition
 	
-	canvasPosition = [evt.pageX, evt.pageY]
-	worldPosition = Vec2.add(canvasPosition, world.cam)
+	canvasPosition = new Option(new Vec2(evt.pageX, evt.pageY))
+	worldPosition = new Option(canvasPosition.clone().add(world.cam))
 	
 	// Helps to differentiate between mouse buttons in different browsers.
 	// The reason it works is because the mouseup event for Firefox has the
@@ -91,13 +88,14 @@ function dragAction(evt){
 	// has it on the "button" attribute.
 	if(uaHas("Firefox") && evt.buttons == 1 || uaHas("Chrome") && evt.button == 0) {
 		if(selected) {
-			Vec2.copy(worldPosition, selected.pos)
+			worldPosition[0] = selected.pos[0]
+			worldPosition[1] = selected.pos[1]
 		}
 		else {
-			let canvasMovement = Vec2.create32()
-			Vec2.subtract(canvasPosition, prevCanvasPosition, canvasMovement)
-			Vec2.reverse(canvasMovement, canvasMovement)
-			Vec2.add(world.cam, canvasMovement, world.cam)
+			let canvasMovement = canvasPosition.clone()
+				.subtract(prevCanvasPosition)
+				.reverse()
+			world.cam.add(canvasMovement)
 		}
 	}
 }
@@ -115,8 +113,8 @@ canvas.addEventListener("wheel", evt => {
 canvas.addEventListener("mousedown", evt => {
 	canvas.addEventListener("mousemove", dragAction)
 	
-	canvasPosition = [evt.pageX, evt.pageY]
-	worldPosition = Vec2.add(canvasPosition, world.cam)
+	canvasPosition = new Vec2(evt.pageX, evt.pageY)
+	worldPosition = canvasPosition.clone().add(world.cam)
 	
 	selected = world.vertexAt(worldPosition)
 })
@@ -197,48 +195,43 @@ function drawLoop(){
 	ctx.lineCap = "square"
 	
 	// arc drawing procedure
-	for(var arc of world.graph.arcs){
-		let from = Vec2.create32(...arc.from.pos)
-		let to = Vec2.create32(...arc.to.pos)
+	for(let arc of world.graph.arcs){
+		let from = new Vec2(...arc.from.pos)
+		let to = new Vec2(...arc.to.pos)
 		
 		// To canvas coordinates
-		Vec2.subtract(from, world.cam, from)
-		Vec2.subtract(to, world.cam, to)
+		from.subtract(world.cam)
+		to.subtract(world.cam)
 		
 		// get offset from center of vertex to its edge
-		let offset = Vec2.create32()
-		Vec2.subtract(to, from, offset)
-		Vec2.resize(offset, world.RAD, offset)
+		let offset = new Vec2(...to)
+			.subtract(from)
+			.resize(world.RAD)
 		
 		// adjust line start and end positions
-		let tail = Vec2.create32()
-		Vec2.add(from, offset, tail)
-		
-		let head = Vec2.create32()
-		Vec2.subtract(to, offset, head)
+		let tail = new Vec2(...from).add(offset)
+		let head = new Vec2(...to).add(offset)
 		
 		// used to calculate positions of tips of both arrowheads
-		const angle = Math.TAU * 5 / 12
-		
-		let arrowHead = Vec2.create32()
-		Vec2.subtract(head, tail, arrowHead)
-		Vec2.resize(arrowHead, 2 * world.RAD / 3, arrowHead)
-		
-		let tipl = Vec2.create32()
-		Vec2.rotate(arrowHead, angle, tipl)
-		Vec2.add(head, tipl, tipl)
-		
-		// TODO: finish converting below
-		var tipr = Vec2.add(head, Vec2.rotate(arrowHead, -angle))
+		const angle = 5 * Math.TAU / 12
+		let arrowHead = new Vec2(...head)
+			.subtract(tail)
+			.resize(2 * world.RAD / 3)
+		let tipl = new Vec2(...arrowHead)
+			.rotate(angle)
+			.add(head)
+		let tipr = new Vec2(...arrowHead)
+			.rotate(-angle)
+			.add(head)
 		
 		ctx.beginPath()
 		
-		ctx.moveTo(tail[0], tail[1])
-		ctx.lineTo(head[0], head[1])
-		ctx.lineTo(tipl[0], tipl[1])
-		ctx.moveTo(head[0], head[1])
-		ctx.lineTo(tipr[0], tipr[1])
-		ctx.moveTo(head[0], head[1])
+		ctx.moveTo(...tail)
+		ctx.lineTo(...head)
+		ctx.lineTo(...tipl)
+		ctx.moveTo(...head)
+		ctx.lineTo(...tipr)
+		ctx.moveTo(...head)
 		
 		ctx.closePath()
 		ctx.stroke()
@@ -247,7 +240,7 @@ function drawLoop(){
 	// vertex drawing procedure
 	for(var vertex of world.vertices){
 		// get position relative to canvas
-		var pos1 = Vec2.subtract(vertex.pos, world.cam)
+		var pos1 = new Vec2(...vertex.pos).subtract(world.cam)
 		ctx.save()
 		
 		ctx.fillStyle = vertex.color
@@ -255,27 +248,27 @@ function drawLoop(){
 		
 		ctx.beginPath()
 		
-		ctx.arc(pos1[0], pos1[1], world.RAD, 0, Math.TAU, true)
+		ctx.arc(...pos1, world.RAD, 0, Math.TAU, true)
 		
 		ctx.closePath()
 		ctx.fill()
 		ctx.stroke()
 		
 		// if there's an icon...
-		if(vertex.icon){
-			// calculate offset for most bottom-right point on circle
-			var offset = [1, 1]
-			Vec2.scale(offset, Math.SQRT1_2 * world.RAD, offset)
-			// set pos1 to most top-left point on circle
-			Vec2.subtract(pos1, offset, pos1)
-			ctx.drawImage(vertex.icon, pos1[0], pos1[1], 2 * offset[0], 2 * offset[1])
+		if(vertex.icon) {
+			// calculate width and height for icon
+			let offset = new Vec2(1, 1)
+				.scale(2 * Math.SQRT1_2 * world.RAD)
+				// set pos1 to most top-left point on circle
+			pos1.subtract(offset)
+			ctx.drawImage(vertex.icon, ...pos1, ...offset)
 		}
-		else if(vertex.symbol){
+		else if(vertex.symbol) {
 			ctx.fillStyle = vertex.textColor
 			ctx.textAlign = "center"
 			ctx.textBaseline = "middle"
 			ctx.font = "16px sans-serif"
-			ctx.fillText(vertex.symbol, pos1[0], pos1[1])
+			ctx.fillText(vertex.symbol, ...pos1)
 		}
 		
 		ctx.restore()
@@ -283,37 +276,37 @@ function drawLoop(){
 	
 	ctx.save()
 	
-	var vertexClass = Vertices.getById(currType).prototype
-	var pos1 = [
+	let vertexClass = Vertices.getById(currType).prototype
+	let pos1 = new Vec2(
 		world.RAD + 10,
 		innerHeight - world.RAD - 10
-	]
+	)
 	
 	ctx.fillStyle = vertexClass.color
 	ctx.strokeStyle = vertexClass.border
 	
 	ctx.beginPath()
 	
-	ctx.arc(pos1[0], pos1[1], world.RAD, 0, 2 * Math.PI, true)
+	ctx.arc(...pos1, world.RAD, 0, Math.TAU, true)
 	
 	ctx.closePath()
 	ctx.fill()
 	ctx.stroke()
 	
 	if(vertexClass.icon) {
-		// calculate offset for most bottom-right point on circle
-		var offset = [1, 1]
-		Vec2.scale(offset, Math.SQRT1_2 * world.RAD, offset)
-		// set pos1 to most top-left point on circle
-		Vec2.subtract(pos1, offset, pos1)
-		ctx.drawImage(vertexClass.icon, pos1[0], pos1[1], 2 * offset[0], 2 * offset[1])
+			// calculate offset for most bottom-right point on circle
+			var offset = new Vec2(1, 1)
+				.scale(2 * Math.SQRT1_2 * world.RAD)
+			// set pos1 to most top-left point on circle
+			pos1.subtract(offset)
+			ctx.drawImage(vertexClass.icon, ...pos1, ...offset)
 	}
 	else if(vertexClass.symbol) {
 		ctx.fillStyle = vertexClass.textColor
 		ctx.textAlign = "center"
 		ctx.textBaseline = "middle"
 		ctx.font = "16px sans-serif"
-		ctx.fillText(vertexClass.symbol, pos1[0], pos1[1])
+		ctx.fillText(vertexClass.symbol, ...pos1)
 	}
 	
 	ctx.restore()
@@ -323,5 +316,3 @@ function drawLoop(){
 
 setInterval(updateLoop, 50/3)
 requestAnimationFrame(drawLoop)
-
-})()

@@ -2,7 +2,7 @@ class World {
 	constructor() {
 		this.RAD = 20
 		this.graph = new DirectedGraph
-		this.cam = [0, 0]
+		this.cam = new Vec2
 		this.markedForUpdates = new Set
 	}
 	
@@ -15,17 +15,13 @@ class World {
 	}
 	
 	vertexAt(pos) {
-		let vertices = []
-		
-		for(let v of this.vertices)
-			vertices.push(v)
-		
 		// search backwards because last node is drawn on top
-		vertices.reverse()
+		let vertices = [...this.vertices].reverse()
+		
 		for(let vertex of vertices) {
-			let d = Vec2.subtract(vertex.pos, pos)
+			let d = vertex.pos.clone().subtract(pos)
 			
-			if(Vec2.length(d) <= this.RAD)
+			if(d.lengthSqr <= this.RAD * this.RAD)
 				return vertex
 		}
 		
