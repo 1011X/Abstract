@@ -1,15 +1,15 @@
 "use strict"
 
-let MathHelper = {
+class MathHelper {
 	
-	clamp(min, val, max) {
+	static clamp(min, val, max) {
 		return Math.max(min, Math.min(val, max))
 	}
 	
-	sum(list) {
+	static sum(list) {
 		let s = 0
 		for(let num of list)
 			s += num
 		return s
-	},
+	}
 }

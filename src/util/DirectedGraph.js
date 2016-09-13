@@ -1,6 +1,9 @@
 class DirectedGraph {
 	constructor() {
 		// Map of maps of arc values. And holy shit is it useful.
+		// a map vertices to (a map of vertices to arcs)
+		// useful because you can easily check if there already exists an arc
+		// between 2 vertices without iterating through each one.
 		this._vertices = new Map
 		this._arcs = new Set
 	}

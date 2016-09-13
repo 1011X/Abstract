@@ -1,9 +1,11 @@
-"use strict"
-
 class Vec2 {
 	
-	static create(x, y) {
+	static create32(x = 0, y = 0) {
 		return new Float32Array([x, y])
+	}
+	
+	static create64(x = 0, y = 0) {
+		return new Float64Array([x, y])
 	}
 	
 	static add(a, b, o) {
