@@ -67,13 +67,9 @@ class World {
 	}
 	
 	toJSON(){
-		let vertices = []
+		let vertices = [...this.graph.vertices]
 		let arcs = []
 		let markedForUpdates = []
-		
-		// list vertices in world
-		for(let vert of this.graph.vertices)
-			vertices.push(vert)
 		
 		// list vertices that need updates by index of above list
 		for(let vert of this.markedForUpdates)

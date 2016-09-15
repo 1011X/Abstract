@@ -1,5 +1,6 @@
 class VertexSwitch extends Vertex {
 	constructor(graph) {
+		super()
 		this.type = "switch"
 		this.on = false
 		

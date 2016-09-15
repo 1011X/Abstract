@@ -29,7 +29,7 @@ class RegistryWithDefault {
 	
 	getById(id) {
 		if(this.idMap.has(id))
-			return this.idMap.get(name)
+			return this.idMap.get(id)
 		else
 			return this.value
 	}

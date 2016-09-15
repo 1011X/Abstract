@@ -4,12 +4,27 @@ class Option {
 		this._value = a
 	}
 	
+	insert(val) {
+		this._state = Option.Some
+		this._value = val
+	}
+	
+	swap(val) {
+		if(!(val instanceof Option)) {
+			throw new TypeError("Swapped with non-`Option`")
+		}
+		
+		let t = this._value
+		this._value = val._value
+		val._value = t
+	}
+	
 	isNone() {
-		return this.state === Option.None
+		return this._state === Option.None
 	}
 	
 	isSome() {
-		return this.state === Option.Some
+		return this._state === Option.Some
 	}
 	
 	expect(msg) {

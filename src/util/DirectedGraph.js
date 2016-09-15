@@ -1,90 +1,99 @@
 class DirectedGraph {
-	constructor() {
-		// Map of maps of arc values. And holy shit is it useful.
-		// a map vertices to (a map of vertices to arcs)
-		// useful because you can easily check if there already exists an arc
-		// between 2 vertices without iterating through each one.
-		this._vertices = new Map
-		this._arcs = new Set
+	constructor(vertices = [], arcs = []) {
+		this._vertices = new Set(vertices)
+		this._arcs = new Set(arcs)
+		
+		//this._arcValues = new Map
 	}
 
-	// For simplicity's sake, we're assuming any vertex/vertices passed are part of
-	// the graph, and that the values used for them are objects.
-	get order() {
-		return this._vertices.size
-	}
+	get order() { return this._vertices.size }
+	get size() { return this._arcs.size }
+	
+	get vertices() { return this._vertices.values() }
+	get arcs() { return this._arcs.values() }
 
-	get size() {
-		return this._arcs.size
-	}
-
-	get vertices() {
-		return this._vertices.keys()
-	}
-
-	get arcs() {
-		return this._arcs.values()
-	}
-
-	has(vertex) {
-		return this._vertices.has(vertex)
-	}
-
-	add(vertex) {
-		this._vertices.set(vertex, new Map)
-	}
-
-	neighborsOf(vertex) {
-		return this._vertices.get(vertex).keys()
+	neighbors(vertex) {
+		let neighbors = []
+		
+		for(let [a, b] in this.arcs) {
+			if(a === vertex) {
+				neighbors.push(b)
+			}
+		}
+		
+		return neighbors
 	}
 
 	adjacent(u, v) {
-		return this._vertices.get(u).has(v)
-	}
-
-	getArc(u, v) {
-		return this._vertices.get(u).get(v)
-	}
-
-	delete(vertex) {
-		for(let neighbor of this.neighborsOf(vertex))
-			this.removeArc(vertex, neighbor)
+		for(let [from, to] in this.arcs) {
+			if(from === u && to === v) {
+				return true
+			}
+		}
 		
-		for(let v of this.vertices)
-			if(this.adjacent(v, vertex))
-				this.removeArc(v, vertex)
+		return false
+	}
+
+	addVertex(vertex) {
+		this._vertices.add(vertex)
+	}
+
+	removeVertex(vertex) {
+		for(let arc of this.arcs) {
+			if(arc[0] === vertex || arc[1] === vertex) {
+				this._arcs.delete(arc)
+			}
+		}
 		
 		this._vertices.delete(vertex)
 	}
-
-	setArc(u, v, val) {
-		this._arcs.delete(this.getArc(u, v))
-		this._vertices.get(u).set(v, val)
-		this._arcs.add(val)
+	
+	addArc(u, v) {
+		if(!this._vertices.has(u) || !this._vertices.has(v))
+			throw new Error("One or both vertices aren't in this graph.")
+		
+		this._arcs.add([u, v])
 	}
-
+	
 	removeArc(u, v) {
-		this._arcs.delete(this.getArc(u, v))
-		this._vertices.get(u).delete(v)
+		for(let arc of this.arcs) {
+			if(arc[0] === u && arc[1] === v) {
+				this._arcs.delete(arc)
+				break
+			}
+		}
 	}
-
+	
+	union(g) {
+		for(let vertex of g.vertices)
+			this.addVertex(vertex)
+		
+		for(let arc of g.arcs)
+			this.addArc(vertex)
+	}
+	
+	static union(g1, g2) {
+		let g = new DirectedGraph(g1.vertices, g1.arcs)
+		
+		for(let vertex of g2.vertices)
+			g.addVertex(vertex)
+		
+		for(let arc of g2.arcs)
+			g.addArc(vertex)
+		
+		return g
+	}
+	
 	toJSON() {
-		let vertices = []
+		let vertices = [...this.vertices]
 		let arcs = []
 		
-		for(let vertex of this.vertices)
-			vertices.push(vertex)
-		
-		for(let vertex of this.vertices)
-			for(let neighbor of this.neighborsOf(vertex)) {
-				let value = this.getArc(vertex, neighbor)
-				
-				arcs.push({
-					from: vertices.indexOf(vertex),
-					to: vertices.indexOf(neighbor),
-					value: value,
-				})
-			}
+		for(let [from, to] of this.arcs) {
+			arcs.push([
+				vertices.indexOf(from),
+				vertices.indexOf(to),
+			])
+		}
 		
 		return {vertices, arcs}
 	}

@@ -1,5 +1,6 @@
 class VertexEnergy extends Vertex {
 	constructor(graph) {
+		super()
 		this.energy = 1
 		this.type = "source"
 		

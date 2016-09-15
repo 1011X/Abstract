@@ -1,5 +1,6 @@
 class VertexNeuron extends Vertex {
 	constructor(graph) {
+		super()
 		this.type = "neuron"
 		this.threshold = 1
 		

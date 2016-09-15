@@ -1,5 +1,6 @@
 class VertexMax extends Vertex {
 	constructor(graph) {
+		super()
 		this.type = "max"
 		this.style.symbol = "max"
 	}

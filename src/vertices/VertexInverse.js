@@ -1,5 +1,6 @@
 class VertexInverse extends Vertex {
 	constructor(graph) {
+		super()
 		this.type = "inverse"
 		
 		this.style.color = "skyblue"

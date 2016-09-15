@@ -1,7 +1,7 @@
 "use strict"
 
 // register vertex types
-const Vertices = new RegistryWithDefault("blank")
+let Vertices = new RegistryWithDefault("blank")
 Vertices.add(0, "blank", Vertex)
 Vertices.add(1, "rotator", VertexRotator)
 Vertices.add(2, "neuron", VertexNeuron)
@@ -14,14 +14,14 @@ Vertices.add(7, "inverse", VertexInverse)
 const canvas = document.getElementById("c")
 const ctx = canvas.getContext("2d")
 
-function load(){
-	var data = JSON.parse(localStorage["abstractWorldData"])
+function load() {
+	let data = JSON.parse(localStorage["abstractWorldData"])
 	world.cam = data.cam
 	
-	var vertices = []
+	let vertices = []
 	for(let vertObj of data.vertices) {
-		var vertexClass = Vertices.get(vertObj.type)
-		var vertex = new vertexClass(world.graph)
+		let vertexClass = Vertices.get(vertObj.type)
+		let vertex = new vertexClass(world.graph)
 		vertex.pos = vertObj.pos
 		vertex.motion = vertObj.motion
 		vertex.inputs = vertObj.inputs
@@ -29,19 +29,20 @@ function load(){
 		world.graph.add(vertex)
 	}
 	
-	var markedForUpdates = []
-	for(let vertObj of data.markedForUpdates)
+	let markedForUpdates = []
+	for(let vertObj of data.markedForUpdates) {
 		markedForUpdates.push(vertices[vertObj])
+	}
 	
 	world.markedForUpdates = new Set(markedForUpdates)
 	
-	var arcs = []
-	for(let arcObj of data.arcs){
-		var from = vertices[arcObj.from]
-		var to = vertices[arcObj.to]
-		var arc = new Arc(from, to)
-		arc.weight = arcObj.value.weight
-		arc.delay = arcObj.value.delay
+	let arcs = []
+	for(let {from_i, to_i, value} of data.arcs) {
+		let from = vertices[from_i]
+		let to = vertices[to_i]
+		let arc = new Arc(from, to)
+		arc.weight = value.weight
+		arc.delay = value.delay
 		arcs.push(arc)
 		world.graph.setArc(from, to, arc)
 	}
@@ -51,23 +52,23 @@ function save(){
 	localStorage["abstractWorldData"] = JSON.stringify(world, null, "\t")
 }
 
-var world = new World
+let world = new World
 // Load world data, if there is any
 if(localStorage["abstractWorldData"]) {
 	load()
 }
 
-var selected = null
-var currType = 0
-var doDrawing = true
-// var vectorPool = new ObjectPool(Vec2.create64, 10)
+let selected = null
+let currType = 0
+let doDrawing = true
+// let vectorPool = new ObjectPool(Vec2.create64, 10)
 
-var canvasPosition = null
-var prevCanvasPosition = null
+let canvasPosition = null
+let prevCanvasPosition = null
 
-var worldPosition = null
-var prevWorldPosition = null
-var hasDragged = false
+let worldPosition = null
+let prevWorldPosition = null
+let hasDragged = false
 
 let uaHas = subs => navigator.userAgent.indexOf(subs) !== -1
 
@@ -79,8 +80,8 @@ function dragAction(evt) {
 	prevCanvasPosition = canvasPosition
 	prevWorldPosition = worldPosition
 	
-	canvasPosition = new Option(new Vec2(evt.pageX, evt.pageY))
-	worldPosition = new Option(canvasPosition.clone().add(world.cam))
+	canvasPosition = new Vec2(evt.pageX, evt.pageY)
+	worldPosition = canvasPosition.clone().add(world.cam)
 	
 	// Helps to differentiate between mouse buttons in different browsers.
 	// The reason it works is because the mouseup event for Firefox has the
@@ -100,6 +101,7 @@ function dragAction(evt) {
 	}
 }
 
+/// Deal with user input
 
 // register event handlers
 canvas.addEventListener("wheel", evt => {
@@ -138,17 +140,17 @@ canvas.addEventListener("mouseup", evt => {
 				let arc = new Arc(selected, next)
 				world.connect(selected, next, arc)
 			}
-			// TODO: implement some sort of context menu here
+			// TODO: implement some sort of context menu here?
 			else if(selected === next) {
 				selected.action()
 			}
 		}
 		// make new vertex if released in blank area and mouse wasn't dragged
 		else if(selected === null && next === null && !hasDragged) {
-			var vertex = new (Vertices.getById(currType))(world.graph)
-			vertex.pos = Vec2.create(worldPosition)
+			let vertex = new (Vertices.getById(currType))(world.graph)
+			vertex.pos = worldPosition.clone()
 			world.spawn(vertex)
-			console.log(`Vertex placed at ${Vec2.toString(worldPosition)}`)
+			console.log(`Vertex placed at ${worldPosition}`)
 		}
 	}
 	// reset EVERYTHING
@@ -185,42 +187,44 @@ window.addEventListener("resize", evt => {
 dispatchEvent(new Event("resize"))
 
 
-function updateLoop(){
+/// Game loops
+
+function updateLoop() {
 	world.tick(selected)
 }
 
-function drawLoop(){
+function drawLoop() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height)
 	ctx.lineWidth = 3
 	ctx.lineCap = "square"
 	
 	// arc drawing procedure
-	for(let arc of world.graph.arcs){
-		let from = new Vec2(...arc.from.pos)
-		let to = new Vec2(...arc.to.pos)
+	for(let {from, to} of world.graph.arcs){
+		let from = from.pos.clone()
+		let to = to.pos.clone()
 		
 		// To canvas coordinates
 		from.subtract(world.cam)
 		to.subtract(world.cam)
 		
 		// get offset from center of vertex to its edge
-		let offset = new Vec2(...to)
+		let offset = to.clone()
 			.subtract(from)
 			.resize(world.RAD)
 		
 		// adjust line start and end positions
-		let tail = new Vec2(...from).add(offset)
-		let head = new Vec2(...to).add(offset)
+		let tail = from.clone().add(offset)
+		let head = to.clone().add(offset)
 		
 		// used to calculate positions of tips of both arrowheads
 		const angle = 5 * Math.TAU / 12
-		let arrowHead = new Vec2(...head)
+		let arrowHead = head.clone()
 			.subtract(tail)
 			.resize(2 * world.RAD / 3)
-		let tipl = new Vec2(...arrowHead)
+		let tipl = arrowHead.clone()
 			.rotate(angle)
 			.add(head)
-		let tipr = new Vec2(...arrowHead)
+		let tipr = arrowHead.clone()
 			.rotate(-angle)
 			.add(head)
 		
@@ -238,9 +242,9 @@ function drawLoop(){
 	}
 	
 	// vertex drawing procedure
-	for(var vertex of world.vertices){
+	for(let vertex of world.vertices) {
 		// get position relative to canvas
-		var pos1 = new Vec2(...vertex.pos).subtract(world.cam)
+		let pos1 = vertex.pos.clone().subtract(world.cam)
 		ctx.save()
 		
 		ctx.fillStyle = vertex.color
@@ -294,12 +298,12 @@ function drawLoop(){
 	ctx.stroke()
 	
 	if(vertexClass.icon) {
-			// calculate offset for most bottom-right point on circle
-			var offset = new Vec2(1, 1)
-				.scale(2 * Math.SQRT1_2 * world.RAD)
-			// set pos1 to most top-left point on circle
-			pos1.subtract(offset)
-			ctx.drawImage(vertexClass.icon, ...pos1, ...offset)
+		// calculate offset for most bottom-right point on circle
+		let offset = new Vec2(1, 1)
+			.scale(2 * Math.SQRT1_2 * world.RAD)
+		// set pos1 to most top-left point on circle
+		pos1.subtract(offset)
+		ctx.drawImage(vertexClass.icon, ...pos1, ...offset)
 	}
 	else if(vertexClass.symbol) {
 		ctx.fillStyle = vertexClass.textColor

@@ -1,5 +1,6 @@
 class VertexMin extends Vertex {
 	constructor(graph) {
+		super()
 		this.type = "min"
 		
 		this.style.symbol = "min"

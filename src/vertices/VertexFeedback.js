@@ -1,5 +1,6 @@
 class VertexFeedback extends Vertex {
 	constructor(graph) {
+		super()
 		this.type = "feedback"
 		
 		// not really necessary, but for completeness's sake

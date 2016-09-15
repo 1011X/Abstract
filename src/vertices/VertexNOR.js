@@ -1,5 +1,6 @@
 class VertexNOR extends Vertex {
 	constructor(graph) {
+		super()
 		this.type = "nor"
 		
 		this.style.symbol = "N"

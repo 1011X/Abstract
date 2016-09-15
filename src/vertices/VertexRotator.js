@@ -1,5 +1,6 @@
 class VertexRotator extends Vertex {
 	constructor(graph) {
+		super()
 		this.type = "rotator"
 		
 		this.style.color = "lightgreen"
