@@ -3,8 +3,8 @@
 Math.TAU = 2 * Math.PI
 
 // register vertex types
-const Vertices = new RegistryWithDefault("blank")
-Vertices.add(0, "blank", null)
+const Vertices = new RegistryWithDefault("none")
+Vertices.add(0, "none", null)
 Vertices.add(1, "rotator", VertexRotator)
 Vertices.add(2, "neuron", VertexNeuron)
 Vertices.add(3, "feedback", VertexFeedback)
@@ -18,14 +18,14 @@ const ctx = canvas.getContext("2d")
 
 function load() {
 	let data = JSON.parse(localStorage["abstractWorldData"])
-	world.cam = new Vec2(...data.cam)
+	world.cam = data.cam.clone()
 	
 	let vertices = []
 	for(let vertObj of data.vertices) {
 		let vertexClass = Vertices.get(vertObj.type)
 		let vertex = new vertexClass(world.graph)
-		vertex.pos = new Vec2(...vertObj.pos)
-		vertex.motion = new Vec2(...vertObj.motion)
+		vertex.pos = vertObj.pos.clone()
+		vertex.motion = vertObj.motion.clone()
 		vertex.inputs = vertObj.inputs
 		vertices.push(vertex)
 		world.graph.add(vertex)
@@ -54,23 +54,23 @@ function save() {
 	localStorage["abstractWorldData"] = JSON.stringify(world, null, "\t")
 }
 
-var world = new World
+let world = new World
 // Load world data, if there is any
 if(localStorage["abstractWorldData"]) {
 	load()
 }
 
-var selected = null
-var currType = 0
-var doDrawing = true
-// var vectorPool = new ObjectPool(Vec2.create64, 10)
+let selected = null
+let currType = 0
+let doDrawing = true
+// let vectorPool = new ObjectPool(Vec2.create64, 10)
 
-var canvasPosition = null
-var prevCanvasPosition = null
+let canvasPosition = null
+let prevCanvasPosition = null
 
-var worldPosition = null
-var prevWorldPosition = null
-var hasDragged = false
+let worldPosition = null
+let prevWorldPosition = null
+let hasDragged = false
 
 
 // If mouse is down and dragged, record position in worldPosition.
@@ -102,6 +102,7 @@ function dragAction(evt) {
 	}
 }
 
+/// Deal with user input
 
 // register event handlers
 canvas.addEventListener("wheel", evt => {
@@ -143,7 +144,7 @@ canvas.addEventListener("mouseup", evt => {
 				let arc = new Arc(selected, next)
 				world.connect(selected, next, arc)
 			}
-			// TODO: implement some sort of context menu here
+			// TODO: implement some sort of context menu here?
 			else if(selected === next) {
 				selected.action()
 			}
@@ -204,9 +205,9 @@ function drawLoop() {
 	ctx.lineCap = "square"
 	
 	// arc drawing procedure
-	for(let arc of world.graph.arcs){
-		let from = arc.from.pos.clone()
-		let to = arc.to.pos.clone()
+	for(let {from, to} of world.graph.arcs){
+		let from = from.pos.clone()
+		let to = to.pos.clone()
 		
 		// To canvas coordinates
 		from.subtract(world.cam)
@@ -252,7 +253,7 @@ function drawLoop() {
 	// vertex drawing procedure
 	for(let vertex of world.vertices) {
 		// get position relative to canvas
-		let pos1 = new Vec2(...vertex.pos).subtract(world.cam)
+		let pos1 = vertex.pos.clone().subtract(world.cam)
 		ctx.save()
 		
 		ctx.fillStyle = vertex.style.color
