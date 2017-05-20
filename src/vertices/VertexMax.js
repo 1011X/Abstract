@@ -1,15 +1,13 @@
 class VertexMax extends Vertex {
-	constructor(graph) {
-		this.type = "max"
-		this.style.symbol = "max"
-	}
-
 	update(options) {
-		let furthest = Math.max(...this.inputs)
+		let max = Math.max(...this.inputs)
 		
-		for(let neighbor of this.neighbors)
-			options.send(neighbor, furthest)
+		for(let neighbor of this.neighbors) {
+			options.send(neighbor, max)
+		}
 		
 		this.inputs = []
 	}
 }
+
+VertexMax.prototype.style = new VertexStyle("white", {symbol: "∨"})
