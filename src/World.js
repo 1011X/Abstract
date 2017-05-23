@@ -1,6 +1,5 @@
 class World {
 	constructor() {
-		this.RAD = 20
 		this.graph = new DirectedGraph
 		this.cam = new Vec2
 		this.markedForUpdates = new Set
@@ -10,10 +9,6 @@ class World {
 		return this.graph.vertices
 	}
 	
-	get count() {
-		return this.graph.order
-	}
-	
 	vertexAt(pos) {
 		// search backwards because last node is drawn on top
 		let vertices = [...this.vertices].reverse()
@@ -21,8 +16,9 @@ class World {
 		for(let vertex of vertices) {
 			let d = vertex.pos.clone().subtract(pos)
 			
-			if(d.lengthSqr <= this.RAD * this.RAD)
+			if(d.lensqr <= vertex.radius * vertex.radius) {
 				return vertex
+			}
 		}
 		
 		return null
@@ -66,14 +62,10 @@ class World {
 		}
 	}
 	
-	toJSON(){
+	toJSON() {
 		let vertices = [...this.graph.vertices]
+		let markedForUpdates = [...this.markedForUpdates]
 		let arcs = []
-		let markedForUpdates = []
-		
-		// list vertices that need updates by index of above list
-		for(let vert of this.markedForUpdates)
-			markedForUpdates.push(vertices.indexOf(vert))
 		
 		for(let arc of this.graph.arcs) {
 			let from = vertices.indexOf(arc.from)
@@ -83,7 +75,7 @@ class World {
 		}
 		
 		return {
-			cam: this.cam,
+			cam: this.cam.toArray(),
 			vertices,
 			arcs,
 			markedForUpdates,

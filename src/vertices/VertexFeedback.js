@@ -1,40 +1,34 @@
 class VertexFeedback extends Vertex {
 	constructor(graph) {
-		super()
-		this.type = "feedback"
-		
-		// not really necessary, but for completeness's sake
-		this.style.color = "gray"
-		this.style.textColor = "black"
-		this.style.symbol = "0"
+		super(graph)
+		this.style = new VertexStyle("gray", {textColor: "black", symbol: "0"})
 	}
 
 	format(value) {
-		if(value === Infinity)
-			return "∞"
-		else if(value === -Infinity)
-			return "-∞"
-		else
-			return value.toString()
+		switch(value) {
+			case Infinity: return "∞";
+			case -Infinity: return "-∞";
+			default: return value.toString();
+		}
 	}
 
 	setColor(value) {
 		if(value === Infinity) {
-			this.color = "white"
-			this.textColor = "black"
+			this.style.color = "white"
+			this.style.textColor = "black"
 		}
 		else if(value === -Infinity) {
-			this.color = "black"
-			this.textColor = "white"
+			this.style.color = "black"
+			this.style.textColor = "white"
 		}
 		else {
-			this.color = "gray"
-			this.textColor = "black"
+			this.style.color = "gray"
+			this.style.textColor = "black"
 		}
 	}
 
 	update(options) {
-		let energy = MathHelper.sum(this.inputs)
+		let energy = this.inputs.reduce((acc, val) => acc + val, 0)
 		this.setColor(energy)
 		this.symbol = this.format(energy)
 		this.inputs = []
@@ -42,6 +36,4 @@ class VertexFeedback extends Vertex {
 }
 
 // for when drawing vertex in gui
-VertexFeedback.prototype.color = "gray"
-VertexFeedback.prototype.textColor = "black"
-
+VertexFeedback.prototype.style = new VertexStyle("gray", {textColor: "black", symbol: "0"})

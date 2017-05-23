@@ -1,8 +1,10 @@
 "use strict"
 
+Math.TAU = 2 * Math.PI
+
 // register vertex types
-let Vertices = new RegistryWithDefault("blank")
-Vertices.add(0, "blank", Vertex)
+const Vertices = new RegistryWithDefault("none")
+Vertices.add(0, "none", null)
 Vertices.add(1, "rotator", VertexRotator)
 Vertices.add(2, "neuron", VertexNeuron)
 Vertices.add(3, "feedback", VertexFeedback)
@@ -16,14 +18,14 @@ const ctx = canvas.getContext("2d")
 
 function load() {
 	let data = JSON.parse(localStorage["abstractWorldData"])
-	world.cam = data.cam
+	world.cam = data.cam.clone()
 	
 	let vertices = []
 	for(let vertObj of data.vertices) {
 		let vertexClass = Vertices.get(vertObj.type)
 		let vertex = new vertexClass(world.graph)
-		vertex.pos = vertObj.pos
-		vertex.motion = vertObj.motion
+		vertex.pos = vertObj.pos.clone()
+		vertex.motion = vertObj.motion.clone()
 		vertex.inputs = vertObj.inputs
 		vertices.push(vertex)
 		world.graph.add(vertex)
@@ -37,18 +39,18 @@ function load() {
 	world.markedForUpdates = new Set(markedForUpdates)
 	
 	let arcs = []
-	for(let {from_i, to_i, value} of data.arcs) {
-		let from = vertices[from_i]
-		let to = vertices[to_i]
+	for(let arcObj of data.arcs) {
+		let from = vertices[arcObj.from]
+		let to = vertices[arcObj.to]
 		let arc = new Arc(from, to)
-		arc.weight = value.weight
-		arc.delay = value.delay
+		arc.weight = arcObj.value.weight
+		arc.delay = arcObj.value.delay
 		arcs.push(arc)
 		world.graph.setArc(from, to, arc)
 	}
 }
 
-function save(){
+function save() {
 	localStorage["abstractWorldData"] = JSON.stringify(world, null, "\t")
 }
 
@@ -70,11 +72,11 @@ let worldPosition = null
 let prevWorldPosition = null
 let hasDragged = false
 
-let uaHas = subs => navigator.userAgent.indexOf(subs) !== -1
 
 // If mouse is down and dragged, record position in worldPosition.
 // Also handles moving of vertex if one is selected and dragged.
 function dragAction(evt) {
+	let uaHas = subs => navigator.userAgent.indexOf(subs) !== -1
 	hasDragged = true
 	
 	prevCanvasPosition = canvasPosition
@@ -89,8 +91,7 @@ function dragAction(evt) {
 	// has it on the "button" attribute.
 	if(uaHas("Firefox") && evt.buttons == 1 || uaHas("Chrome") && evt.button == 0) {
 		if(selected) {
-			worldPosition[0] = selected.pos[0]
-			worldPosition[1] = selected.pos[1]
+			worldPosition.cloneFrom(selected.pos)
 		}
 		else {
 			let canvasMovement = canvasPosition.clone()
@@ -106,10 +107,13 @@ function dragAction(evt) {
 // register event handlers
 canvas.addEventListener("wheel", evt => {
 	currType += evt.deltaY
-	if(currType < 0)
+	
+	if(currType < 0) {
 		currType += Vertices.size
-	else if(currType >= Vertices.size)
+	}
+	else if(currType >= Vertices.size) {
 		currType -= Vertices.size
+	}
 })
 
 canvas.addEventListener("mousedown", evt => {
@@ -147,10 +151,14 @@ canvas.addEventListener("mouseup", evt => {
 		}
 		// make new vertex if released in blank area and mouse wasn't dragged
 		else if(selected === null && next === null && !hasDragged) {
-			let vertex = new (Vertices.getById(currType))(world.graph)
-			vertex.pos = worldPosition.clone()
-			world.spawn(vertex)
-			console.log(`Vertex placed at ${worldPosition}`)
+			let vertexClass = Vertices.getById(currType)
+			
+			if(vertexClass != null) {
+				let vertex = new vertexClass(world.graph)
+				vertex.pos = new Vec2(...worldPosition)
+				world.spawn(vertex)
+				console.log(`Vertex placed at ${worldPosition}`)
+			}
 		}
 	}
 	// reset EVERYTHING
@@ -165,15 +173,13 @@ canvas.addEventListener("mouseup", evt => {
 
 window.addEventListener("keydown", evt => {
 	// 's' is pressed
-	if(evt.keyCode == 83)
+	if(evt.keyCode == 83) {
 		save()
+	}
 	// 'r' is pressed
-	if(evt.keyCode == 82)
+	if(evt.keyCode == 82) {
 		localStorage["abstractWorldData"] = ""
-})
-
-window.addEventListener("keyup", evt => {
-	
+	}
 })
 
 canvas.addEventListener("contextmenu", evt => {
@@ -187,13 +193,13 @@ window.addEventListener("resize", evt => {
 dispatchEvent(new Event("resize"))
 
 
-/// Game loops
-
 function updateLoop() {
 	world.tick(selected)
 }
 
 function drawLoop() {
+	requestAnimationFrame(drawLoop)
+	
 	ctx.clearRect(0, 0, canvas.width, canvas.height)
 	ctx.lineWidth = 3
 	ctx.lineCap = "square"
@@ -208,23 +214,26 @@ function drawLoop() {
 		to.subtract(world.cam)
 		
 		// get offset from center of vertex to its edge
-		let offset = to.clone()
+		const fromOffset = to.clone()
 			.subtract(from)
-			.resize(world.RAD)
+			.resize(arc.from.radius)
+		const toOffset = from.clone()
+			.subtract(to)
+			.resize(arc.to.radius)
 		
 		// adjust line start and end positions
-		let tail = from.clone().add(offset)
-		let head = to.clone().add(offset)
+		const tail = from.clone().add(fromOffset)
+		const head = to.clone().add(toOffset)
 		
 		// used to calculate positions of tips of both arrowheads
 		const angle = 5 * Math.TAU / 12
-		let arrowHead = head.clone()
+		const arrowHead = head.clone()
 			.subtract(tail)
-			.resize(2 * world.RAD / 3)
-		let tipl = arrowHead.clone()
+			.resize(16)
+		const tipl = arrowHead.clone()
 			.rotate(angle)
 			.add(head)
-		let tipr = arrowHead.clone()
+		const tipr = arrowHead.clone()
 			.rotate(-angle)
 			.add(head)
 		
@@ -247,32 +256,34 @@ function drawLoop() {
 		let pos1 = vertex.pos.clone().subtract(world.cam)
 		ctx.save()
 		
-		ctx.fillStyle = vertex.color
-		ctx.strokeStyle = vertex.border
+		ctx.fillStyle = vertex.style.color
+		ctx.strokeStyle = vertex.style.border
 		
 		ctx.beginPath()
 		
-		ctx.arc(...pos1, world.RAD, 0, Math.TAU, true)
+		ctx.arc(...pos1, vertex.radius, 0, Math.TAU)
 		
 		ctx.closePath()
 		ctx.fill()
 		ctx.stroke()
 		
 		// if there's an icon...
+		/*
 		if(vertex.icon) {
 			// calculate width and height for icon
 			let offset = new Vec2(1, 1)
-				.scale(2 * Math.SQRT1_2 * world.RAD)
+				.scale(2 * Math.SQRT1_2 * vertex.radius)
 				// set pos1 to most top-left point on circle
 			pos1.subtract(offset)
 			ctx.drawImage(vertex.icon, ...pos1, ...offset)
 		}
-		else if(vertex.symbol) {
-			ctx.fillStyle = vertex.textColor
+		else */
+		if(vertex.style.symbol) {
+			ctx.fillStyle = vertex.style.textColor
 			ctx.textAlign = "center"
 			ctx.textBaseline = "middle"
 			ctx.font = "16px sans-serif"
-			ctx.fillText(vertex.symbol, ...pos1)
+			ctx.fillText(vertex.style.symbol, ...pos1)
 		}
 		
 		ctx.restore()
@@ -280,42 +291,46 @@ function drawLoop() {
 	
 	ctx.save()
 	
-	let vertexClass = Vertices.getById(currType).prototype
-	let pos1 = new Vec2(
-		world.RAD + 10,
-		innerHeight - world.RAD - 10
-	)
+	let vertexClass = Vertices.getById(currType)
 	
-	ctx.fillStyle = vertexClass.color
-	ctx.strokeStyle = vertexClass.border
+	if(vertexClass != null) {
+		let style = vertexClass.prototype.style
+		let pos1 = new Vec2(
+			/*world.RAD*/ 20 + 10,
+			innerHeight - /*world.RAD*/ 20 - 10
+		)
+		
+		ctx.fillStyle = style.color
+		ctx.strokeStyle = style.border
+		
+		ctx.beginPath()
 	
-	ctx.beginPath()
+		ctx.arc(...pos1, vertexClass.prototype.radius, 0, Math.TAU)
 	
-	ctx.arc(...pos1, world.RAD, 0, Math.TAU, true)
+		ctx.closePath()
+		ctx.fill()
+		ctx.stroke()
 	
-	ctx.closePath()
-	ctx.fill()
-	ctx.stroke()
+		/*
+		if(vertexClass.icon) {
+				// calculate offset for most bottom-right point on circle
+				var offset = new Vec2(1, 1)
+					.scale(2 * Math.SQRT1_2 * world.RAD)
+				// set pos1 to most top-left point on circle
+				pos1.subtract(offset)
+				ctx.drawImage(vertexClass.icon, ...pos1, ...offset)
+		}
+		else*/
+		if(style.symbol) {
+			ctx.fillStyle = style.textColor
+			ctx.textAlign = "center"
+			ctx.textBaseline = "middle"
+			ctx.font = "16px sans-serif"
+			ctx.fillText(style.symbol, ...pos1)
+		}
 	
-	if(vertexClass.icon) {
-		// calculate offset for most bottom-right point on circle
-		let offset = new Vec2(1, 1)
-			.scale(2 * Math.SQRT1_2 * world.RAD)
-		// set pos1 to most top-left point on circle
-		pos1.subtract(offset)
-		ctx.drawImage(vertexClass.icon, ...pos1, ...offset)
+		ctx.restore()
 	}
-	else if(vertexClass.symbol) {
-		ctx.fillStyle = vertexClass.textColor
-		ctx.textAlign = "center"
-		ctx.textBaseline = "middle"
-		ctx.font = "16px sans-serif"
-		ctx.fillText(vertexClass.symbol, ...pos1)
-	}
-	
-	ctx.restore()
-	
-	requestAnimationFrame(drawLoop)
 }
 
 setInterval(updateLoop, 50/3)

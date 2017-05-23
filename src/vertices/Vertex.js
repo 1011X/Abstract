@@ -1,26 +1,24 @@
 class Vertex {
 	constructor(graph) {
-		this.pos = [0, 0]
-		this.motion = [0, 0]
+		this.pos = new Vec2
+		this.motion = new Vec2
 		this.inputs = []
-	
+		
 		this.graph = graph
-	
+		/*
 		this.style = {
-			type: "blank",
-	
-			icon: null,
 			symbol: "",
 			color: "white",
 			textColor: "black",
 			border: "black",
 			// borderStart: 0,
-			// borderEnd: 2 * Math.PI,
+			// borderEnd: Math.TAU,
 		}
+		*/
 	}
 	
-	get neighbors(){
-		return this.graph.neighbors(this)
+	get neighbors() {
+		return this.graph.neighborsOf(this)
 	}
 	
 	update() {}
@@ -30,9 +28,12 @@ class Vertex {
 	toJSON() {
 		return {
 			type: this.type,
-			pos: this.pos,
-			motion: this.motion,
+			pos: this.pos.toArray(),
+			motion: this.motion.toArray(),
 			inputs: this.inputs,
 		}
 	}
 }
+
+Object.defineProperty(Vertex.prototype, "radius", {value: 18})
+Object.defineProperty(Vertex.prototype, "type", {value: "none"})

@@ -1,15 +1,11 @@
 class VertexSwitch extends Vertex {
 	constructor(graph) {
-		super()
-		this.type = "switch"
+		super(graph)
 		this.on = false
-		
-		this.style.color = "black"
-		this.style.textColor = "white"
-		this.style.symbol = "S"
+		this.style = new VertexStyle("black", {textColor: "white", symbol: "S"})
 	}
 
-	toggle() {
+	action() {
 		this.on = !this.on
 	
 		if(this.on) {
@@ -21,14 +17,12 @@ class VertexSwitch extends Vertex {
 			this.style.textColor = "white"
 		}
 	}
-	
-	action() {
-		this.toggle()
-	}
 
 	update(options) {
-		for(var neighbor of this.neighbors) {
+		for(let neighbor of this.neighbors) {
 			options.send(neighbor, this.on ? Infinity : -Infinity)
 		}
 	}
 }
+
+VertexSwitch.prototype.style = new VertexStyle("black", {textColor: "white", symbol: "S"})

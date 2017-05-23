@@ -1,37 +1,51 @@
-class ObjectPool {
-	constructor(objType, number) {
-		this.objType = objType
-		this.available = new WeakSet
+class VecPool {
+	constructor(size = 0) {
 		this.pool = new Set
 	
-		for(let i = 0; i < number; ++i)
-			this._create()
+		for(let i = 0; i < size; ++i)
+			this.pool.add(new Vec2)
+		
+		this.available = new WeakSet(this.pool)
 	}
 	
-	get size() {
-		return this.pool.length
-	}
-	
-	_create() {
-		let obj = new this.objType
-		this.pool.add(obj)
-		this.available.add(obj)
-		return obj
+	capacity() {
+		return this.pool.size
 	}
 	
 	request() {
-		let next = this.available.values().next()
+		for(let vec of this.pool)
+			if(this.available.has(vec)) {
+				this.available.delete(vec)
+				return vec
+			}
 		
-		if(next.done) // no available objects; create one
-			return this._create()
-		else {
-			// remove object from list of available objects and return it
-			this.available.delete(next.value)
-			return next.value
+		// no vecs available, so grow
+		_grow()
+		
+		for(let vec of this.pool)
+			if(this.available.has(vec)) {
+				this.available.delete(vec)
+				return vec
+			}
+	}
+	
+	// assumes vec is a Vec2 and in the pool
+	return(vec) {
+		this.available.add(vec)
+	}
+	
+	_grow() {
+		let newCap = this.capacity + 1
+		for(let i = 0; i < newCap; i++) {
+			let vec = new Vec2
+			this.pool.add(vec)
+			this.available.add(vec)
 		}
 	}
 	
-	return(obj) {
-		this.available.add(obj)
+	shrinkToFit() {
+		for(let vec of this.pool)
+			if(this.available.has(vec))
+				this.pool.delete(vec)
 	}
 }
