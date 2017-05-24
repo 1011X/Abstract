@@ -1,4 +1,4 @@
-class VertexMax extends Vertex {
+Vertex.Max = class extends Vertex.Base {
 	update(options) {
 		let max = Math.max(...this.inputs)
 		
@@ -10,4 +10,4 @@ class VertexMax extends Vertex {
 	}
 }
 
-VertexMax.prototype.style = new VertexStyle("white", {symbol: "∨"})
+Vertex.Max.prototype.style = new VertexStyle("white", {symbol: "∨"})

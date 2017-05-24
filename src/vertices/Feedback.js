@@ -1,4 +1,4 @@
-class VertexFeedback extends Vertex {
+Vertex.Feedback = class extends Vertex.Base {
 	constructor(graph) {
 		super(graph)
 		this.style = new VertexStyle("gray", {textColor: "black", symbol: "0"})
@@ -30,10 +30,10 @@ class VertexFeedback extends Vertex {
 	update(options) {
 		let energy = this.inputs.reduce((acc, val) => acc + val, 0)
 		this.setColor(energy)
-		this.symbol = this.format(energy)
+		this.style.symbol = this.format(energy)
 		this.inputs = []
 	}
 }
 
 // for when drawing vertex in gui
-VertexFeedback.prototype.style = new VertexStyle("gray", {textColor: "black", symbol: "0"})
+Vertex.Feedback.prototype.style = new VertexStyle("gray", {textColor: "black", symbol: "0"})

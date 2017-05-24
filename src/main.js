@@ -1,3 +1,8 @@
+/// TODO
+/// * Figure out vertex serialization
+/// * Do new vertex selection
+/// * Re-add edges?
+
 "use strict"
 
 Math.TAU = 2 * Math.PI
@@ -5,17 +10,18 @@ Math.TAU = 2 * Math.PI
 // register vertex types
 const Vertices = new RegistryWithDefault("none")
 Vertices.add(0, "none", null)
-Vertices.add(1, "rotator", VertexRotator)
-Vertices.add(2, "neuron", VertexNeuron)
-Vertices.add(3, "feedback", VertexFeedback)
-Vertices.add(4, "switch", VertexSwitch)
-Vertices.add(5, "min", VertexMin)
-Vertices.add(6, "max", VertexMax)
-Vertices.add(7, "inverse", VertexInverse)
+Vertices.add(1, "rotator", Vertex.Rotator)
+Vertices.add(2, "neuron", Vertex.Neuron)
+Vertices.add(3, "feedback", Vertex.Feedback)
+Vertices.add(4, "switch", Vertex.Switch)
+Vertices.add(5, "min", Vertex.Min)
+Vertices.add(6, "max", Vertex.Max)
+Vertices.add(7, "inverse", Vertex.Inverse)
 
 const canvas = document.getElementById("c")
 const ctx = canvas.getContext("2d")
 
+// TODO have this as a deserialization function for World
 function load() {
 	let data = JSON.parse(localStorage["abstractWorldData"])
 	world.cam = new Vec2(...data.cam)
@@ -23,12 +29,15 @@ function load() {
 	let vertices = []
 	for(let vertObj of data.vertices) {
 		let vertexClass = Vertices.get(vertObj.type)
-		let vertex = new vertexClass(world.graph)
-		vertex.pos = vertObj.pos.clone()
-		vertex.motion = vertObj.motion.clone()
-		vertex.inputs = vertObj.inputs
-		vertices.push(vertex)
-		world.graph.add(vertex)
+		
+		if(vertexClass !== null) {
+			let vertex = new vertexClass(world.graph)
+			vertex.pos = vertObj.pos.clone()
+			vertex.motion = vertObj.motion.clone()
+			vertex.inputs = vertObj.inputs
+			vertices.push(vertex)
+			world.graph.add(vertex)
+		}
 	}
 	
 	let markedForUpdates = []
@@ -55,6 +64,7 @@ function save() {
 }
 
 let world = new World
+
 // Load world data, if there is any
 if(localStorage["abstractWorldData"]) {
 	load()
@@ -201,21 +211,21 @@ function drawLoop() {
 	ctx.lineCap = "square"
 	
 	// arc drawing procedure
-	for(let {from, to} of world.graph.arcs){
-		let from = from.pos.clone()
-		let to = to.pos.clone()
+	for(let {from: fromVert, to: toVert} of world.graph.arcs){
+		let from = fromVert.pos.clone()
+		let to = toVert.pos.clone()
 		
 		// To canvas coordinates
-		from.subtract(world.cam)
-		to.subtract(world.cam)
+		from.sub(world.cam)
+		to.sub(world.cam)
 		
 		// get offset from center of vertex to its edge
 		const fromOffset = to.clone()
-			.subtract(from)
-			.resize(arc.from.radius)
+			.sub(from)
+			.resize(fromVert.radius)
 		const toOffset = from.clone()
-			.subtract(to)
-			.resize(arc.to.radius)
+			.sub(to)
+			.resize(toVert.radius)
 		
 		// adjust line start and end positions
 		const tail = from.clone().add(fromOffset)
@@ -224,7 +234,7 @@ function drawLoop() {
 		// used to calculate positions of tips of both arrowheads
 		const angle = 5 * Math.TAU / 12
 		const arrowHead = head.clone()
-			.subtract(tail)
+			.sub(tail)
 			.resize(16)
 		const tipl = arrowHead.clone()
 			.rotate(angle)
@@ -249,7 +259,7 @@ function drawLoop() {
 	// vertex drawing procedure
 	for(let vertex of world.vertices) {
 		// get position relative to canvas
-		let pos1 = vertex.pos.clone().subtract(world.cam)
+		let pos1 = vertex.pos.clone().sub(world.cam)
 		ctx.save()
 		
 		ctx.fillStyle = vertex.style.color
@@ -278,7 +288,7 @@ function drawLoop() {
 			ctx.fillStyle = vertex.style.textColor
 			ctx.textAlign = "center"
 			ctx.textBaseline = "middle"
-			ctx.font = "16px sans-serif"
+			ctx.font = "bold 16px sans-serif"
 			ctx.fillText(vertex.style.symbol, ...pos1)
 		}
 		
@@ -321,7 +331,7 @@ function drawLoop() {
 			ctx.fillStyle = style.textColor
 			ctx.textAlign = "center"
 			ctx.textBaseline = "middle"
-			ctx.font = "16px sans-serif"
+			ctx.font = "bold 16px sans-serif"
 			ctx.fillText(style.symbol, ...pos1)
 		}
 	

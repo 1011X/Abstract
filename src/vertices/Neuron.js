@@ -1,4 +1,4 @@
-class VertexNeuron extends Vertex {
+Vertex.Neuron = class extends Vertex.Base {
 	constructor(graph) {
 		super(graph)
 		this.threshold = 1
@@ -15,6 +15,12 @@ class VertexNeuron extends Vertex {
 		
 		this.inputs = []
 	}
+	
+	toJSON() {
+		let data = super.toJSON()
+		data.threshold = this.threshold
+		return data
+	}
 }
 
-VertexNeuron.prototype.style = new VertexStyle("darkgray")
+Vertex.Neuron.prototype.style = new VertexStyle("darkgray")

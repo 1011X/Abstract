@@ -14,7 +14,7 @@ class World {
 		let vertices = [...this.vertices].reverse()
 		
 		for(let vertex of vertices) {
-			let d = vertex.pos.clone().subtract(pos)
+			let d = vertex.pos.clone().sub(pos)
 			
 			if(d.lensqr <= vertex.radius * vertex.radius) {
 				return vertex
@@ -50,6 +50,7 @@ class World {
 		// .markedForUpdates is there for a reason!
 		for(let vertex of this.graph.vertices) {
 			this.markedForUpdates.delete(vertex)
+			
 			vertex.update({
 				selected,
 				send: (vert, value) => {
@@ -79,6 +80,43 @@ class World {
 			vertices,
 			arcs,
 			markedForUpdates,
+		}
+	}
+	
+	static fromJSON(json) {
+		//let data = JSON.parse(localStorage["abstractWorldData"])
+		world.cam = new Vec2(...json.cam)
+		
+		let vertices = []
+		for(let vertObj of json.vertices) {
+			let vertexClass = Vertices.get(vertObj.type)
+			
+			if(vertexClass !== null) {
+				let vertex = new vertexClass(world.graph)
+				vertex.pos = new Vec2(...vertObj.pos)
+				vertex.motion = new Vec2(...vertObj.motion)
+				vertex.inputs = vertObj.inputs
+				vertices.push(vertex)
+				world.graph.add(vertex)
+			}
+		}
+		
+		let markedForUpdates = []
+		for(let vertObj of data.markedForUpdates) {
+			markedForUpdates.push(vertices[vertObj])
+		}
+		
+		world.markedForUpdates = new Set(markedForUpdates)
+		
+		let arcs = []
+		for(let arcObj of data.arcs) {
+			let from = vertices[arcObj.from]
+			let to = vertices[arcObj.to]
+			let arc = new Arc(from, to)
+			arc.weight = arcObj.value.weight
+			arc.delay = arcObj.value.delay
+			arcs.push(arc)
+			world.graph.setArc(from, to, arc)
 		}
 	}
 }

@@ -1,4 +1,4 @@
-class VertexMin extends Vertex {
+Vertex.Min = class extends Vertex.Base {
 	update(options) {
 		let closest = Math.min(...this.inputs)
 		
@@ -10,4 +10,4 @@ class VertexMin extends Vertex {
 	}
 }
 
-VertexMin.prototype.style = new VertexStyle("white", {symbol: "∧"})
+Vertex.Min.prototype.style = new VertexStyle("white", {symbol: "∧"})
