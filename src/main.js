@@ -18,7 +18,7 @@ const ctx = canvas.getContext("2d")
 
 function load() {
 	let data = JSON.parse(localStorage["abstractWorldData"])
-	world.cam = data.cam.clone()
+	world.cam = new Vec2(...data.cam)
 	
 	let vertices = []
 	for(let vertObj of data.vertices) {
@@ -65,37 +65,35 @@ let currType = 0
 let doDrawing = true
 // let vectorPool = new ObjectPool(Vec2.create64, 10)
 
-let canvasPosition = null
-let prevCanvasPosition = null
+let canvasPos = null
+let canvasDelta = null
+let prevCanvasPos = null
 
-let worldPosition = null
-let prevWorldPosition = null
 let hasDragged = false
 
 
-// If mouse is down and dragged, record position in worldPosition.
+// If mouse is down and dragged, record position in worldPos.
 // Also handles moving of vertex if one is selected and dragged.
 function dragAction(evt) {
 	let uaHas = subs => navigator.userAgent.indexOf(subs) !== -1
 	hasDragged = true
 	
-	prevCanvasPosition = canvasPosition
-	prevWorldPosition = worldPosition
+	prevCanvasPos = canvasPos
 	
-	canvasPosition = new Vec2(evt.pageX, evt.pageY)
-	worldPosition = canvasPosition.clone().add(world.cam)
+	canvasPos = new Vec2(evt.pageX, evt.pageY)
+	let worldPos = canvasPos.clone().add(world.cam)
 	
 	// Helps to differentiate between mouse buttons in different browsers.
 	// The reason it works is because the mouseup event for Firefox has the
 	// releasing button information in the "buttons" attribute, but Chrome
 	// has it on the "button" attribute.
 	if(uaHas("Firefox") && evt.buttons == 1 || uaHas("Chrome") && evt.button == 0) {
-		if(selected) {
-			worldPosition.cloneFrom(selected.pos)
+		if(selected !== null) {
+			selected.pos.cloneFrom(worldPos)
 		}
 		else {
-			let canvasMovement = canvasPosition.clone()
-				.subtract(prevCanvasPosition)
+			let canvasMovement = canvasPos.clone()
+				.subtract(prevCanvasPos)
 				.reverse()
 			world.cam.add(canvasMovement)
 		}
@@ -107,22 +105,20 @@ function dragAction(evt) {
 // register event handlers
 canvas.addEventListener("wheel", evt => {
 	currType += evt.deltaY
+	currType %= Vertices.size
 	
 	if(currType < 0) {
 		currType += Vertices.size
-	}
-	else if(currType >= Vertices.size) {
-		currType -= Vertices.size
 	}
 })
 
 canvas.addEventListener("mousedown", evt => {
 	canvas.addEventListener("mousemove", dragAction)
 	
-	canvasPosition = new Vec2(evt.pageX, evt.pageY)
-	worldPosition = canvasPosition.clone().add(world.cam)
+	canvasPos = new Vec2(evt.pageX, evt.pageY)
+	let worldPos = canvasPos.clone().add(world.cam)
 	
-	selected = world.vertexAt(worldPosition)
+	selected = world.vertexAt(worldPos)
 })
 
 canvas.addEventListener("mouseup", evt => {
@@ -131,12 +127,15 @@ canvas.addEventListener("mouseup", evt => {
 	// left release
 	if(evt.button == 0) {
 		// remove if there's a vertex and there was no dragging
-		if(selected && !hasDragged)
+		if(selected !== null && !hasDragged) {
 			world.despawn(selected)
+		}
 	}
 	// right release
 	else if(evt.button == 2) {
-		let next = world.vertexAt(worldPosition)
+		let worldPos = canvasPos.clone().add(world.cam)
+		let next = world.vertexAt(worldPos)
+		
 		// a vertex was present on mousedown and on mouseup
 		if(selected !== null && next !== null) {
 			// connect vertices if released on a different vertex
@@ -144,7 +143,6 @@ canvas.addEventListener("mouseup", evt => {
 				let arc = new Arc(selected, next)
 				world.connect(selected, next, arc)
 			}
-			// TODO: implement some sort of context menu here?
 			else if(selected === next) {
 				selected.action()
 			}
@@ -155,9 +153,9 @@ canvas.addEventListener("mouseup", evt => {
 			
 			if(vertexClass != null) {
 				let vertex = new vertexClass(world.graph)
-				vertex.pos = new Vec2(...worldPosition)
+				vertex.pos.cloneFrom(worldPos)
 				world.spawn(vertex)
-				console.log(`Vertex placed at ${worldPosition}`)
+				console.log(`Vertex placed at ${worldPos}`)
 			}
 		}
 	}
@@ -165,10 +163,8 @@ canvas.addEventListener("mouseup", evt => {
 	hasDragged = false
 	selected = null
 	
-	prevCanvasPosition = null
-	canvasPosition = null
-	prevWorldPosition = null
-	worldPosition = null
+	prevCanvasPos = null
+	canvasPos = null
 })
 
 window.addEventListener("keydown", evt => {
