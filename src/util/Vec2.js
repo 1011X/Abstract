@@ -19,7 +19,7 @@ class Vec2 extends Float64Array {
 		return this
 	}
 	
-	subtract(rhs) {
+	sub(rhs) {
 		this.x -= rhs[0]
 		this.y -= rhs[1]
 		return this
@@ -32,7 +32,7 @@ class Vec2 extends Float64Array {
 	}
 	
 	resize(s) {
-		return this.scale(s / a.length)
+		return this.scale(s / this.len)
 	}
 
 	norm() {
@@ -44,7 +44,7 @@ class Vec2 extends Float64Array {
 	}
 	
 	get len() {
-		return Math.hypot(...this)
+		return Math.sqrt(this.lensqr)
 	}
 	
 	reverse() {

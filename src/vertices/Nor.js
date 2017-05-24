@@ -1,4 +1,4 @@
-class VertexNOR extends Vertex {
+Vertex.Nor = class extends Vertex.Base {
 	constructor(graph) {
 		super(graph)
 		this.energy = 0
@@ -13,6 +13,12 @@ class VertexNOR extends Vertex {
 		
 		this.energy = 0
 	}
+	
+	toJSON() {
+		let data = super.toJSON()
+		data.energy = this.energy
+		return data
+	}
 }
 
-VertexNOR.prototype.style = new VertexStyle("skyblue", {symbol: "N"})
+Vertex.Nor.prototype.style = new VertexStyle("skyblue", {symbol: "N"})

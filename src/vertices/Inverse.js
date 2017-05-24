@@ -1,4 +1,4 @@
-class VertexInverse extends Vertex {
+Vertex.Inverse = class extends Vertex.Base {
 	update(options) {
 		let max = Math.max(...this.inputs)
 		
@@ -10,4 +10,4 @@ class VertexInverse extends Vertex {
 	}
 }
 
-VertexInverse.prototype.style = new VertexStyle("skyblue", {symbol: "–"})
+Vertex.Inverse.prototype.style = new VertexStyle("skyblue", {symbol: "–"})
