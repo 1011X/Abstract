@@ -1,7 +1,7 @@
 Vertex.Feedback = class extends Vertex.Base {
 	constructor(graph) {
 		super(graph)
-		this.style = new VertexStyle("gray", {symbol: "0"})
+		this.style = new VertexStyle("darkgray", {symbol: "0"})
 	}
 
 	format(value) {
@@ -22,7 +22,7 @@ Vertex.Feedback = class extends Vertex.Base {
 			this.style.textColor = "white"
 		}
 		else {
-			this.style.color = "gray"
+			this.style.color = "darkgray"
 			this.style.textColor = "black"
 		}
 	}
@@ -34,5 +34,4 @@ Vertex.Feedback = class extends Vertex.Base {
 	}
 }
 
-// for when drawing vertex in gui
-Vertex.Feedback.prototype.style = new VertexStyle("gray", {symbol: "0"})
+Vertex.Feedback.prototype.style = new VertexStyle("darkgray", {symbol: "0"})

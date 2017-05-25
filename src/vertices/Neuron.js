@@ -21,4 +21,4 @@ Vertex.Neuron = class extends Vertex.Base {
 	}
 }
 
-Vertex.Neuron.prototype.style = new VertexStyle("darkgray")
+Vertex.Neuron.prototype.style = new VertexStyle("gray")
