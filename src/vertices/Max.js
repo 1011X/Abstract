@@ -1,12 +1,10 @@
 Vertex.Max = class extends Vertex.Base {
-	update(options) {
-		let max = Math.max(...this.inputs)
+	update(ins, outs) {
+		let max = Math.max(...ins)
 		
-		for(let neighbor of this.neighbors) {
-			options.send(neighbor, max)
+		for(let i = 0; i < outs.length; i++) {
+			outs[i] = max
 		}
-		
-		this.inputs = []
 	}
 }
 

@@ -2,7 +2,6 @@ class World {
 	constructor() {
 		this.graph = new DirectedGraph
 		this.cam = new Vec2
-		this.markedForUpdates = new Set
 	}
 	
 	get vertices() {
@@ -41,31 +40,38 @@ class World {
 	}
 	/*
 	moveCamTo(pos) {
-		this.cam[0] = pos[0]
-		this.cam[1] = pos[1]
+		this.cam.cloneFrom(pos)
 	}
 	*/
-	tick(selected) {
-		// Loops through all vertices. Don't do this!
-		// .markedForUpdates is there for a reason!
-		for(let vertex of this.graph.vertices) {
-			this.markedForUpdates.delete(vertex)
+	// TODO change update mechanism; it seems to be updating
+	// weirdly (eg, glitches in updates, changes that weren't in
+	// the previous update mechanism, etc.)
+	tick() {
+		for(let vertex of this.vertices) {
+			let neighbors = [...this.graph.neighborsOf(vertex)]
+			let outs = neighbors.map(_ => 0)
+			let ins = []
 			
-			vertex.update({
-				selected,
-				send: (vert, value) => {
-					if(this.graph.adjacent(vertex, vert)) {
-						vert.inputs.push(value)
-						this.markedForUpdates.add(vert)
+			// TODO uh, do this better somehow
+			for(let from of this.vertices) {
+				for(let to of this.graph.neighborsOf(from)) {
+					if(to === vertex) {
+						ins.push(this.graph.getArc(from, to).value)
 					}
 				}
-			})
+			}
+			
+			vertex.update(ins, outs)
+			
+			for(let i = 0; i < neighbors.length; i++) {
+				let arc = this.graph.getArc(vertex, neighbors[i])
+				arc.value = outs[i]
+			}
 		}
 	}
 	
 	toJSON() {
 		let vertices = [...this.graph.vertices]
-		let markedForUpdates = [...this.markedForUpdates]
 		let arcs = []
 		
 		for(let arc of this.graph.arcs) {
@@ -79,7 +85,6 @@ class World {
 			cam: this.cam.toArray(),
 			vertices,
 			arcs,
-			markedForUpdates,
 		}
 	}
 	
@@ -95,18 +100,21 @@ class World {
 				let vertex = new vertexClass(world.graph)
 				vertex.pos = new Vec2(...vertObj.pos)
 				vertex.motion = new Vec2(...vertObj.motion)
-				vertex.inputs = vertObj.inputs
 				vertices.push(vertex)
 				world.graph.add(vertex)
 			}
 		}
 		
-		let markedForUpdates = []
-		for(let vertObj of data.markedForUpdates) {
-			markedForUpdates.push(vertices[vertObj])
-		}
+		// rather than do it like this, check if any previous
+		// arcs will update the vertex they point to, and add
+		// those to `.markedForUpdate`.
 		
-		world.markedForUpdates = new Set(markedForUpdates)
+		//let markedForUpdates = []
+		//for(let vertObj of data.markedForUpdates) {
+			//markedForUpdates.push(vertices[vertObj])
+		//}
+		
+		//world.markedForUpdates = new Set(markedForUpdates)
 		
 		let arcs = []
 		for(let arcObj of data.arcs) {

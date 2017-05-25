@@ -98,12 +98,12 @@ function dragAction(evt) {
 	// releasing button information in the "buttons" attribute, but Chrome
 	// has it on the "button" attribute.
 	if(uaHas("Firefox") && evt.buttons == 1 || uaHas("Chrome") && evt.button == 0) {
-		if(selected !== null) {
+		if(selected !== null && selected.motion.isNull()) {
 			selected.pos.cloneFrom(worldPos)
 		}
 		else {
 			let canvasMovement = canvasPos.clone()
-				.subtract(prevCanvasPos)
+				.sub(prevCanvasPos)
 				.reverse()
 			world.cam.add(canvasMovement)
 		}
@@ -149,12 +149,12 @@ canvas.addEventListener("mouseup", evt => {
 		// a vertex was present on mousedown and on mouseup
 		if(selected !== null && next !== null) {
 			// connect vertices if released on a different vertex
-			if(selected !== next) {
+			if(selected === next) {
+				selected.action()
+			}
+			else {
 				let arc = new Arc(selected, next)
 				world.connect(selected, next, arc)
-			}
-			else if(selected === next) {
-				selected.action()
 			}
 		}
 		// make new vertex if released in blank area and mouse wasn't dragged
@@ -165,7 +165,6 @@ canvas.addEventListener("mouseup", evt => {
 				let vertex = new vertexClass(world.graph)
 				vertex.pos.cloneFrom(worldPos)
 				world.spawn(vertex)
-				console.log(`Vertex placed at ${worldPos}`)
 			}
 		}
 	}
@@ -200,7 +199,7 @@ dispatchEvent(new Event("resize"))
 
 
 function updateLoop() {
-	world.tick(selected)
+	world.tick()
 }
 
 function drawLoop() {

@@ -21,9 +21,10 @@ Vertex.Switch = class extends Vertex.Base {
 		}
 	}
 
-	update(options) {
-		for(let neighbor of this.neighbors) {
-			options.send(neighbor, this.on ? Infinity : -Infinity)
+	update(ins, outs) {
+		let val = this.on ? Infinity : -Infinity
+		for(let i = 0; i < outs.length; i++) {
+			outs[i] = val
 		}
 	}
 	
