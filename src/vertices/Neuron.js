@@ -4,16 +4,14 @@ Vertex.Neuron = class extends Vertex.Base {
 		this.threshold = 1
 	}
 
-	update(options) {
-		let energy = this.inputs.reduce((acc, val) => acc + val, 0)
+	update(ins, outs) {
+		let energy = ins.reduce((acc, val) => acc + val, 0)
 		
 		if(energy >= this.threshold) {
-			for(let neighbor of this.neighbors) {
-				options.send(neighbor, 1)
+			for(let i = 0; i < outs.length; i++) {
+				outs[i] = 1
 			}
 		}
-		
-		this.inputs = []
 	}
 	
 	toJSON() {

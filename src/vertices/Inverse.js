@@ -1,12 +1,9 @@
 Vertex.Inverse = class extends Vertex.Base {
-	update(options) {
-		let max = Math.max(...this.inputs)
-		
-		for(let neighbor of this.neighbors) {
-			options.send(neighbor, -max)
+	update(ins, outs) {
+		let max = Math.max(...ins)
+		for(let i = 0; i < outs.length; i++) {
+			outs[i] = -max
 		}
-		
-		this.inputs = []
 	}
 }
 

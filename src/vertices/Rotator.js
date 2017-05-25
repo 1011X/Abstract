@@ -1,12 +1,8 @@
 Vertex.Rotator = class extends Vertex.Base {
-	update(options) {
+	update(ins, outs) {
 		for(let neighbor of this.neighbors) {
-			if(neighbor === options.selected) {
-				continue
-			}
-			
 			// TODO figure out why rotating gives neighbor a position of NaN,NaN
-			let energy = this.inputs.reduce((acc, val) => acc + val, 0)
+			let energy = ins.reduce((acc, val) => acc + val, 0)
 			let displace = neighbor.pos.clone()
 				.sub(this.pos)
 				.rotate(Math.TAU / 60 * energy)
@@ -14,8 +10,6 @@ Vertex.Rotator = class extends Vertex.Base {
 			neighbor.pos.cloneFrom(this.pos)
 			neighbor.pos.add(displace)
 		}
-		
-		this.inputs = []
 	}
 }
 

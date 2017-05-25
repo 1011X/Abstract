@@ -1,12 +1,10 @@
 Vertex.Min = class extends Vertex.Base {
-	update(options) {
-		let closest = Math.min(...this.inputs)
+	update(ins, outs) {
+		let min = Math.min(...ins)
 		
-		for(let neighbor of this.neighbors) {
-			options.send(neighbor, closest)
+		for(let i = 0; i < outs.length; i++) {
+			outs[i] = min
 		}
-		
-		this.inputs = []
 	}
 }
 

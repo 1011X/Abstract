@@ -2,14 +2,12 @@ class Arc {
 	constructor(from, to) {
 		this.from = from
 		this.to = to
-		this.weight = 1
-		this.delay = 1
+		this.value = 0
 	}
 	
 	toJSON() {
 		return {
-			weight: this.weight,
-			delay: this.delay
+			value: this.value
 		}
 	}
 }

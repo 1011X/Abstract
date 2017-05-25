@@ -4,11 +4,8 @@ Vertex.Energy = class extends Vertex.Base {
 		this.energy = 1
 	}
 	
-	update(inputs, options) {
-		for(let neighbor of this.neighbors) {
-			options.send(neighbor, 1)
-		}
-		return inputs.map(_ => 1)
+	update(ins, outs) {
+		outs = outs.map(_ => 1)
 	}
 	
 	toJSON() {
