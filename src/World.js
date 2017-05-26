@@ -1,6 +1,6 @@
 class World {
 	constructor() {
-		this.graph = new DirectedGraph
+		this.graph = new MixedGraph
 		this.cam = new Vec2
 	}
 	
@@ -31,12 +31,17 @@ class World {
 		this.graph.delete(vertex)
 	}
 	
-	connect(u, v, val) {
+	arcConnect(u, v, val) {
 		this.graph.setArc(u, v, val)
+	}
+	
+	edgeConnect(u, v, val) {
+		this.graph.setEdge(u, v, val)
 	}
 	
 	disconnect(u, v) {
 		this.graph.deleteArc(u, v)
+		this.graph.deleteEdge(u, v)
 	}
 	/*
 	moveCamTo(pos) {
@@ -48,16 +53,14 @@ class World {
 	// the previous update mechanism, etc.)
 	tick() {
 		for(let vertex of this.vertices) {
-			let neighbors = [...this.graph.neighborsOf(vertex)]
+			let neighbors = [...this.graph.arcNeighbors(vertex)]
 			let outs = neighbors.map(_ => 0)
 			let ins = []
 			
 			// TODO uh, do this better somehow
-			for(let from of this.vertices) {
-				for(let to of this.graph.neighborsOf(from)) {
-					if(to === vertex) {
-						ins.push(this.graph.getArc(from, to).value)
-					}
+			for(let arc of this.graph.arcs) {
+				if(arc.to === vertex) {
+					ins.push(arc.value)
 				}
 			}
 			
@@ -71,26 +74,16 @@ class World {
 	}
 	
 	toJSON() {
-		let vertices = [...this.graph.vertices]
-		let arcs = []
-		
-		for(let arc of this.graph.arcs) {
-			let from = vertices.indexOf(arc.from)
-			let to = vertices.indexOf(arc.to)
-			
-			arcs.push({from, to, value: arc})
-		}
-		
 		return {
 			cam: this.cam.toArray(),
-			vertices,
-			arcs,
+			graph: this.graph,
 		}
 	}
 	
 	static fromJSON(json) {
 		//let data = JSON.parse(localStorage["abstractWorldData"])
 		world.cam = new Vec2(...json.cam)
+		world.graph = DirectedGraph.fromJSON(json.graph)
 		
 		let vertices = []
 		for(let vertObj of json.vertices) {
