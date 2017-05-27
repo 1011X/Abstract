@@ -10,56 +10,12 @@ const canvas = document.getElementById("c")
 const ctx = canvas.getContext("2d")
 
 // TODO have this as a deserialization function for World
-function load() {
-	let data = JSON.parse(localStorage["abstractWorldData"])
-	/*
-	world.cam = new Vec2(...data.cam)
-	
-	let vertices = []
-	for(let vertObj of data.vertices) {
-		let vertexClass = Vertices.get(vertObj.type)
-		
-		if(vertexClass !== null) {
-			let vertex = new vertexClass(world.graph)
-			vertex.pos = vertObj.pos.clone()
-			vertex.motion = vertObj.motion.clone()
-			vertex.inputs = vertObj.inputs
-			vertices.push(vertex)
-			world.graph.add(vertex)
-		}
-	}
-	
-	let markedForUpdates = []
-	for(let vertObj of data.markedForUpdates) {
-		markedForUpdates.push(vertices[vertObj])
-	}
-	
-	world.markedForUpdates = new Set(markedForUpdates)
-	
-	let arcs = []
-	for(let arcObj of data.arcs) {
-		let from = vertices[arcObj.from]
-		let to = vertices[arcObj.to]
-		let arc = new Arc(from, to)
-		arc.weight = arcObj.value.weight
-		arc.delay = arcObj.value.delay
-		arcs.push(arc)
-		world.graph.setArc(from, to, arc)
-	}
-	*/
-}
-
-function save() {
-	localStorage["abstractWorldData"] = JSON.stringify(world, null, "\t")
-}
 
 // Load world data, if there is any
-let world = !localStorage["abstractWorldData"] ? new World
-	: World.fromJSON(JSON.parse(localStorage["abstractWorldData"]))
+let world = null
 
-let selected = null
-let currType = 0
-let doDrawing = true
+let selected = null // vertex clicked on mousedown
+let currType = 0 // vertex type selected for placement
 // let vectorPool = new ObjectPool(Vec2.create64, 10)
 
 let canvasPos = null
@@ -67,6 +23,25 @@ let prevCanvasPos = null
 
 let hasDragged = false
 
+function save() {
+	localStorage["gameData"] = JSON.stringify({
+		selected: currType,
+		world
+	})
+}
+
+function load() {
+	if(!localStorage["gameData"]) {
+		world = new World
+	}
+	else {
+		let game = JSON.parse(localStorage["gameData"])
+		world = World.fromJSON(game.world)
+		currType = game.selected
+	}
+}
+
+load()
 
 // If mouse is down and dragged, record position in worldPos.
 // Also handles moving of vertex if one is selected and dragged.
