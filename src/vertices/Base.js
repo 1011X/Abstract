@@ -1,13 +1,7 @@
 Vertex.Base = class {
-	constructor(graph) {
+	constructor() {
 		this.pos = new Vec2
 		this.motion = new Vec2
-		
-		this.graph = graph
-	}
-	
-	get neighbors() {
-		return this.graph.neighborsOf(this)
 	}
 	
 	// maybe???
@@ -17,13 +11,14 @@ Vertex.Base = class {
 	action() {}
 	
 	toJSON() {
-		return {
-			pos: this.pos.toArray(),
-			motion: this.motion.toArray(),
-		}
+		return this
 	}
 	
 	static fromJSON(json) {
+		let vertex = new this
+		vertex.pos = new Vec2(...json.pos)
+		vertex.motion = new Vec2(...json.motion)
+		return vertex
 	}
 }
 

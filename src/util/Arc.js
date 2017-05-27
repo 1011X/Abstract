@@ -1,7 +1,7 @@
 class Arc {
-	constructor(from, to) {
+	constructor(from, to, val = 0) {
 		this.from = from
 		this.to = to
-		this.value = 0
+		this.value = val
 	}
 }

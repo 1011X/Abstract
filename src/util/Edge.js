@@ -17,4 +17,8 @@ class Edge {
 		}
 		return null
 	}
+	
+	toArray() {
+		return [this._a, this._b]
+	}
 }

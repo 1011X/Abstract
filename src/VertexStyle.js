@@ -9,13 +9,29 @@ class VertexStyle {
 	}
 	
 	toJSON() {
-		return {
-			color: this.color,
-			border: this.border,
-			symbol: this.symbol,
-			textColor: this.textColor
-			//borderStart: this.borderStart
-			//borderEnd: this.borderEnd
+		let style = {color: this.color}
+		
+		if(this.border !== "black") {
+			style.border = this.border
 		}
+		
+		if(this.symbol !== "") {
+			style.symbol = this.symbol
+		}
+		
+		if(this.textColor !== "black") {
+			style.textColor = this.textColor
+		}
+		
+		return style
+	}
+	
+	static fromJSON(json) {
+		let style = new this
+		style.color = json.color
+		for(let prop in json) {
+			style[prop] = json[prop]
+		}
+		return style
 	}
 }

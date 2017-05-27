@@ -76,7 +76,7 @@ class Vec2 extends Float64Array {
 		this.y = source[1]
 	}
 	
-	toArray() {
+	toJSON() {
 		return [this.x, this.y]
 	}
 	

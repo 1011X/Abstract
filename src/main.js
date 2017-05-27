@@ -1,22 +1,10 @@
 /// TODO
-/// * Figure out vertex serialization
 /// * Do new vertex selection
-/// * Re-add edges?
+/// * Add Rust-like iterator methods for manual `for` loops
 
 "use strict"
 
 Math.TAU = 2 * Math.PI
-
-// register vertex types
-const Vertices = new RegistryWithDefault("none")
-Vertices.add(0, "none", null)
-Vertices.add(1, "rotator", Vertex.Rotator)
-Vertices.add(2, "neuron", Vertex.Neuron)
-Vertices.add(3, "feedback", Vertex.Feedback)
-Vertices.add(4, "switch", Vertex.Switch)
-Vertices.add(5, "min", Vertex.Min)
-Vertices.add(6, "max", Vertex.Max)
-Vertices.add(7, "inverse", Vertex.Inverse)
 
 const canvas = document.getElementById("c")
 const ctx = canvas.getContext("2d")
@@ -24,6 +12,7 @@ const ctx = canvas.getContext("2d")
 // TODO have this as a deserialization function for World
 function load() {
 	let data = JSON.parse(localStorage["abstractWorldData"])
+	/*
 	world.cam = new Vec2(...data.cam)
 	
 	let vertices = []
@@ -57,18 +46,16 @@ function load() {
 		arcs.push(arc)
 		world.graph.setArc(from, to, arc)
 	}
+	*/
 }
 
 function save() {
 	localStorage["abstractWorldData"] = JSON.stringify(world, null, "\t")
 }
 
-let world = new World
-
 // Load world data, if there is any
-if(localStorage["abstractWorldData"]) {
-	load()
-}
+let world = !localStorage["abstractWorldData"] ? new World
+	: World.fromJSON(JSON.parse(localStorage["abstractWorldData"]))
 
 let selected = null
 let currType = 0
@@ -76,7 +63,6 @@ let doDrawing = true
 // let vectorPool = new ObjectPool(Vec2.create64, 10)
 
 let canvasPos = null
-let canvasDelta = null
 let prevCanvasPos = null
 
 let hasDragged = false
@@ -115,10 +101,10 @@ function dragAction(evt) {
 // register event handlers
 canvas.addEventListener("wheel", evt => {
 	currType += evt.deltaY
-	currType %= Vertices.size
+	currType %= Vertex.registry.size
 	
 	if(currType < 0) {
-		currType += Vertices.size
+		currType += Vertex.registry.size
 	}
 })
 
@@ -154,12 +140,12 @@ canvas.addEventListener("mouseup", evt => {
 			}
 			else {
 				let arc = new Arc(selected, next)
-				world.connect(selected, next, arc)
+				world.arcConnect(selected, next, arc)
 			}
 		}
 		// make new vertex if released in blank area and mouse wasn't dragged
 		else if(selected === null && next === null && !hasDragged) {
-			let vertexClass = Vertices.getById(currType)
+			let vertexClass = Vertex.registry.getById(currType)
 			
 			if(vertexClass != null) {
 				let vertex = new vertexClass(world.graph)
@@ -183,7 +169,7 @@ window.addEventListener("keydown", evt => {
 	}
 	// 'r' is pressed
 	if(evt.keyCode == 82) {
-		localStorage["abstractWorldData"] = ""
+		//localStorage.removeItem("abstractWorldData")
 	}
 })
 
@@ -296,7 +282,7 @@ function drawLoop() {
 	
 	ctx.save()
 	
-	let vertexClass = Vertices.getById(currType)
+	let vertexClass = Vertex.registry.getById(currType)
 	
 	if(vertexClass != null) {
 		let style = vertexClass.prototype.style
@@ -339,4 +325,5 @@ function drawLoop() {
 }
 
 setInterval(updateLoop, 50/3)
+setInterval(save, 60 * 1000)
 requestAnimationFrame(drawLoop)

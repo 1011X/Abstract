@@ -12,11 +12,11 @@ class MixedGraph {
 	}
 
 	get arcs() {
-		return this._arcs.keys()
+		return this._arcs.values()
 	}
 	
 	get edges() {
-		return this._edges.keys()
+		return this._edges.values()
 	}
 
 	has(vertex) {
@@ -129,24 +129,39 @@ class MixedGraph {
 		let arcs = []
 		let edges = []
 		
-		for(let vertex of this.vertices) {
-			for(let neighbor of this.arcNeighbors(vertex)) {
-				arcs.push({
-					from: vertices.indexOf(vertex),
-					to: vertices.indexOf(neighbor),
-					value: this.getArc(vertex, neighbor).value,
-				})
-			}
-			
-			for(let neighbor of this.edgeNeighbors(vertex)) {
-				edges.push({
-					from: vertices.indexOf(vertex),
-					to: vertices.indexOf(neighbor),
-					value: this.getEdge(vertex, neighbor).value,
-				})
-			}
+		for(let arc of this.arcs) {
+			arcs.push([
+				vertices.indexOf(arc.from),
+				vertices.indexOf(arc.to),
+				arc.value
+			])
+		}
+		
+		for(let edge of this.edges) {
+			let [u, v] = edge.toArray()
+			edges.push([vertices.indexOf(u), vertices.indexOf(v)])
 		}
 		
 		return {vertices, arcs, edges}
+	}
+	
+	static fromJSON(json) {
+		let graph = new this
+		graph._vertices = new Set(json.vertices)
+		
+		for(let [from, to, value] of json.arcs) {
+			graph._arcs.add(new Arc(
+				json.vertices[from],
+				json.vertices[to],
+				value
+			))
+		}
+		
+		for(let [from, to] of json.edges) {
+			let edge = new Edge(json.vertices[from], json.vertices[to])
+			graph._edges.add(edge)
+		}
+		
+		return graph
 	}
 }
