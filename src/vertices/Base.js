@@ -1,31 +1,26 @@
 Vertex.Base = class {
-	constructor(graph) {
+	constructor() {
 		this.pos = new Vec2
 		this.motion = new Vec2
-		
-		this.graph = graph
 	}
 	
-	get neighbors() {
-		return this.graph.neighborsOf(this)
+	update(ins, outs) {
 	}
 	
-	// maybe???
-	update(inp, outp) {
+	action() {
 	}
-	
-	action() {}
 	
 	toJSON() {
-		return {
-			pos: this.pos.toArray(),
-			motion: this.motion.toArray(),
-		}
+		return this
 	}
 	
 	static fromJSON(json) {
+		let vertex = new this
+		vertex.pos = new Vec2(...json.pos)
+		vertex.motion = new Vec2(...json.motion)
+		return vertex
 	}
 }
 
 Vertex.Base.prototype.radius = 18
-Vertex.Base.prototype.type = "none"
+Vertex.Base.prototype.style = new VertexStyle("black")
