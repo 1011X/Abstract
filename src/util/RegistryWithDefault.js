@@ -1,5 +1,3 @@
-// import "lib/Map.js"
-
 class RegistryWithDefault {
 	constructor(name) {
 		this.key = name
@@ -33,5 +31,14 @@ class RegistryWithDefault {
 			return this.idMap.get(id)
 		}
 		return this.value
+	}
+	
+	getName(val) {
+		for(let entry of this.nameMap.entries()) {
+			if(val === entry[1]) {
+				return entry[0]
+			}
+		}
+		return this.key
 	}
 }
