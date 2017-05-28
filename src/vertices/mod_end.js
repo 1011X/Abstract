@@ -1,4 +1,4 @@
-Vertex.registry.add(0, "broken", null)
+Vertex.registry.add(0, "none", Vertex.Base)
 Vertex.registry.add(1, "rotator", Vertex.Rotator)
 Vertex.registry.add(2, "neuron", Vertex.Neuron)
 Vertex.registry.add(3, "feedback", Vertex.Feedback)

@@ -4,11 +4,11 @@ Vertex.Base = class {
 		this.motion = new Vec2
 	}
 	
-	// maybe???
-	update(inp, outp) {
+	update(ins, outs) {
 	}
 	
-	action() {}
+	action() {
+	}
 	
 	toJSON() {
 		return this
@@ -23,4 +23,4 @@ Vertex.Base = class {
 }
 
 Vertex.Base.prototype.radius = 18
-Vertex.Base.prototype.type = "none"
+Vertex.Base.prototype.style = new VertexStyle("black")

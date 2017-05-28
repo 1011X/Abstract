@@ -4,6 +4,7 @@ class VertexStyle {
 		this.border = options.border || "black"
 		this.symbol = options.symbol || ""
 		this.textColor = options.textColor || "black"
+		this.gradient = options.gradient || VertexStyle.NO_GRADIENT
 		//this.borderStart = options.borderStart || 0
 		//this.borderEnd = options.borderEnd || Math.TAU
 	}
@@ -35,3 +36,7 @@ class VertexStyle {
 		return style
 	}
 }
+
+VertexStyle.NO_GRADIENT = 0
+VertexStyle.LINEAR_GRADIENT = 1
+VertexStyle.RADIAL_GRADIENT = 2

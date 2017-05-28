@@ -1,7 +1,10 @@
 Vertex.Feedback = class extends Vertex.Base {
 	constructor() {
 		super()
-		this.style = new VertexStyle("darkgray", {symbol: "0"})
+		this.style = new VertexStyle("darkgray", {
+			symbol: "0",
+			gradient: VertexStyle.RADIAL_GRADIENT
+		})
 	}
 
 	format(value) {
@@ -31,4 +34,7 @@ Vertex.Feedback = class extends Vertex.Base {
 	}
 }
 
-Vertex.Feedback.prototype.style = new VertexStyle("darkgray", {symbol: "0"})
+Vertex.Feedback.prototype.style = new VertexStyle("darkgray", {
+	symbol: "0",
+	gradient: VertexStyle.RADIAL_GRADIENT
+})

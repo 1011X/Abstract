@@ -1,5 +1,6 @@
 Vertex.Rotator = class extends Vertex.Base {
 	update(ins, outs) {
+		/*
 		for(let neighbor of this.neighbors) {
 			// TODO figure out why rotating gives neighbor a position of NaN,NaN
 			let energy = ins.reduce((acc, val) => acc + val, 0)
@@ -10,7 +11,11 @@ Vertex.Rotator = class extends Vertex.Base {
 			neighbor.pos.cloneFrom(this.pos)
 			neighbor.pos.add(displace)
 		}
+		*/
 	}
 }
 
-Vertex.Rotator.prototype.style = new VertexStyle("lightgreen")
+Vertex.Rotator.prototype.style = new VertexStyle("lightgreen", {
+	symbol: "⛭",
+	gradient: VertexStyle.RADIAL_GRADIENT
+})

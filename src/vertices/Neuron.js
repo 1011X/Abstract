@@ -1,6 +1,6 @@
 Vertex.Neuron = class extends Vertex.Base {
-	constructor(graph) {
-		super(graph)
+	constructor() {
+		super()
 		this.threshold = 1
 	}
 
@@ -15,4 +15,4 @@ Vertex.Neuron = class extends Vertex.Base {
 	}
 }
 
-Vertex.Neuron.prototype.style = new VertexStyle("gray")
+Vertex.Neuron.prototype.style = new VertexStyle("darkgray")

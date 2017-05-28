@@ -7,4 +7,7 @@ Vertex.Inverse = class extends Vertex.Base {
 	}
 }
 
-Vertex.Inverse.prototype.style = new VertexStyle("skyblue", {symbol: "–"})
+Vertex.Inverse.prototype.style = new VertexStyle("skyblue", {
+	symbol: "–",
+	gradient: VertexStyle.RADIAL_GRADIENT,
+})
