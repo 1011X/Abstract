@@ -1,7 +1,9 @@
 class World {
 	constructor() {
-		this.graph = new MixedGraph
 		this.cam = new Vec2
+		//this.markForUpdate = new Set
+		
+		this.graph = new MixedGraph
 	}
 	
 	get vertices() {
@@ -25,6 +27,7 @@ class World {
 	
 	spawn(vertex) {
 		this.graph.add(vertex)
+		//this.markForUpdate(vertex)
 	}
 	
 	despawn(vertex) {
@@ -33,15 +36,13 @@ class World {
 	
 	arcConnect(u, v, val) {
 		this.graph.setArc(u, v, val)
+		//this.markForUpdate(u)
 	}
 	
 	edgeConnect(u, v, val) {
 		this.graph.setEdge(u, v, val)
-	}
-	
-	disconnect(u, v) {
-		this.graph.deleteArc(u, v)
-		this.graph.deleteEdge(u, v)
+		//this.markForUpdate(u)
+		//this.markForUpdate(v)
 	}
 	/*
 	moveCamTo(pos) {
