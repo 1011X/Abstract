@@ -36,6 +36,8 @@ There are a variety of vertex types, and their effects range from mechanical mov
 
 **Rotator**: Rotates neighbors connected by edge when receiving a non-zero input signal. I've yet to decide if the vertex will remain fixed, or if it'll take other vertices into account and rotate around a center-point.
 
+**Positive/Negative**: Vertices with a positive or negative charge that move depending on the surrounding electric field. It might be a type that is charged based on input, or inductively based on surrounding vertices.
+
 
 ## Planned Features
 
