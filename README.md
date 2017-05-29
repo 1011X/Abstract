@@ -42,7 +42,6 @@ There are a variety of vertex types, and their effects range from mechanical mov
 * Collision detection (maybe?)
 * Forces (eg. gravitational, electromagnetic)
 * Multiple vertex selection
-* 
 
 ### Ideas
 
