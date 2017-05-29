@@ -19,26 +19,59 @@ class RegistryWithDefault {
 		this.nameMap.set(name, object)
 	}
 	
-	get(name) {
-		if(this.nameMap.has(name)) {
-			return this.nameMap.get(name)
+	get(param) {
+		switch(typeof param) {
+			case "number":
+				return this.idMap.get(param) || this.value
+			case "string":
+				return this.nameMap.get(param) || this.value
+			default:
+				throw new TypeError("RegistryWithDefault: Invalid parameter type.")
 		}
-		return this.value
 	}
 	
-	getById(id) {
-		if(this.idMap.has(id)) {
-			return this.idMap.get(id)
+	getName(param) {
+		let val
+		
+		switch(typeof param) {
+			case "number":
+				// if id is given, get its constructor
+				val = this.get(param); break
+			case "function":
+				val = param; break
+			default:
+				throw new TypeError("RegistryWithDefault: Invalid parameter type.")
 		}
-		return this.value
-	}
-	
-	getName(val) {
+		
+		// iterate thru name entries
 		for(let entry of this.nameMap.entries()) {
 			if(val === entry[1]) {
 				return entry[0]
 			}
 		}
+		
 		return this.key
+	}
+	
+	getId(param) {
+		let val
+		
+		switch(typeof param) {
+			case "string":
+				// if name is given, get its constructor
+				val = this.get(param); break
+			case "function":
+				val = param; break
+			default:
+				throw new TypeError("RegistryWithDefault: Invalid parameter type.")
+		}
+		
+		for(let entry of this.idMap.entries()) {
+			if(val === entry[1]) {
+				return entry[0]
+			}
+		}
+		
+		return -1
 	}
 }

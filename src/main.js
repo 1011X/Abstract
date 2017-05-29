@@ -1,6 +1,6 @@
 /// TODO
-/// * Do new vertex selection
-/// * Add Rust-like iterator methods for manual `for` loops
+/// * Add Rust-like iterators to replace manual `for` loops?
+/// * 
 
 "use strict"
 
@@ -23,7 +23,7 @@ let hasDragged = false
 
 function save() {
 	localStorage["gameData"] = JSON.stringify({
-		currVert: currVert,
+		currVert: Vertex.registry.getName(currVert),
 		currEdge: currEdge,
 		world
 	})
@@ -36,12 +36,12 @@ function load() {
 	else {
 		let game = JSON.parse(localStorage["gameData"])
 		world = World.fromJSON(game.world)
-		currVert = game.selected || game.currVert
+		currVert = Vertex.registry.getId(game.currVert)
 		currEdge = game.currEdge
 	}
 }
 
-// Load world data, if there is any
+// Load world data, if any
 load()
 
 // If mouse is down and dragged, record position in worldPos.
@@ -63,8 +63,8 @@ function dragAction(evt) {
 		// if a vertex was selected and it wasn't moving,
 		// then move it according to the cursor's movement.
 		if(selected !== null && selected.motion.isNull()) {
-			// we use the Base type as an "anchor"
-			if(!(selected.constructor === Vertex.Base)) {
+			// ensure it's not the Anchor type
+			if(!(selected instanceof Vertex.Anchor)) {
 				selected.pos.cloneFrom(worldPos)
 			}
 		}
@@ -136,7 +136,7 @@ canvas.addEventListener("mouseup", evt => {
 		}
 		// make new vertex if released in blank area and mouse wasn't dragged
 		else if(selected === null && next === null && !hasDragged) {
-			let vertexClass = Vertex.registry.getById(currVert)
+			let vertexClass = Vertex.registry.get(currVert)
 			
 			if(vertexClass != null) {
 				let vertex = new vertexClass(world.graph)
@@ -158,10 +158,6 @@ window.addEventListener("keydown", evt => {
 	if(evt.keyCode == 83) {
 		save()
 	}
-	// 'r' is pressed
-	if(evt.keyCode == 82) {
-		localStorage.removeItem("gameData")
-	}
 	// 'e' is pressed
 	if(evt.keyCode == 69) {
 		if(currEdge === 0) {
@@ -182,6 +178,47 @@ window.addEventListener("resize", evt => {
 	canvas.height = innerHeight
 })
 dispatchEvent(new Event("resize"))
+
+
+function drawVertex(pos, radius, style) {
+	ctx.save()
+
+	if(style.gradient === VertexStyle.RADIAL_GRADIENT) {
+		let radialGradient = ctx.createRadialGradient(...pos, 0, ...pos, radius)
+	
+		if(style.textColor === "white") {
+			radialGradient.addColorStop(0, "black")
+			radialGradient.addColorStop(1, style.color)
+		}
+		else {
+			radialGradient.addColorStop(0, "white")
+			radialGradient.addColorStop(1, style.color)
+		}
+
+		ctx.fillStyle = radialGradient
+	}
+	else {
+		ctx.fillStyle = style.color
+	}
+
+	ctx.strokeStyle = style.border
+
+	ctx.beginPath()
+	ctx.arc(...pos, radius, 0, Math.TAU)
+	ctx.closePath()
+	ctx.fill()
+	ctx.stroke()
+
+	if(style.symbol) {
+		ctx.fillStyle = style.textColor
+		ctx.textAlign = "center"
+		ctx.textBaseline = "middle"
+		ctx.font = "bold 18px sans-serif"
+		ctx.fillText(style.symbol, ...pos)
+	}
+
+	ctx.restore()
+}
 
 
 function updateLoop() {
@@ -215,12 +252,12 @@ function drawLoop() {
 			.resize(edge[1].radius)
 		
 		// adjust line start and end positions
-		const tail = from.clone().add(fromOffset)
-		const head = to.clone().add(toOffset)
+		from.add(fromOffset)
+		to.add(toOffset)
 		
 		ctx.beginPath()
-		ctx.moveTo(...tail)
-		ctx.lineTo(...head)
+		ctx.moveTo(...from)
+		ctx.lineTo(...to)
 		ctx.closePath()
 		
 		ctx.stroke()
@@ -290,81 +327,22 @@ function drawLoop() {
 	for(let vertex of world.vertices) {
 		// get position relative to canvas
 		let pos = vertex.pos.clone().sub(world.cam)
-		ctx.save()
-		
-		if(vertex.style.gradient === VertexStyle.RADIAL_GRADIENT) {
-			let radialGradient = ctx.createRadialGradient(...pos, 0, ...pos, vertex.radius)
-			
-			if(vertex.style.textColor === "white") {
-				radialGradient.addColorStop(0, "black")
-				radialGradient.addColorStop(1, vertex.style.color)
-			}
-			else {
-				radialGradient.addColorStop(0, "white")
-				radialGradient.addColorStop(1, vertex.style.color)
-			}
-		
-			ctx.fillStyle = radialGradient
-		}
-		else {
-			ctx.fillStyle = vertex.style.color
-		}
-		
-		ctx.strokeStyle = vertex.style.border
-		
-		ctx.beginPath()
-		
-		ctx.arc(...pos, vertex.radius, 0, Math.TAU)
-		
-		ctx.closePath()
-		ctx.fill()
-		ctx.stroke()
-		
-		if(vertex.style.symbol) {
-			ctx.fillStyle = vertex.style.textColor
-			ctx.textAlign = "center"
-			ctx.textBaseline = "middle"
-			ctx.font = "bold 18px sans-serif"
-			ctx.fillText(vertex.style.symbol, ...pos)
-		}
-		
-		ctx.restore()
+		drawVertex(pos, vertex.radius, vertex.style)
 	}
 	
 	ctx.save()
 	
 	// draw UI
 	
-	let vertexClass = Vertex.registry.getById(currVert)
+	let vertexClass = Vertex.registry.get(currVert)
 	
-	if(vertexClass != null) {
-		let style = vertexClass.prototype.style
-		let pos = new Vec2(
-			/*world.RAD*/ 20 + 10,
-			innerHeight - /*world.RAD*/ 20 - 10
-		)
-		
-		ctx.fillStyle = style.color
-		ctx.strokeStyle = style.border
-		
-		ctx.beginPath()
+	let {style, radius} = vertexClass.prototype
+	let pos = new Vec2(
+		/*world.RAD*/ 20 + 10,
+		innerHeight - /*world.RAD*/ 20 - 10
+	)
 	
-		ctx.arc(...pos, vertexClass.prototype.radius, 0, Math.TAU)
-	
-		ctx.closePath()
-		ctx.fill()
-		ctx.stroke()
-	
-		if(style.symbol) {
-			ctx.fillStyle = style.textColor
-			ctx.textAlign = "center"
-			ctx.textBaseline = "middle"
-			ctx.font = "bold 18px sans-serif"
-			ctx.fillText(style.symbol, ...pos)
-		}
-	
-		ctx.restore()
-	}
+	drawVertex(pos, radius, style)
 	
 	{
 		let start = new Vec2(10 + 2 * 20 + 10, innerHeight - 13)
