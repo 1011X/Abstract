@@ -1,7 +1,9 @@
 class World {
 	constructor() {
-		this.graph = new DirectedGraph
 		this.cam = new Vec2
+		//this.markForUpdate = new Set
+		
+		this.graph = new MixedGraph
 	}
 	
 	get vertices() {
@@ -25,39 +27,39 @@ class World {
 	
 	spawn(vertex) {
 		this.graph.add(vertex)
+		//this.markForUpdate(vertex)
 	}
 	
 	despawn(vertex) {
 		this.graph.delete(vertex)
 	}
 	
-	connect(u, v, val) {
+	arcConnect(u, v, val) {
 		this.graph.setArc(u, v, val)
+		//this.markForUpdate(u)
 	}
 	
-	disconnect(u, v) {
-		this.graph.deleteArc(u, v)
+	edgeConnect(u, v, val) {
+		this.graph.setEdge(u, v, val)
+		//this.markForUpdate(u)
+		//this.markForUpdate(v)
 	}
 	/*
 	moveCamTo(pos) {
 		this.cam.cloneFrom(pos)
 	}
 	*/
-	// TODO change update mechanism; it seems to be updating
-	// weirdly (eg, glitches in updates, changes that weren't in
-	// the previous update mechanism, etc.)
+	// TODO Improve update mechanism; seems to update weirdly
+	// (eg, glitches, previously unseen behavior, etc.).
 	tick() {
 		for(let vertex of this.vertices) {
-			let neighbors = [...this.graph.neighborsOf(vertex)]
+			let neighbors = [...this.graph.arcNeighbors(vertex)]
 			let outs = neighbors.map(_ => 0)
 			let ins = []
 			
-			// TODO uh, do this better somehow
-			for(let from of this.vertices) {
-				for(let to of this.graph.neighborsOf(from)) {
-					if(to === vertex) {
-						ins.push(this.graph.getArc(from, to).value)
-					}
+			for(let arc of this.graph.arcs) {
+				if(arc.to === vertex) {
+					ins.push(arc.value)
 				}
 			}
 			
@@ -71,43 +73,56 @@ class World {
 	}
 	
 	toJSON() {
-		let vertices = [...this.graph.vertices]
-		let arcs = []
+		let graph = this.graph.toJSON()
 		
-		for(let arc of this.graph.arcs) {
-			let from = vertices.indexOf(arc.from)
-			let to = vertices.indexOf(arc.to)
-			
-			arcs.push({from, to, value: arc})
-		}
+		// set vertex type on the object to know which constructor to
+		// call when deserializing
+		graph.vertices = graph.vertices.map(v => {
+			let vertex = v.toJSON()
+			vertex.type = Vertex.registry.getName(v.constructor)
+			return vertex
+		})
 		
-		return {
-			cam: this.cam.toArray(),
-			vertices,
-			arcs,
-		}
-	}
-	
-	static fromJSON(json) {
-		//let data = JSON.parse(localStorage["abstractWorldData"])
-		world.cam = new Vec2(...json.cam)
-		
-		let vertices = []
-		for(let vertObj of json.vertices) {
-			let vertexClass = Vertices.get(vertObj.type)
-			
-			if(vertexClass !== null) {
-				let vertex = new vertexClass(world.graph)
-				vertex.pos = new Vec2(...vertObj.pos)
-				vertex.motion = new Vec2(...vertObj.motion)
-				vertices.push(vertex)
-				world.graph.add(vertex)
+		// ugh, no valid representation for IEEE NaN and Infinity
+		// in JSON, so convert them to strings
+		for(let arc of graph.arcs) {
+			switch(arc[2]) {
+				case Infinity: arc[2] = "inf"; break;
+				case -Infinity: arc[2] = "-inf"; break;
+				case NaN: arc[2] = "nan"; break;
 			}
 		}
 		
-		// rather than do it like this, check if any previous
-		// arcs will update the vertex they point to, and add
-		// those to `.markedForUpdate`.
+		return {cam: this.cam, graph}
+	}
+	
+	static fromJSON(json) {
+		let world = new World
+		world.cam = new Vec2(...json.cam)
+		
+		// convert json.graph.vertices into regular vertex objects
+		// from the provided type in json
+		let vertices = []
+		for(let vertObj of json.graph.vertices) {
+			let vertexClass = Vertex.registry.get(vertObj.type)
+			let vertex = vertexClass.fromJSON(vertObj)
+			vertices.push(vertex)
+		}
+		json.graph.vertices = vertices
+		
+		// turn back string values to numeric values
+		for(let arc of json.graph.arcs) {
+			switch(arc[2]) {
+				case "inf": arc[2] = Infinity; break;
+				case "-inf": arc[2] = -Infinity; break;
+				case "nan": arc[2] = NaN; break;
+			}
+		}
+		
+		world.graph = MixedGraph.fromJSON(json.graph)
+		
+		// can also check if any previous arcs will update their
+		// next vertex, and add those to `.markedForUpdate`.
 		
 		//let markedForUpdates = []
 		//for(let vertObj of data.markedForUpdates) {
@@ -116,15 +131,6 @@ class World {
 		
 		//world.markedForUpdates = new Set(markedForUpdates)
 		
-		let arcs = []
-		for(let arcObj of data.arcs) {
-			let from = vertices[arcObj.from]
-			let to = vertices[arcObj.to]
-			let arc = new Arc(from, to)
-			arc.weight = arcObj.value.weight
-			arc.delay = arcObj.value.delay
-			arcs.push(arc)
-			world.graph.setArc(from, to, arc)
-		}
+		return world
 	}
 }

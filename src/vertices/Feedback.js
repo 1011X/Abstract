@@ -1,7 +1,10 @@
 Vertex.Feedback = class extends Vertex.Base {
-	constructor(graph) {
-		super(graph)
-		this.style = new VertexStyle("darkgray", {symbol: "0"})
+	constructor() {
+		super()
+		this.style = new VertexStyle("darkgray", {
+			symbol: "0",
+			gradient: VertexStyle.RADIAL_GRADIENT
+		})
 	}
 
 	format(value) {
@@ -12,12 +15,15 @@ Vertex.Feedback = class extends Vertex.Base {
 		}
 	}
 
-	setColor(value) {
-		if(value === Infinity) {
+	update(ins, outs) {
+		let energy = ins.reduce((acc, val) => acc + val, 0)
+		this.style.symbol = this.format(energy)
+		
+		if(energy === Infinity) {
 			this.style.color = "white"
 			this.style.textColor = "black"
 		}
-		else if(value === -Infinity) {
+		else if(energy === -Infinity) {
 			this.style.color = "black"
 			this.style.textColor = "white"
 		}
@@ -26,12 +32,9 @@ Vertex.Feedback = class extends Vertex.Base {
 			this.style.textColor = "black"
 		}
 	}
-
-	update(ins, outs) {
-		let energy = ins.reduce((acc, val) => acc + val, 0)
-		this.setColor(energy)
-		this.style.symbol = this.format(energy)
-	}
 }
 
-Vertex.Feedback.prototype.style = new VertexStyle("darkgray", {symbol: "0"})
+Vertex.Feedback.prototype.style = new VertexStyle("darkgray", {
+	symbol: "0",
+	gradient: VertexStyle.RADIAL_GRADIENT
+})

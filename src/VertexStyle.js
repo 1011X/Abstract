@@ -4,18 +4,39 @@ class VertexStyle {
 		this.border = options.border || "black"
 		this.symbol = options.symbol || ""
 		this.textColor = options.textColor || "black"
+		this.gradient = options.gradient || VertexStyle.NO_GRADIENT
 		//this.borderStart = options.borderStart || 0
 		//this.borderEnd = options.borderEnd || Math.TAU
 	}
 	
 	toJSON() {
-		return {
-			color: this.color,
-			border: this.border,
-			symbol: this.symbol,
-			textColor: this.textColor
-			//borderStart: this.borderStart
-			//borderEnd: this.borderEnd
+		let style = {color: this.color}
+		
+		if(this.border !== "black") {
+			style.border = this.border
 		}
+		
+		if(this.symbol !== "") {
+			style.symbol = this.symbol
+		}
+		
+		if(this.textColor !== "black") {
+			style.textColor = this.textColor
+		}
+		
+		return style
+	}
+	
+	static fromJSON(json) {
+		let style = new this
+		style.color = json.color
+		for(let prop in json) {
+			style[prop] = json[prop]
+		}
+		return style
 	}
 }
+
+VertexStyle.NO_GRADIENT = 0
+VertexStyle.LINEAR_GRADIENT = 1
+VertexStyle.RADIAL_GRADIENT = 2
