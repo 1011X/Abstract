@@ -220,6 +220,68 @@ function drawVertex(pos, radius, style) {
 	ctx.restore()
 }
 
+function drawEdge(begin, end) {
+	ctx.beginPath()
+	ctx.moveTo(...begin)
+	ctx.lineTo(...end)
+	ctx.closePath()
+	ctx.stroke()
+}
+
+function drawArc(begin, end, opp_head = false) {
+	// draw dashed line
+	ctx.beginPath()
+	ctx.setLineDash([15, 15])
+	ctx.moveTo(...begin)
+	ctx.lineTo(...end)
+	ctx.stroke()
+	
+	let angle = Math.TAU / 12
+	let line = begin.clone().sub(end)
+	let tip = line.clone()
+		.resize(16)
+		.rotate(angle)
+		.add(end)
+	
+	// draw arrowhead
+	ctx.beginPath()
+	ctx.setLineDash([])
+	ctx.moveTo(...end)
+	ctx.lineTo(...tip)
+	ctx.moveTo(...end)
+	
+	tip.sub(end)
+		.rotate(-2 * angle)
+		.add(end)
+	
+	ctx.lineTo(...tip)
+	ctx.moveTo(...end)
+	
+	// draw back arrowhead if told to
+	if(opp_head) {
+		line.reverse()
+		tip.cloneFrom(line)
+		tip.resize(16)
+			.rotate(angle)
+			.add(start)
+		
+		ctx.beginPath()
+		ctx.moveTo(...start)
+		ctx.lineTo(...tip)
+		ctx.moveTo(...start)
+		
+		tip.sub(start)
+			.rotate(-2 * angle)
+			.add(start)
+		
+		ctx.lineTo(...tip)
+		ctx.moveTo(...end)
+	}
+	
+	ctx.closePath()
+	ctx.stroke()
+}
+
 
 function updateLoop() {
 	world.tick()
@@ -252,75 +314,40 @@ function drawLoop() {
 			.resize(edge[1].radius)
 		
 		// adjust line start and end positions
-		from.add(fromOffset)
-		to.add(toOffset)
-		
-		ctx.beginPath()
-		ctx.moveTo(...from)
-		ctx.lineTo(...to)
-		ctx.closePath()
-		
-		ctx.stroke()
+		drawEdge(from.add(fromOffset), to.add(toOffset))
 	}
 	
 	// arc drawing procedure
 	let alreadyDrawn = new Set
-	for(let arc of world.graph.arcs){
-		let fromVert = arc.from
-		let toVert = arc.to
+	for(let arc of world.graph.arcs) {
+		let has_opposite = world.graph.getArc(arc.to, arc.from) !== null
 		
-		let from = fromVert.pos.clone()
+		if(alreadyDrawn.has(arc) || has_opposite) {
+			continue
+		}
+		
+		let from = arc.from.pos.clone()
 			.sub(world.cam)
 		
-		let to = toVert.pos.clone()
+		let to = arc.to.pos.clone()
 			.sub(world.cam)
 		
 		// get offset from center of vertex to its edge
-		const fromOffset = to.clone()
+		let fromOffset = to.clone()
 			.sub(from)
-			.resize(fromVert.radius)
+			.resize(arc.from.radius)
 		
-		const toOffset = from.clone()
+		let toOffset = from.clone()
 			.sub(to)
-			.resize(toVert.radius)
+			.resize(arc.to.radius)
 		
-		// adjust line start and end positions
-		const tail = from.clone().add(fromOffset)
-		const head = to.clone().add(toOffset)
+		drawArc(
+			from.add(fromOffset),
+			to.add(toOffset),
+			has_opposite
+		)
 		
-		// used to calculate positions of tips of both arrowheads
-		const angle = 5 * Math.TAU / 12
-		const arrowHead = head.clone()
-			.sub(tail)
-			.resize(16)
-		const tipl = arrowHead.clone()
-			.rotate(angle)
-			.add(head)
-		const tipr = arrowHead.clone()
-			.rotate(-angle)
-			.add(head)
-		
-		// don't duplicate dotted line, otherwise it causes an
-		// overlapping effect.
-		if(!alreadyDrawn.has(arc) && !alreadyDrawn.has(world.graph.getArc(arc.to, arc.from))) {
-			ctx.beginPath()
-			ctx.setLineDash([15, 15])
-			ctx.moveTo(...tail)
-			ctx.lineTo(...head)
-			ctx.stroke()
-			alreadyDrawn.add(arc)
-		}
-		
-		// but still allow the other arrow head to be drawn
-		ctx.beginPath()
-		ctx.setLineDash([])
-		ctx.moveTo(...head)
-		ctx.lineTo(...tipl)
-		ctx.moveTo(...head)
-		ctx.lineTo(...tipr)
-		
-		ctx.closePath()
-		ctx.stroke()
+		alreadyDrawn.add(arc)
 	}
 	
 	// vertex drawing procedure
@@ -333,7 +360,6 @@ function drawLoop() {
 	ctx.save()
 	
 	// draw UI
-	
 	let vertexClass = Vertex.registry.get(currVert)
 	
 	let {style, radius} = vertexClass.prototype
@@ -344,45 +370,14 @@ function drawLoop() {
 	
 	drawVertex(pos, radius, style)
 	
-	{
-		let start = new Vec2(10 + 2 * 20 + 10, innerHeight - 13)
-		let end = start.clone().add([33, -33])
-		
-		if(currEdge === 0) {
-			ctx.beginPath()
-			ctx.moveTo(...start)
-			ctx.lineTo(...end)
-			ctx.closePath()
-			ctx.stroke()
-		}
-		else {
-			const angle = 5 * Math.TAU / 12
-			const arrowHead = end.clone()
-				.sub(start)
-				.resize(16)
-			const tipl = arrowHead.clone()
-				.rotate(angle)
-				.add(end)
-			const tipr = arrowHead.clone()
-				.rotate(-angle)
-				.add(end)
-		
-			ctx.beginPath()
-			ctx.setLineDash([15, 15])
-			ctx.moveTo(...start)
-			ctx.lineTo(...end)
-			ctx.stroke()
-			
-			ctx.beginPath()
-			ctx.setLineDash([])
-			ctx.moveTo(...end)
-			ctx.lineTo(...tipl)
-			ctx.moveTo(...end)
-			ctx.lineTo(...tipr)
-		
-			ctx.closePath()
-			ctx.stroke()
-		}
+	let start = new Vec2(10 + 2 * 20 + 10, innerHeight - 13)
+	let end = start.clone().add([33, -33])
+	
+	if(currEdge === 0) {
+		drawEdge(start, end)
+	}
+	else {
+		drawArc(start, end, false)
 	}
 }
 
