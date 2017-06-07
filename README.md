@@ -14,19 +14,23 @@ The rules of the game are that you can connect vertices by arcs (or arrows) that
 
 There are a variety of vertex types, and their effects range from mechanical movement to electromagnetic forces to logic.
 
+**Neuron**: If the sum of its inputs pass a given threshold, it outputs a constant value to all neighbors. By default, the threshold is 1 and the output signal is 1. Might implement wear-out in the future.
+
+**Anchor**: The position of this vertex in the world is fixed, and cannot be moved by mouse, other vertices, or any unstoppable forces (untested).
+
+### Logic
+
 **Min**: The numerical equivalent of a boolean AND gate. Outputs the smallest number it receives as input. If there are no inputs, it returns positive infinity.
 
 **Max**: The numerical equivalent of a boolean OR gate. Outputs the largest number it receives as input. If there are no inputs, it returns negative infinity.
 
 **Negate**: The numerical equivalent of a boolean NOT gate. Outputs the negation of the max of its inputs. This also makes it a NOR gate. If there are no inputs, it returns positive infinity.
 
+### Interaction
+
 **Feedback**: Shows the value of the sum of its inputs. Doesn't output anything.
 
-**Neuron**: If the sum of its inputs pass a given threshold, it outputs a constant value to all neighbors. By default, the threshold is 1 and the output signal is 1. Might implement wear-out in the future.
-
-**Switch**: Can be in an off or on state. On state outputs positive infinity to all neighbors. Off state outputs negative infinity to all neighbors. Default is state is off.
-
-**Anchor**: The position of this vertex in the world is fixed, and cannot be moved by mouse, other vertices, or any unstoppable forces (untested).
+**Switch**: Can be in an off or on state. On state outputs positive infinity to all neighbors. Off state outputs negative infinity to all neighbors. Default state is off.
 
 ### Planned Types
 
