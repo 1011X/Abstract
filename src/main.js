@@ -139,7 +139,7 @@ canvas.addEventListener("mouseup", evt => {
 			let vertexClass = Vertex.registry.get(currVert)
 			
 			if(vertexClass != null) {
-				let vertex = new vertexClass(world.graph)
+				let vertex = new vertexClass
 				vertex.pos.cloneFrom(worldPos)
 				world.spawn(vertex)
 			}
@@ -159,7 +159,7 @@ window.addEventListener("keydown", evt => {
 		save()
 	}
 	// 'e' is pressed
-	if(evt.keyCode == 69) {
+	if(evt.keyCode == 69) { // nice
 		if(currEdge === 0) {
 			currEdge = 1
 		}
@@ -356,8 +356,6 @@ function drawLoop() {
 		let pos = vertex.pos.clone().sub(world.cam)
 		drawVertex(pos, vertex.radius, vertex.style)
 	}
-	
-	ctx.save()
 	
 	// draw UI
 	let vertexClass = Vertex.registry.get(currVert)
