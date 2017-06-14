@@ -3,7 +3,8 @@ Vertex.Neuron = class extends Vertex.Base {
 		super()
 		this.threshold = 1
 	}
-
+	
+	// TODO impl burnout
 	update(ins, outs) {
 		let energy = ins.reduce((acc, val) => acc + val, 0)
 		

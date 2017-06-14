@@ -4,6 +4,9 @@ Vertex.Base = class {
 		this.motion = new Vec2
 	}
 	
+	// should updates return a boolean to indicate whether
+	// they should be updated next time? it would be very
+	// useful...
 	update(ins, outs) {
 	}
 	
@@ -11,7 +14,7 @@ Vertex.Base = class {
 	}
 	
 	toJSON() {
-		return this
+		return Object.assign({}, this)
 	}
 	
 	static fromJSON(json) {

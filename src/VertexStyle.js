@@ -10,7 +10,10 @@ class VertexStyle {
 	}
 	
 	toJSON() {
-		let style = {color: this.color}
+		let style = {
+			color: this.color,
+			gradient: this.gradient,
+		}
 		
 		if(this.border !== "black") {
 			style.border = this.border
@@ -28,12 +31,8 @@ class VertexStyle {
 	}
 	
 	static fromJSON(json) {
-		let style = new this
-		style.color = json.color
-		for(let prop in json) {
-			style[prop] = json[prop]
-		}
-		return style
+		let style = new this(json.color)
+		return Object.assign(style, json)
 	}
 }
 
