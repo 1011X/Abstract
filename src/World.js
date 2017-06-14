@@ -105,6 +105,7 @@ class World {
 		let vertices = []
 		for(let vertObj of json.graph.vertices) {
 			let vertexClass = Vertex.registry.get(vertObj.type)
+			delete vertObj.type
 			let vertex = vertexClass.fromJSON(vertObj)
 			vertices.push(vertex)
 		}

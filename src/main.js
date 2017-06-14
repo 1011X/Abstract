@@ -84,11 +84,18 @@ canvas.addEventListener("wheel", evt => {
 	// ensure ctrl is up, otherwise browser will zoom and
 	// cycle through vertices at the same time
 	if(!evt.ctrlKey) {
-		currVert += Math.sign(evt.deltaY)
-		currVert %= Vertex.registry.size
-	
-		if(currVert < 0) {
-			currVert += Vertex.registry.size
+		let delta = Math.sign(evt.deltaY)
+		
+		// skip the vertex type at 0 because it's the "none"
+		// type and we don't want it.
+		if(delta === -1 && currVert === 1) {
+			currVert = Vertex.registry.size - 1
+		}
+		else if(delta === 1 && currVert === Vertex.registry.size - 1) {
+			currVert = 1
+		}
+		else {
+			currVert += delta
 		}
 	}
 })
@@ -377,6 +384,12 @@ function drawLoop() {
 	else {
 		drawArc(start, end, false)
 	}
+	
+	// draw name of current vertex
+	ctx.save()
+	ctx.font = "18px sans-serif"
+	ctx.fillText(Vertex.registry.getName(currVert), 10, innerHeight - (10 + 2 * 20 + 10))
+	ctx.restore()
 }
 
 setInterval(updateLoop, 50/3)
