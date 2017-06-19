@@ -263,30 +263,31 @@ function drawArc(begin, end, opp_head = false) {
 	
 	ctx.lineTo(...tip)
 	ctx.moveTo(...end)
+	ctx.closePath()
+	ctx.stroke()
 	
-	// FIXME draw back arrowhead if told to
+	// draw back arrowhead if told to
 	if(opp_head) {
 		line.reverse()
 		tip.cloneFrom(line)
 		tip.resize(16)
 			.rotate(angle)
-			.add(start)
+			.add(begin)
 		
 		ctx.beginPath()
-		ctx.moveTo(...start)
+		ctx.moveTo(...begin)
 		ctx.lineTo(...tip)
-		ctx.moveTo(...start)
+		ctx.moveTo(...begin)
 		
-		tip.sub(start)
+		tip.sub(begin)
 			.rotate(-2 * angle)
-			.add(start)
+			.add(begin)
 		
 		ctx.lineTo(...tip)
 		ctx.moveTo(...end)
+		ctx.closePath()
+		ctx.stroke()
 	}
-	
-	ctx.closePath()
-	ctx.stroke()
 }
 
 
@@ -330,9 +331,9 @@ function drawLoop() {
 	// arc drawing procedure
 	let alreadyDrawn = new Set
 	for(let arc of world.graph.arcs) {
-		let has_opposite = world.graph.getArc(arc.to, arc.from) !== null
+		let opposite = world.graph.getArc(arc.to, arc.from)
 		
-		if(alreadyDrawn.has(arc) || has_opposite) {
+		if(alreadyDrawn.has(arc) || alreadyDrawn.has(opposite)) {
 			continue
 		}
 		
@@ -354,10 +355,13 @@ function drawLoop() {
 		drawArc(
 			from.add(fromOffset),
 			to.add(toOffset),
-			has_opposite
+			opposite !== null
 		)
 		
 		alreadyDrawn.add(arc)
+		if(opposite !== null) {
+			alreadyDrawn.add(opposite)
+		}
 	}
 	
 	// vertex drawing procedure
