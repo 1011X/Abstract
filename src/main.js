@@ -19,6 +19,7 @@ let currEdge = 0 // edge type (arc or regular edge) being used
 let canvasPos = null
 let prevCanvasPos = null
 
+let paused = false
 let hasDragged = false
 
 function save() {
@@ -163,16 +164,21 @@ canvas.addEventListener("mouseup", evt => {
 window.addEventListener("keydown", evt => {
 	// 's' is pressed
 	if(evt.keyCode == 83) {
+		// save the world
 		save()
 	}
 	// 'e' is pressed
-	if(evt.keyCode == 69) { // nice
+	else if(evt.keyCode == 69) { // nice
+		// toggle current connection type
 		if(currEdge === 0) {
 			currEdge = 1
 		}
 		else {
 			currEdge = 0
 		}
+	}
+	else if(evt.keyCode == 27) { // esc
+		paused = !paused
 	}
 })
 
@@ -192,15 +198,9 @@ function drawVertex(pos, radius, style) {
 
 	if(style.gradient === VertexStyle.RADIAL_GRADIENT) {
 		let radialGradient = ctx.createRadialGradient(...pos, 0, ...pos, radius)
-	
-		if(style.textColor === "white") {
-			radialGradient.addColorStop(0, "black")
-			radialGradient.addColorStop(1, style.color)
-		}
-		else {
-			radialGradient.addColorStop(0, "white")
-			radialGradient.addColorStop(1, style.color)
-		}
+		
+		radialGradient.addColorStop(0, "white")
+		radialGradient.addColorStop(1, style.color)
 
 		ctx.fillStyle = radialGradient
 	}
@@ -263,6 +263,8 @@ function drawArc(begin, end, opp_head = false) {
 	
 	ctx.lineTo(...tip)
 	ctx.moveTo(...end)
+	ctx.closePath()
+	ctx.stroke()
 	
 	// draw back arrowhead if told to
 	if(opp_head) {
@@ -270,30 +272,32 @@ function drawArc(begin, end, opp_head = false) {
 		tip.cloneFrom(line)
 		tip.resize(16)
 			.rotate(angle)
-			.add(start)
+			.add(begin)
 		
 		ctx.beginPath()
-		ctx.moveTo(...start)
+		ctx.moveTo(...begin)
 		ctx.lineTo(...tip)
-		ctx.moveTo(...start)
+		ctx.moveTo(...begin)
 		
-		tip.sub(start)
+		tip.sub(begin)
 			.rotate(-2 * angle)
-			.add(start)
+			.add(begin)
 		
 		ctx.lineTo(...tip)
 		ctx.moveTo(...end)
+		ctx.closePath()
+		ctx.stroke()
 	}
-	
-	ctx.closePath()
-	ctx.stroke()
 }
 
 
 function updateLoop() {
-	world.tick()
+	if(!paused) {
+		world.tick()
+	}
 }
 
+// TODO implement motion blur (once motion is added)
 function drawLoop() {
 	requestAnimationFrame(drawLoop)
 	
@@ -327,9 +331,9 @@ function drawLoop() {
 	// arc drawing procedure
 	let alreadyDrawn = new Set
 	for(let arc of world.graph.arcs) {
-		let has_opposite = world.graph.getArc(arc.to, arc.from) !== null
+		let opposite = world.graph.getArc(arc.to, arc.from)
 		
-		if(alreadyDrawn.has(arc) || has_opposite) {
+		if(alreadyDrawn.has(arc) || alreadyDrawn.has(opposite)) {
 			continue
 		}
 		
@@ -351,10 +355,13 @@ function drawLoop() {
 		drawArc(
 			from.add(fromOffset),
 			to.add(toOffset),
-			has_opposite
+			opposite !== null
 		)
 		
 		alreadyDrawn.add(arc)
+		if(opposite !== null) {
+			alreadyDrawn.add(opposite)
+		}
 	}
 	
 	// vertex drawing procedure
@@ -390,6 +397,14 @@ function drawLoop() {
 	ctx.font = "18px sans-serif"
 	ctx.fillText(Vertex.registry.getName(currVert), 10, innerHeight - (10 + 2 * 20 + 10))
 	ctx.restore()
+	
+	// draw if paused
+	if(paused) {
+		ctx.save()
+		ctx.font = "18px sans-serif"
+		ctx.fillText("PAUSED", 10, innerHeight - (10 + 2 * 20 + 10) - 18)
+		ctx.restore()
+	}
 }
 
 setInterval(updateLoop, 50/3)
