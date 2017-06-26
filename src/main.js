@@ -14,12 +14,15 @@ let world = null
 let selected = null // vertex clicked on mousedown
 let currVert = 0 // vertex type selected for placement
 let currEdge = 0 // edge type (arc or regular edge) being used
+let fps = 0 // used to save previous second's fps
+let frameCounter = 0
 // let vectorPool = new ObjectPool(Vec2, 10)
 
 let canvasPos = null
 let prevCanvasPos = null
 
 let paused = false
+let debug = false
 let hasDragged = false
 
 function save() {
@@ -163,12 +166,12 @@ canvas.addEventListener("mouseup", evt => {
 
 window.addEventListener("keydown", evt => {
 	// 's' is pressed
-	if(evt.keyCode == 83) {
+	if(evt.keyCode === 83) {
 		// save the world
 		save()
 	}
 	// 'e' is pressed
-	else if(evt.keyCode == 69) { // nice
+	else if(evt.keyCode === 69) { // nice
 		// toggle current connection type
 		if(currEdge === 0) {
 			currEdge = 1
@@ -177,8 +180,14 @@ window.addEventListener("keydown", evt => {
 			currEdge = 0
 		}
 	}
-	else if(evt.keyCode == 27) { // esc
+	else if(evt.keyCode === 27) { // esc
 		paused = !paused
+	}
+	else if(evt.keyCode === 114) { // f3
+		evt.preventDefault()
+		frameCounter = 0
+		fps = 0
+		debug = !debug
 	}
 })
 
@@ -298,7 +307,7 @@ function updateLoop() {
 }
 
 // TODO implement motion blur (once motion is added)
-function drawLoop() {
+function drawLoop(time) {
 	requestAnimationFrame(drawLoop)
 	
 	ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -403,6 +412,20 @@ function drawLoop() {
 		ctx.save()
 		ctx.font = "18px sans-serif"
 		ctx.fillText("PAUSED", 10, innerHeight - (10 + 2 * 20 + 10) - 18)
+		ctx.restore()
+	}
+	
+	if(debug) {
+		frameCounter += 1
+		if(time % 1000 < 16.6) {
+			fps = frameCounter
+			frameCounter = 0
+		}
+		
+		ctx.save()
+		ctx.font = "18px sans-serif"
+		ctx.textBaseline = "top"
+		ctx.fillText(`FPS: ${fps}`, 10, 10)
 		ctx.restore()
 	}
 }

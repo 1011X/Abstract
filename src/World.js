@@ -51,6 +51,8 @@ class World {
 	*/
 	// TODO Improve update mechanism; seems to update weirdly
 	// (eg, glitches, previously unseen behavior, etc.).
+	// TODO Also handle any physics at this point. But should it
+	// be before or after update? (probably after?)
 	tick() {
 		for(let vertex of this.vertices) {
 			let neighbors = [...this.graph.arcNeighbors(vertex)]
@@ -83,8 +85,8 @@ class World {
 			return vertex
 		})
 		
-		// ugh, no valid representation for IEEE NaN and Infinity
-		// in JSON, so convert them to strings
+		// ugh, no valid representation for IEEE NaN and
+		// Infinity in JSON, so convert them to strings
 		for(let arc of graph.arcs) {
 			switch(arc[2]) {
 				case Infinity: arc[2] = "inf"; break;
@@ -100,8 +102,8 @@ class World {
 		let world = new World
 		world.cam = new Vec2(...json.cam)
 		
-		// convert json.graph.vertices into regular vertex objects
-		// from the provided type in json
+		// convert json.graph.vertices into regular vertex
+		// objects from the provided type in json
 		let vertices = []
 		for(let vertObj of json.graph.vertices) {
 			let vertexClass = Vertex.registry.get(vertObj.type)
