@@ -1,6 +1,5 @@
 /// TODO
 /// * Add Rust-like iterators to replace manual `for` loops?
-/// * 
 
 "use strict"
 
