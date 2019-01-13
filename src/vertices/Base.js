@@ -1,13 +1,12 @@
 Vertex.Base = class {
 	constructor() {
-		this.pos = new Vec2
-		this.motion = new Vec2
+		this.pos = new Vec2(0, 0)
+		this.motion = new Vec2(0, 0)
+		//this.angle = 0
 	}
 	
-	// should updates return a boolean to indicate whether
-	// they should be updated next time? it would be very
-	// useful...
-	update(ins, outs) {
+	update(handler) {
+	    return 0
 	}
 	
 	action() {
@@ -25,5 +24,5 @@ Vertex.Base = class {
 	}
 }
 
-Vertex.Base.prototype.radius = 18
+Vertex.Base.prototype.radius = 24
 Vertex.Base.prototype.style = new VertexStyle("black")

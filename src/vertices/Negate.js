@@ -1,7 +1,6 @@
 Vertex.Negate = class extends Vertex.Base {
-	update(ins, outs) {
-		let max = Math.max(...ins)
-		outs.fill(-max)
+	update(h) {
+		return -Math.max(...h.inputs)
  	}
 }
 

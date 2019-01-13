@@ -1,5 +1,5 @@
 class Vec2 extends Float64Array {
-	constructor(x = 0, y = 0) {
+	constructor(x, y) {
 		super([x, y])
 	}
 	
@@ -13,24 +13,30 @@ class Vec2 extends Float64Array {
 		return this.eq(Vec2.NULL)
 	}
 	
+	// rhs: Vec2
 	add(rhs) {
-		this.x += rhs[0]
-		this.y += rhs[1]
+	    console.assert(rhs instanceof Vec2)
+		this.x += rhs.x
+		this.y += rhs.y
 		return this
 	}
 	
+	// rhs: Vec2
 	sub(rhs) {
-		this.x -= rhs[0]
-		this.y -= rhs[1]
+	    console.assert(rhs instanceof Vec2)
+		this.x -= rhs.x
+		this.y -= rhs.y
 		return this
 	}
 	
+	// scalar: Number
 	scale(scalar) {
 		this.x *= scalar
 		this.y *= scalar
 		return this
 	}
 	
+	// s: Number
 	resize(s) {
 		return this.scale(s / this.len)
 	}
@@ -52,28 +58,35 @@ class Vec2 extends Float64Array {
 		this.y = -this.y
 		return this
 	}
-
+    
+    /// Rotates clockwise
+    // t: Number (radians)
 	rotate(t) {
 		let xo = Math.cos(t)
 		let yo = Math.sin(t)
-		this.cloneFrom([
-			this.x * xo + this.y * yo,
-			this.y * xo - this.x * yo
-		])
+		let x = this.x * xo + this.y * yo
+		let y = this.y * xo - this.x * yo
+		this.x = x
+		this.y = y
 		return this
 	}
 	
+	// other: Vec2
 	eq(other) {
-		return this.x == other[0] && this.y == other[1]
+	    console.assert(other instanceof Vec2)
+		return this.x == other.x && this.y == other.y
 	}
 	
 	clone() {
 		return new Vec2(...this)
 	}
 	
+	// source: Vec2
 	cloneFrom(source) {
-		this.x = source[0]
-		this.y = source[1]
+	    console.assert(source instanceof Vec2)
+		this.x = source.x
+		this.y = source.y
+		return this
 	}
 	
 	toJSON() {
@@ -84,13 +97,19 @@ class Vec2 extends Float64Array {
 		return `[${this.x}, ${this.y}]`
 	}
 	
+	// a: Vec2, b: Vec2
 	static dot(a, b) {
-		return a[0] * b[0] + a[1] * b[1]
+	    console.assert(a instanceof Vec2)
+	    console.assert(b instanceof Vec2)
+		return a.x * b.x + a.y * b.y
 	}
 	
+	// a: Vec2, b: Vec2
 	static eq(a, b) {
-		return a[0] == b[0] && a[1] == b[1]
+	    console.assert(a instanceof Vec2)
+	    console.assert(b instanceof Vec2)
+		return a.x == b.x && a.y == b.y
 	}
 }
 
-Object.defineProperty(Vec2, "NULL", {value: new Vec2})
+Object.defineProperty(Vec2, "NULL", {value: new Vec2(0, 0)})

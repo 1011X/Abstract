@@ -2,7 +2,7 @@ Vertex.Switch = class extends Vertex.Base {
 	constructor() {
 		super()
 		this.on = false
-		this.style = new VertexStyle("black", {textColor: "white", symbol: "O"})
+		this.style = Vertex.Switch.OFF
 	}
 
 	action() {
@@ -10,24 +10,12 @@ Vertex.Switch = class extends Vertex.Base {
 		this.updateStyle()
 	}
 	
-	update(ins, outs) {
-		let val = this.on ? Infinity : -Infinity
-		for(let i = 0; i < outs.length; i++) {
-			outs[i] = val
-		}
+	update(_) {
+		return this.on ? 1 : -1
 	}
 	
 	updateStyle() {
-		if(this.on) {
-			this.style.symbol = "|"
-			this.style.color = "white"
-			this.style.textColor = "black"
-		}
-		else {
-			this.style.symbol = "O"
-			this.style.color = "black"
-			this.style.textColor = "white"
-		}
+		this.style = (this.on) ? Vertex.Switch.ON : Vertex.Switch.OFF
 	}
 	
 	toJSON() {
@@ -44,4 +32,9 @@ Vertex.Switch = class extends Vertex.Base {
 	}
 }
 
-Vertex.Switch.prototype.style = new VertexStyle("black", {textColor: "white", symbol: "S"})
+Vertex.Switch.prototype.style = new VertexStyle("black", {textColor: "white", symbol: "⏼"})
+Vertex.Switch.ON = new VertexStyle("white", {symbol: "⏽"})
+Vertex.Switch.OFF = new VertexStyle("black", {
+    textColor: "white",
+    symbol: "⭘"
+})

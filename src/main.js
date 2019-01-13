@@ -1,6 +1,5 @@
 /// TODO
 /// * Add Rust-like iterators to replace manual `for` loops?
-
 "use strict"
 
 Math.TAU = 2 * Math.PI
@@ -21,7 +20,7 @@ let canvasPos = null
 let prevCanvasPos = null
 
 let paused = false
-let debug = false
+var debug = false
 let hasDragged = false
 
 function save() {
@@ -35,6 +34,18 @@ function save() {
 function load() {
 	if(!localStorage["gameData"]) {
 		world = new World
+		currVert = 1
+        if(!localStorage["gameData"]) {
+            alert(
+`Controls:
+    S key: save the world
+    E key: toggle connection type
+    F3: view debug information
+    scroll: select vertex type
+    right click: place or interact with vertex
+    left click: delete vertex`
+            )
+        }
 	}
 	else {
 		let game = JSON.parse(localStorage["gameData"])
@@ -65,12 +76,13 @@ function dragAction(evt) {
 	if(uaHas("Firefox") && evt.buttons == 1 || uaHas("Chrome") && evt.button == 0) {
 		// if a vertex was selected and it wasn't moving,
 		// then move it according to the cursor's movement.
-		if(selected !== null && selected.motion.isNull()) {
+		if(selected !== null) {
 			// ensure it's not the Anchor type
 			if(!(selected instanceof Vertex.Anchor)) {
 				selected.pos.cloneFrom(worldPos)
 			}
 		}
+		// otherwise, move the camera
 		else {
 			let canvasMovement = canvasPos.clone()
 				.sub(prevCanvasPos)
@@ -80,7 +92,7 @@ function dragAction(evt) {
 	}
 }
 
-/// Deal with user input
+/// Handle user input
 
 // register event handlers
 canvas.addEventListener("wheel", evt => {
@@ -135,12 +147,11 @@ canvas.addEventListener("mouseup", evt => {
 			}
 			else {
 				if(currEdge === 0) {
-					let edge = new Edge(selected, next)
-					world.edgeConnect(selected, next, edge)
+				    let len = next.pos.clone().sub(selected.pos).len
+					world.edgeConnect(selected, next, len)
 				}
 				else {
-					let arc = new Arc(selected, next)
-					world.arcConnect(selected, next, arc)
+					world.arcConnect(selected, next, 0)
 				}
 			}
 		}
@@ -203,7 +214,7 @@ dispatchEvent(new Event("resize"))
 
 function drawVertex(pos, radius, style) {
 	ctx.save()
-
+	
 	if(style.gradient === VertexStyle.RADIAL_GRADIENT) {
 		let radialGradient = ctx.createRadialGradient(...pos, 0, ...pos, radius)
 		
@@ -228,10 +239,10 @@ function drawVertex(pos, radius, style) {
 		ctx.fillStyle = style.textColor
 		ctx.textAlign = "center"
 		ctx.textBaseline = "middle"
-		ctx.font = "bold 18px sans-serif"
+		ctx.font = "bold 20px serif"
 		ctx.fillText(style.symbol, ...pos)
 	}
-
+	
 	ctx.restore()
 }
 
@@ -242,20 +253,20 @@ function drawEdge(begin, end) {
 	ctx.closePath()
 	ctx.stroke()
 }
-
+/*
 function drawArc(begin, end, opp_head = false) {
-	// draw dashed line
 	ctx.beginPath()
-	ctx.setLineDash([15, 15])
+	// draw dashed line
+	ctx.setLineDash([7, 10])
 	ctx.moveTo(...begin)
 	ctx.lineTo(...end)
 	ctx.stroke()
 	
-	let angle = Math.TAU / 12
+	const ANGLE = Math.TAU / 12
 	let line = begin.clone().sub(end)
 	let tip = line.clone()
 		.resize(16)
-		.rotate(angle)
+		.rotate(ANGLE)
 		.add(end)
 	
 	// draw arrowhead
@@ -266,7 +277,7 @@ function drawArc(begin, end, opp_head = false) {
 	ctx.moveTo(...end)
 	
 	tip.sub(end)
-		.rotate(-2 * angle)
+		.rotate(-2 * ANGLE)
 		.add(end)
 	
 	ctx.lineTo(...tip)
@@ -279,7 +290,7 @@ function drawArc(begin, end, opp_head = false) {
 		line.reverse()
 		tip.cloneFrom(line)
 		tip.resize(16)
-			.rotate(angle)
+			.rotate(ANGLE)
 			.add(begin)
 		
 		ctx.beginPath()
@@ -288,7 +299,7 @@ function drawArc(begin, end, opp_head = false) {
 		ctx.moveTo(...begin)
 		
 		tip.sub(begin)
-			.rotate(-2 * angle)
+			.rotate(-2 * ANGLE)
 			.add(begin)
 		
 		ctx.lineTo(...tip)
@@ -297,11 +308,35 @@ function drawArc(begin, end, opp_head = false) {
 		ctx.stroke()
 	}
 }
+*/
+
+function drawArc(begin, end, opp_head = false) {
+    ctx.save()
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+    
+    let start_offset = end.clone()
+        .sub(begin)
+        .rotate(Math.TAU / 4)
+        .resize(10)
+    
+	ctx.beginPath()
+	ctx.moveTo(...start_offset.add(begin))
+	ctx.lineTo(...end)
+	start_offset.sub(begin).reverse()
+	ctx.lineTo(...start_offset.add(begin))
+	ctx.closePath()
+	ctx.fill()
+	
+	ctx.restore()
+}
 
 
 function updateLoop() {
 	if(!paused) {
 		world.tick()
+	} else {
+	    alert("paused")
+	    paused = false
 	}
 }
 
@@ -309,9 +344,9 @@ function updateLoop() {
 function drawLoop(time) {
 	requestAnimationFrame(drawLoop)
 	
-	ctx.clearRect(0, 0, canvas.width, canvas.height)
 	ctx.lineWidth = 3
 	ctx.lineCap = "round"
+	ctx.clearRect(0, 0, innerWidth, innerHeight)
 	
 	// edge drawing procedure
 	for(let edge of world.graph.edges) {
@@ -323,53 +358,52 @@ function drawLoop(time) {
 		let to = edge[1].pos.clone()
 			.sub(world.cam)
 		
-		// get offset from center of vertex to its edge
-		const fromOffset = to.clone()
-			.sub(from)
-			.resize(edge[0].radius)
+		// tmp vector to reduce allocations
+		let vec = to.clone().sub(from)
 		
-		const toOffset = from.clone()
-			.sub(to)
-			.resize(edge[1].radius)
+	    // adds offsets from vertex center to its circumference respectively
+	    vec.resize(edge[0].radius)
+        from.add(vec)
+        vec.resize(edge[1].radius).reverse()
+        to.add(vec)
 		
 		// adjust line start and end positions
-		drawEdge(from.add(fromOffset), to.add(toOffset))
+		drawEdge(from, to)
 	}
 	
 	// arc drawing procedure
-	let alreadyDrawn = new Set
+	//let alreadyDrawn = new Set
 	for(let arc of world.graph.arcs) {
+	    /*
 		let opposite = world.graph.getArc(arc.to, arc.from)
 		
 		if(alreadyDrawn.has(arc) || alreadyDrawn.has(opposite)) {
 			continue
 		}
-		
+		*/
 		let from = arc.from.pos.clone()
 			.sub(world.cam)
 		
 		let to = arc.to.pos.clone()
 			.sub(world.cam)
 		
-		// get offset from center of vertex to its edge
-		let fromOffset = to.clone()
-			.sub(from)
-			.resize(arc.from.radius)
+		// tmp vector to reduce allocations
+		let vec = to.clone().sub(from)
+	    
+	    // adds offsets from vertex center to its circumference respectively
+	    vec.resize(arc.from.radius)
+        from.add(vec)
+        vec.resize(arc.to.radius).reverse()
+        to.add(vec)
+        
+		drawArc(from, to, false)
 		
-		let toOffset = from.clone()
-			.sub(to)
-			.resize(arc.to.radius)
-		
-		drawArc(
-			from.add(fromOffset),
-			to.add(toOffset),
-			opposite !== null
-		)
-		
+		/*
 		alreadyDrawn.add(arc)
 		if(opposite !== null) {
 			alreadyDrawn.add(opposite)
 		}
+		*/
 	}
 	
 	// vertex drawing procedure
@@ -379,40 +413,21 @@ function drawLoop(time) {
 		drawVertex(pos, vertex.radius, vertex.style)
 	}
 	
+	
 	// draw UI
-	let vertexClass = Vertex.registry.get(currVert)
+	let pos = new Vec2(10, innerHeight - 18)
 	
-	let {style, radius} = vertexClass.prototype
-	let pos = new Vec2(
-		/*world.RAD*/ 20 + 10,
-		innerHeight - /*world.RAD*/ 20 - 10
-	)
-	
-	drawVertex(pos, radius, style)
-	
-	let start = new Vec2(10 + 2 * 20 + 10, innerHeight - 13)
-	let end = start.clone().add([33, -33])
-	
-	if(currEdge === 0) {
-		drawEdge(start, end)
-	}
-	else {
-		drawArc(start, end, false)
-	}
+	let current_vertex = `vertex: ${Vertex.registry.getName(currVert)}`
+	let current_connection = `connection: ${currEdge ? 'arc' : 'edge'}`
 	
 	// draw name of current vertex
-	ctx.save()
 	ctx.font = "18px sans-serif"
-	ctx.fillText(Vertex.registry.getName(currVert), 10, innerHeight - (10 + 2 * 20 + 10))
-	ctx.restore()
+	ctx.fillText(current_vertex, ...pos)
 	
-	// draw if paused
-	if(paused) {
-		ctx.save()
-		ctx.font = "18px sans-serif"
-		ctx.fillText("PAUSED", 10, innerHeight - (10 + 2 * 20 + 10) - 18)
-		ctx.restore()
-	}
+	pos.y -= 18
+	
+    ctx.fillText(current_connection, ...pos)
+	
 	
 	if(debug) {
 		frameCounter += 1
@@ -422,7 +437,6 @@ function drawLoop(time) {
 		}
 		
 		ctx.save()
-		ctx.font = "18px sans-serif"
 		ctx.textBaseline = "top"
 		ctx.fillText(`FPS: ${fps}`, 10, 10)
 		ctx.restore()
@@ -430,5 +444,5 @@ function drawLoop(time) {
 }
 
 setInterval(updateLoop, 50/3)
-setInterval(save, 60 * 1000)
+//setInterval(save, 60 * 1000)
 requestAnimationFrame(drawLoop)
