@@ -8,6 +8,29 @@ Abstract is a toy sandbox-style game where you can connect different types of ve
 The rules of the game are that you can connect vertices by arcs (i.e arrows, or directed connections) or by edges (undirected connections). Arcs can transmit a numeric value. Edges enforce their length (currently unimplemented). The vertices themselves can have different effects, as described below.
 
 
+## How to play
+
+The controls are similar to Minecraft.
+
+Place a vertex by selecting the vertex type you want to use and right-clicking on an empty part of the world. If the vertex is a switch, you can right-click on it to toggle its state. Move vertices by left clicking and dragging them. Left click a vertex to delete it.
+
+Connect two vertices by selecting what type of connection you want to use, holding right click on the starting vertex, and releasing it on the ending vertex.
+
+Left click and drag on an empty part of the world to pan around. Select multiple vertices by holding down the Ctrl key while left-dragging. You can press the Delete key to remove them.
+
+### Controls
+
+**T key**: Shows in-game tutorial, in case you forgot something.
+
+**S key**: Save the world manually.
+
+**C key**: Toggle autosaving. Default is on.
+
+**Z key**: Use arc connections.
+
+**X key**: Use edge connections.
+
+
 ## Vertex Types
 
 **Degree**: Displays the degree of the vertex (how many edges, not arcs) it has. It also outputs this information as a numerical value via arcs.

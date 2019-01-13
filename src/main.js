@@ -32,30 +32,12 @@ function save() {
 	})
 }
 
-function showTutorial() {
-    alert(
-`Controls:
-    T key: show this tutorial
-    S key: manually save the world
-    C key: toggle autosaving (default: enabled)
-    Z key: use arc connections
-    X key: use edge connections`)
-    alert(
-`Current selection will be shown in the bottom left corner.
-Scroll the mouse wheel to select a vertex type.
-Right click to place a vertex or (in the case of the switch) interact with it.
-Right click and drag from one vertex to another to connect them.
-Left click and drag to move a vertex or to pan the world.
-Left click a vertex to delete it.`)
-    alert("Enjoy!")
-}
-
 function load() {
 	if(!localStorage["gameData"]) {
 		world = new World
 		currVert = 1
         if(!localStorage["gameData"]) {
-            showTutorial()
+            alert("Welcome! Make sure to read the README.md file to understand how to play the game. Enjoy!")
         }
 	}
 	else {
@@ -217,9 +199,6 @@ window.addEventListener("keydown", evt => {
     }
     else if(evt.key === 'c') {
         autosave = !autosave
-    }
-    else if(evt.key === 't') {
-        showTutorial()
     }
 	else if(evt.key === "Escape") {
 	    if(selectedVertices.size > 0) {
