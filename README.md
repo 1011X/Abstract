@@ -1,8 +1,6 @@
 # Abstract
 
-Version: 0.3.0b
-
-Abstract is a toy sandbox-style game where you can connect different types of vertices with different effects to form complex graphs.
+Abstract is a toy sandbox-style game where you can connect different types of vertices with different effects to form complex graphs. It is currently in alpha-level quality, so don't expect *too* much.
 
 
 ## Description
