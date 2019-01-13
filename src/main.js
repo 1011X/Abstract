@@ -18,10 +18,12 @@ let frameCounter = 0
 
 let canvasPos = null
 let prevCanvasPos = null
+let selectedVertices = new Set
 
 let paused = false
 var debug = false
 let hasDragged = false
+let selecting = false
 
 function save() {
 	localStorage["gameData"] = JSON.stringify({
@@ -64,32 +66,38 @@ function dragAction(evt) {
 	let uaHas = subs => navigator.userAgent.indexOf(subs) !== -1
 	hasDragged = true
 	
-	prevCanvasPos = canvasPos
-	
-	canvasPos = new Vec2(evt.pageX, evt.pageY)
-	let worldPos = canvasPos.clone().add(world.cam)
-	
-	// Helps to differentiate between mouse buttons in different browsers.
-	// The reason it works is because the mouseup event for Firefox has the
-	// releasing button information in the "buttons" attribute, but Chrome
-	// has it on the "button" attribute.
-	if(uaHas("Firefox") && evt.buttons == 1 || uaHas("Chrome") && evt.button == 0) {
-		// if a vertex was selected and it wasn't moving,
-		// then move it according to the cursor's movement.
-		if(selected !== null) {
-			// ensure it's not the Anchor type
-			if(!(selected instanceof Vertex.Anchor)) {
-				selected.pos.cloneFrom(worldPos)
-			}
-		}
-		// otherwise, move the camera
-		else {
-			let canvasMovement = canvasPos.clone()
-				.sub(prevCanvasPos)
-				.reverse()
-			world.cam.add(canvasMovement)
-		}
+	if(evt.ctrlKey) {
+	    selecting = true
+	    canvasPos = new Vec2(evt.pageX, evt.pageY)
 	}
+	else {
+	    prevCanvasPos = canvasPos
+	    
+	    canvasPos = new Vec2(evt.pageX, evt.pageY)
+	    let worldPos = canvasPos.clone().add(world.cam)
+	    
+	    // Helps to differentiate between mouse buttons in different browsers.
+	    // The reason it works is because the mouseup event for Firefox has the
+	    // releasing button information in the "buttons" attribute, but Chrome
+	    // has it on the "button" attribute.
+	    if(uaHas("Firefox") && evt.buttons == 1 || uaHas("Chrome") && evt.button == 0) {
+		    // if a vertex was selected,
+		    // then move it according to the cursor's movement.
+		    if(selected !== null) {
+			    // ensure it's not the Anchor type
+			    if(!(selected instanceof Vertex.Anchor)) {
+				    selected.pos.cloneFrom(worldPos)
+			    }
+		    }
+		    // otherwise, move the camera
+		    else {
+			    let canvasMovement = canvasPos.clone()
+				    .sub(prevCanvasPos)
+				    .reverse()
+			    world.cam.add(canvasMovement)
+		    }
+	    }
+    }
 }
 
 /// Handle user input
@@ -171,6 +179,7 @@ canvas.addEventListener("mouseup", evt => {
 	}
 	// reset EVERYTHING
 	hasDragged = false
+	selecting = false
 	selected = null
 	
 	prevCanvasPos = null
@@ -194,13 +203,26 @@ window.addEventListener("keydown", evt => {
 		}
 	}
 	else if(evt.keyCode === 27) { // esc
-		paused = !paused
+	    if(selectedVertices.size > 0) {
+	        selectedVertices.clear()
+	    }
+	    else {
+    		paused = !paused
+		}
 	}
 	else if(evt.keyCode === 114) { // f3
 		evt.preventDefault()
 		frameCounter = 0
 		fps = 0
 		debug = !debug
+	}
+	else if(evt.keyCode === 46) { // del
+	    if(selectedVertices.size > 0) {
+	        for(let vertex of selectedVertices) {
+	            world.despawn(vertex)
+	        }
+	        selectedVertices.clear()
+	    }
 	}
 })
 
@@ -256,64 +278,8 @@ function drawEdge(begin, end) {
 	ctx.closePath()
 	ctx.stroke()
 }
-/*
-function drawArc(begin, end, opp_head = false) {
-	ctx.beginPath()
-	// draw dashed line
-	ctx.setLineDash([7, 10])
-	ctx.moveTo(...begin)
-	ctx.lineTo(...end)
-	ctx.stroke()
-	
-	const ANGLE = Math.TAU / 12
-	let line = begin.clone().sub(end)
-	let tip = line.clone()
-		.resize(16)
-		.rotate(ANGLE)
-		.add(end)
-	
-	// draw arrowhead
-	ctx.beginPath()
-	ctx.setLineDash([])
-	ctx.moveTo(...end)
-	ctx.lineTo(...tip)
-	ctx.moveTo(...end)
-	
-	tip.sub(end)
-		.rotate(-2 * ANGLE)
-		.add(end)
-	
-	ctx.lineTo(...tip)
-	ctx.moveTo(...end)
-	ctx.closePath()
-	ctx.stroke()
-	
-	// draw back arrowhead if told to
-	if(opp_head) {
-		line.reverse()
-		tip.cloneFrom(line)
-		tip.resize(16)
-			.rotate(ANGLE)
-			.add(begin)
-		
-		ctx.beginPath()
-		ctx.moveTo(...begin)
-		ctx.lineTo(...tip)
-		ctx.moveTo(...begin)
-		
-		tip.sub(begin)
-			.rotate(-2 * ANGLE)
-			.add(begin)
-		
-		ctx.lineTo(...tip)
-		ctx.moveTo(...end)
-		ctx.closePath()
-		ctx.stroke()
-	}
-}
-*/
 
-function drawArc(begin, end, opp_head = false) {
+function drawArc(begin, end) {
     ctx.save()
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
     
@@ -376,15 +342,7 @@ function drawLoop(time) {
 	}
 	
 	// arc drawing procedure
-	//let alreadyDrawn = new Set
 	for(let arc of world.graph.arcs) {
-	    /*
-		let opposite = world.graph.getArc(arc.to, arc.from)
-		
-		if(alreadyDrawn.has(arc) || alreadyDrawn.has(opposite)) {
-			continue
-		}
-		*/
 		let from = arc.from.pos.clone()
 			.sub(world.cam)
 		
@@ -400,21 +358,56 @@ function drawLoop(time) {
         vec.resize(arc.to.radius).reverse()
         to.add(vec)
         
-		drawArc(from, to, false)
-		
-		/*
-		alreadyDrawn.add(arc)
-		if(opposite !== null) {
-			alreadyDrawn.add(opposite)
-		}
-		*/
+		drawArc(from, to)
 	}
 	
 	// vertex drawing procedure
 	for(let vertex of world.vertices) {
 		// get position relative to canvas
 		let pos = vertex.pos.clone().sub(world.cam)
+		
+		// if inside the selection box, put in selectedVertices
+		if(selecting) {
+		    let inside = prevCanvasPos.x < pos.x && pos.x < canvasPos.x
+		        && prevCanvasPos.y < pos.y && pos.y < canvasPos.y
+	        if(inside) {
+	            selectedVertices.add(vertex)
+	        }
+	        else {
+	            selectedVertices.delete(vertex)
+	        }
+		}
+		
 		drawVertex(pos, vertex.radius, vertex.style)
+		
+		if(selectedVertices.has(vertex)) {
+		    let dt = (time / 1000) % Math.TAU
+		    ctx.save()
+		    ctx.lineWidth = 2.5
+        	ctx.lineCap = "butt"
+		    ctx.strokeStyle = 'rgb(255, 255, 0)'
+		    ctx.setLineDash([15, 15])
+		    ctx.beginPath()
+		    ctx.arc(...pos, vertex.radius, 0 + dt, Math.TAU + dt)
+		    ctx.closePath()
+		    ctx.stroke()
+		    ctx.restore()
+		}
+	}
+	
+	
+	// draw selection box
+	if(selecting) {
+	    ctx.save()
+	    
+	    ctx.fillStyle = 'rgba(230, 230, 0, 0.4)'
+	    ctx.strokeStyle = 'yellow'
+	    let rectSize = canvasPos.clone().sub(prevCanvasPos)
+	    
+	    ctx.fillRect(...prevCanvasPos, ...rectSize)
+	    ctx.strokeRect(...prevCanvasPos, ...rectSize)
+	    
+	    ctx.restore()
 	}
 	
 	
