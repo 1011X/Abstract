@@ -118,10 +118,14 @@ canvas.addEventListener("wheel", evt => {
 canvas.addEventListener("mousedown", evt => {
 	canvas.addEventListener("mousemove", dragAction)
 	
-	canvasPos = new Vec2(evt.pageX, evt.pageY)
-	let worldPos = canvasPos.clone().add(world.cam)
-	
-	selected = world.vertexAt(worldPos)
+	if(evt.ctrlKey) {
+	    prevCanvasPos = new Vec2(evt.pageX, evt.pageY)
+	}
+	else {
+        canvasPos = new Vec2(evt.pageX, evt.pageY)
+	    let worldPos = canvasPos.clone().add(world.cam)
+	    selected = world.vertexAt(worldPos)
+    }
 })
 
 canvas.addEventListener("mouseup", evt => {

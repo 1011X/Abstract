@@ -89,6 +89,17 @@ class World {
         
         this.components = components
     }
+    
+    getNearbyVertices(vertex, r) {
+        let near = []
+        for(let other of this.vertices) {
+            let distance = other.pos.clone().sub(vertex.pos).lensqr
+            if(distance <= r ** 2 && other !== vertex) {
+                near.push(other)
+            }
+        }
+        return near
+    }
     // TODO Change update mechanism; flip-flops don't become unstable when they
     // are turned on at the same time.
     tick() {
@@ -121,14 +132,7 @@ class World {
                 },
                 
                 nearby(r) {
-                    let near = []
-                    for(let other of world.vertices) {
-                        let distance = other.pos.clone().sub(vertex.pos).lensqr
-                        if(distance < r ** 2 && other !== vertex) {
-                            near.push(other)
-                        }
-                    }
-                    return near
+                    return world.getNearbyVertices(vertex, r)
                 },
                 
                 arcConnectFrom(v) {
@@ -162,11 +166,24 @@ class World {
                 console.warn('deleting vertex with invalid position: ', vertex)
             }
             
-            // update physics
-            // TODO calculate physics component-wise.
+            // TODO better physics
+            // handle collisions; remember they're run twice for both vertices
+            for(let v of this.getNearbyVertices(vertex, 24 * 2)) {
+                let vec = vertex.pos.clone().sub(v.pos)
+                let overlap = 24 * 2 - vec.len
+                
+                // TODO something different for Anchor?
+                vec.resize(overlap / 4)
+                vertex.motion.add(vec)
+                vec.reverse()
+                v.motion.add(vec)
+            }
+            
+            // update its position and motion
             vertex.pos.add(vertex.motion)
             vertex.motion.scale(0.95)
             
+            // if motion is slow enough, stop it completely
             if(vertex.motion.lensqr < 0.1 ** 2) {
                 vertex.motion.cloneFrom(Vec2.NULL)
             }
