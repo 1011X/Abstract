@@ -147,11 +147,10 @@ canvas.addEventListener("mouseup", evt => {
 			}
 			else {
 				if(currEdge === 0) {
-				    let len = next.pos.clone().sub(selected.pos).len
-					world.edgeConnect(selected, next, len)
+					world.edgeConnect(selected, next)
 				}
 				else {
-					world.arcConnect(selected, next, 0)
+					world.arcConnect(selected, next)
 				}
 			}
 		}
@@ -346,6 +345,7 @@ function drawLoop(time) {
 	
 	ctx.lineWidth = 3
 	ctx.lineCap = "round"
+	
 	ctx.clearRect(0, 0, innerWidth, innerHeight)
 	
 	// edge drawing procedure
@@ -415,7 +415,7 @@ function drawLoop(time) {
 	
 	
 	// draw UI
-	let pos = new Vec2(10, innerHeight - 18)
+	let pos = new Vec2(10, innerHeight - 10)
 	
 	let current_vertex = `vertex: ${Vertex.registry.getName(currVert)}`
 	let current_connection = `connection: ${currEdge ? 'arc' : 'edge'}`

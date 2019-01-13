@@ -5,6 +5,8 @@ class World {
         
         this.graph = new MixedGraph
         this.ticks = 0
+        this.components = null
+        this.needsUpdate = true
     }
     
     get vertices() {
@@ -28,20 +30,30 @@ class World {
 	
 	spawn(vertex) {
 		this.graph.add(vertex)
+		//this.components.add(new Set().add(vertex))
 		//this.markForUpdate(vertex)
 	}
 	
 	despawn(vertex) {
 		this.graph.delete(vertex)
+		//this.calculateComponents()
 	}
     
-    arcConnect(u, v, val) {
-        this.graph.setArc(u, v, val)
+    arcConnect(u, v) {
+        this.graph.setArc(u, v, 0)
+		//this.calculateComponents()
+		// TODO should be:
+		// union component of u and component of v
         //this.markForUpdate(u)
+        //this.markForUpdate(v)
     }
     
-    edgeConnect(u, v, val) {
-        this.graph.setEdge(u, v, val)
+    edgeConnect(u, v) {
+        let len = v.pos.clone().sub(u.pos).len
+        this.graph.setEdge(u, v, len)
+		//this.calculateComponents()
+		// TODO should be:
+		// union component of u and component of v
         //this.markForUpdate(u)
         //this.markForUpdate(v)
     }
@@ -50,6 +62,33 @@ class World {
         this.cam.cloneFrom(pos)
     }
     */
+    calculateComponents() {
+        let components = new Set
+        // helper closure to see if given vertex is already accounted for
+        let already_counted = v => components.size > 0 && [...components].some(g => g.has(v))
+        
+        for(let vertex of this.vertices) {
+            if(already_counted(vertex)) {
+                continue
+            }
+            
+            // add vertex with set and start with that
+            let component = new Set
+            component.add(vertex)
+            
+            // get connections of each vertex and add them to the component set.
+            // once this is done, we'll have the whole component!
+            for(let vertex of component) {
+                for(let connection of this.graph.connectionsOf(vertex)) {
+                    component.add(connection)
+                }
+            }
+            
+            components.add(component)
+        }
+        
+        this.components = components
+    }
     // TODO Change update mechanism; flip-flops don't become unstable when they
     // are turned on at the same time.
     tick() {
@@ -57,28 +96,52 @@ class World {
             let world = this
             let handler = {
                 // for memoization reasons
-                memo_inputs: undefined,
-                memo_neighbors: undefined,
+                memoInputs: undefined,
+                memoNeighbors: undefined,
+                needsUpdate: false,
                 
                 // gather list input values
                 get inputs() {
-                    if(this.memo_inputs === undefined) {
-                        this.memo_inputs = []
+                    if(this.memoInputs === undefined) {
+                        this.memoInputs = []
                         for(let arc of world.graph.arcs) {
                             if(arc.to === vertex) {
-                                this.memo_inputs.push(arc.value)
+                                this.memoInputs.push(arc.value)
                             }
                         }
                     }
-                    return this.memo_inputs
+                    return this.memoInputs
                 },
                 
                 get neighbors() {
-                    if(!this.memo_neighbors) {
-                        this.memo_neighbors = [...world.graph.neighborsOf(vertex)]
+                    if(!this.memoNeighbors) {
+                        this.memoNeighbors = [...world.graph.neighborsOf(vertex)]
                     }
-                    return this.memo_neighbors
-                }
+                    return this.memoNeighbors
+                },
+                
+                nearby(r) {
+                    let near = []
+                    for(let other of world.vertices) {
+                        let distance = other.pos.clone().sub(vertex.pos).lensqr
+                        if(distance < r ** 2 && other !== vertex) {
+                            near.push(other)
+                        }
+                    }
+                    return near
+                },
+                
+                arcConnectFrom(v) {
+                    world.arcConnect(v, vertex)
+                },
+                
+                arcConnectTo(v) {
+                    world.arcConnect(vertex, v)
+                },
+                
+                edgeConnectWith(v) {
+                    world.edgeConnect(vertex, v)
+                },
             }
             
             let out = vertex.update(handler) || 0
@@ -88,12 +151,15 @@ class World {
                 this.graph.setArc(vertex, successor, out)
             }
             
-            // check that all vertices still have a valid position, and if not,
-            // remove them.
-            // FIXME whatever triggers this
+            // check that all vertices still have a valid position and motion,
+            // and if not, remove them.
+            if(isNaN(vertex.motion.x) || isNaN(vertex.motion.y)) {
+                this.graph.delete(vertex)
+                console.warn('deleting vertex with invalid motion: ', vertex)
+            }
             if(isNaN(vertex.pos.x) || isNaN(vertex.pos.y)) {
                 this.graph.delete(vertex)
-                console.warn('deleted nan vertex: ', vertex)
+                console.warn('deleting vertex with invalid position: ', vertex)
             }
             
             // update physics
@@ -161,6 +227,7 @@ class World {
         }
         
         world.graph = MixedGraph.fromJSON(json.graph)
+        //world.calculateComponents()
         
         // can also check if any previous arcs will update their
         // next vertex, and add those to `.markedForUpdate`.

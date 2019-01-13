@@ -17,7 +17,14 @@ Vertex.Feedback = class extends Vertex.Base {
 
 	update(h) {
 		let energy = h.inputs.reduce((acc, val) => acc + val, 0)
-		this.style.symbol = this.format(energy)
+		let val = this.format(energy)
+		
+		if(val === this.style.symbol) {
+		    return 0
+		}
+		
+		h.needsUpdate = true
+		this.style.symbol = val
 		
 		if(energy > 0) {
 			this.style.color = "cyan"
