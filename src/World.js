@@ -174,14 +174,23 @@ class World {
                 
                 // TODO something different for Anchor?
                 vec.resize(overlap / 4)
-                vertex.motion.add(vec)
+                
+                // make sure it's not currently being held or an Anchor
+                // TODO don't use `selected` here
+                if(vertex !== selected || vertex instanceof Vertex.Anchor) {
+                    vertex.motion.add(vec)
+                }
+                
                 vec.reverse()
-                v.motion.add(vec)
+                
+                if(v !== selected || v instanceof Vertex.Anchor) {
+                    v.motion.add(vec)
+                }
             }
             
             // update its position and motion
             vertex.pos.add(vertex.motion)
-            vertex.motion.scale(0.95)
+            vertex.motion.scale(0.90)
             
             // if motion is slow enough, stop it completely
             if(vertex.motion.lensqr < 0.1 ** 2) {

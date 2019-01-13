@@ -19,24 +19,22 @@ Vertex.Meter = class extends Vertex.Base {
 		let energy = h.inputs.reduce((acc, val) => acc + val, 0)
 		let val = this.format(energy)
 		
-		if(val === this.style.symbol) {
-		    return 0
+		if(val !== this.style.symbol) {
+		    h.needsUpdate = true
+		    this.style.symbol = val
+		    
+		    if(energy > 0) {
+			    this.style.color = "cyan"
+		    }
+		    else if(energy < 0) {
+			    this.style.color = "red"
+		    }
+		    else {
+			    this.style.color = "gray"
+		    }
 		}
 		
-		h.needsUpdate = true
-		this.style.symbol = val
-		
-		if(energy > 0) {
-			this.style.color = "cyan"
-		}
-		else if(energy < 0) {
-			this.style.color = "red"
-		}
-		else {
-			this.style.color = "gray"
-		}
-		
-		return 0
+		return energy
 	}
 }
 
