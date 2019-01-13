@@ -1,4 +1,4 @@
-Vertex.Feedback = class extends Vertex.Base {
+Vertex.Meter = class extends Vertex.Base {
 	constructor() {
 		super()
 		this.style = new VertexStyle("gray", {
@@ -40,4 +40,4 @@ Vertex.Feedback = class extends Vertex.Base {
 	}
 }
 
-Vertex.Feedback.prototype.style = new VertexStyle("white", {symbol: "F"})
+Vertex.Meter.prototype.style = new VertexStyle("white", {symbol: "F"})

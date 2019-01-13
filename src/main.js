@@ -1,5 +1,3 @@
-/// TODO
-/// * Add Rust-like iterators to replace manual `for` loops?
 "use strict"
 
 Math.TAU = 2 * Math.PI
@@ -24,13 +22,32 @@ let paused = false
 var debug = false
 let hasDragged = false
 let selecting = false
+let autosave = true
 
 function save() {
 	localStorage["gameData"] = JSON.stringify({
 		currVert: Vertex.registry.getName(currVert),
-		currEdge: currEdge,
+		currEdge,
 		world
 	})
+}
+
+function showTutorial() {
+    alert(
+`Controls:
+    T key: show this tutorial
+    S key: manually save the world
+    C key: toggle autosaving (default: enabled)
+    Z key: use arc connections
+    X key: use edge connections`)
+    alert(
+`Current selection will be shown in the bottom left corner.
+Scroll the mouse wheel to select a vertex type.
+Right click to place a vertex or (in the case of the switch) interact with it.
+Right click and drag from one vertex to another to connect them.
+Left click and drag to move a vertex or to pan the world.
+Left click a vertex to delete it.`)
+    alert("Enjoy!")
 }
 
 function load() {
@@ -38,15 +55,7 @@ function load() {
 		world = new World
 		currVert = 1
         if(!localStorage["gameData"]) {
-            alert(
-`Controls:
-    S key: save the world
-    E key: toggle connection type
-    F3: view debug information
-    scroll: select vertex type
-    right click: place or interact with vertex
-    left click: delete vertex`
-            )
+            showTutorial()
         }
 	}
 	else {
@@ -187,13 +196,11 @@ canvas.addEventListener("mouseup", evt => {
 })
 
 window.addEventListener("keydown", evt => {
-	// 's' is pressed
-	if(evt.keyCode === 83) {
-		// save the world
+	if(evt.key === 's') { // s
+		// manually save the world
 		save()
 	}
-	// 'e' is pressed
-	else if(evt.keyCode === 69) { // nice
+	else if(evt.key === 'e') {
 		// toggle current connection type
 		if(currEdge === 0) {
 			currEdge = 1
@@ -202,7 +209,19 @@ window.addEventListener("keydown", evt => {
 			currEdge = 0
 		}
 	}
-	else if(evt.keyCode === 27) { // esc
+	else if(evt.key === 'z') {
+	    currEdge = 1
+    }
+    else if(evt.key === 'x') {
+        currEdge = 0
+    }
+    else if(evt.key === 'c') {
+        autosave = !autosave
+    }
+    else if(evt.key === 't') {
+        showTutorial()
+    }
+	else if(evt.key === "Escape") {
 	    if(selectedVertices.size > 0) {
 	        selectedVertices.clear()
 	    }
@@ -210,13 +229,13 @@ window.addEventListener("keydown", evt => {
     		paused = !paused
 		}
 	}
-	else if(evt.keyCode === 114) { // f3
+	else if(evt.key === "F3") {
 		evt.preventDefault()
 		frameCounter = 0
 		fps = 0
 		debug = !debug
 	}
-	else if(evt.keyCode === 46) { // del
+	else if(evt.key === "Delete") {
 	    if(selectedVertices.size > 0) {
 	        for(let vertex of selectedVertices) {
 	            world.despawn(vertex)
@@ -304,7 +323,7 @@ function updateLoop() {
 	if(!paused) {
 		world.tick()
 	} else {
-	    alert("paused")
+	    alert(`Paused.\nAutosave: ${autosave ? 'enabled' : 'disabled'}`)
 	    paused = false
 	}
 }
@@ -380,6 +399,7 @@ function drawLoop(time) {
 		
 		drawVertex(pos, vertex.radius, vertex.style)
 		
+		// draw rotating selection "ring"
 		if(selectedVertices.has(vertex)) {
 		    let dt = (time / 1000) % Math.TAU
 		    ctx.save()
@@ -411,19 +431,20 @@ function drawLoop(time) {
 	}
 	
 	
-	// draw UI
+	// draw UI/current selection
 	let pos = new Vec2(10, innerHeight - 10)
 	
-	let current_vertex = `vertex: ${Vertex.registry.getName(currVert)}`
-	let current_connection = `connection: ${currEdge ? 'arc' : 'edge'}`
+	let strings = [
+	    `vertex: ${Vertex.registry.getName(currVert)}`,
+	    `connection: ${currEdge ? 'arc' : 'edge'}`,
+    ]
 	
-	// draw name of current vertex
 	ctx.font = "18px sans-serif"
-	ctx.fillText(current_vertex, ...pos)
 	
-	pos.y -= 18
-	
-    ctx.fillText(current_connection, ...pos)
+	for(let str of strings.reverse()) {
+    	ctx.fillText(str, ...pos)
+	    pos.y -= 18
+    }
 	
 	
 	if(debug) {
@@ -441,5 +462,5 @@ function drawLoop(time) {
 }
 
 setInterval(updateLoop, 50/3)
-//setInterval(save, 60 * 1000)
+setInterval(() => {if(autosave) save()}, 60 * 1000)
 requestAnimationFrame(drawLoop)

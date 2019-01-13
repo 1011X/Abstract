@@ -1,21 +1,45 @@
 Vertex.Switch = class extends Vertex.Base {
 	constructor() {
 		super()
-		this.on = false
-		this.style = Vertex.Switch.OFF
+		this.value = 0
+		this.style = new VertexStyle("black", {
+            textColor: "white",
+            symbol: "⭘"
+        })
 	}
 
 	action() {
-		this.on = !this.on
-		this.updateStyle()
+	    switch(this.value) {
+	        case 0:  this.value =  1; break
+	        case 1:  this.value = -1; break
+	        case -1: this.value =  0; break
+	        default:
+	            throw new Error("switch has invalid value: " + this.value)
+	    }
+	    this.updateStyle()
 	}
 	
 	update(_) {
-		return this.on ? 1 : -1
+		return this.value
 	}
 	
 	updateStyle() {
-		this.style = (this.on) ? Vertex.Switch.ON : Vertex.Switch.OFF
+	    switch(this.value) {
+	        case 0:
+                this.style.color = "black"
+	            this.style.symbol = "⭘"
+	            break
+	        case 1:
+                this.style.color = "white"
+	            this.style.symbol = '➕'
+	            break
+	        case -1:
+                this.style.color = "white"
+	            this.style.symbol = '➖'
+	            break
+	        default:
+	            throw new Error("switch has invalid value: " + this.value)
+	    }
 	}
 	
 	toJSON() {
@@ -26,15 +50,10 @@ Vertex.Switch = class extends Vertex.Base {
 	
 	static fromJSON(json) {
 		let vertex = super.fromJSON(json)
-		vertex.on = json.on
+		vertex.value = json.value
 		vertex.updateStyle()
 		return vertex
 	}
 }
 
 Vertex.Switch.prototype.style = new VertexStyle("black", {textColor: "white", symbol: "⏼"})
-Vertex.Switch.ON = new VertexStyle("white", {symbol: "⏽"})
-Vertex.Switch.OFF = new VertexStyle("black", {
-    textColor: "white",
-    symbol: "⭘"
-})
