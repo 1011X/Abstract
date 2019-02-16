@@ -1,6 +1,6 @@
 class World {
     constructor() {
-        this.cam = new Vec2
+        this.cam = new Vec2(0, 0)
         //this.markForUpdate = new Set
         
         this.graph = new MixedGraph
