@@ -5,6 +5,9 @@ Math.TAU = 2 * Math.PI
 const canvas = document.getElementById("c")
 const ctx = canvas.getContext("2d")
 
+let game = new Game(canvas)
+game.load(JSON.parse(localStorage['gameData']))
+
 let world = null
 
 let selected = null // vertex clicked on mousedown
@@ -18,9 +21,9 @@ let canvasPos = null
 let prevCanvasPos = null
 let selectedVertices = new Set
 
-let paused = false
+//let paused = false
 var debug = false
-let hasDragged = false
+//let hasDragged = false
 let selecting = false
 let autosave = true
 
@@ -32,21 +35,6 @@ function save() {
 	})
 }
 
-function load() {
-	if(!localStorage["gameData"]) {
-		world = new World
-		currVert = 1
-        if(!localStorage["gameData"]) {
-            alert("Welcome! Make sure to read the README.md file to understand how to play the game. Enjoy!")
-        }
-	}
-	else {
-		let game = JSON.parse(localStorage["gameData"])
-		world = World.fromJSON(game.world)
-		currVert = Vertex.registry.getId(game.currVert)
-		currEdge = game.currEdge
-	}
-}
 
 // Load world data, if any
 load()
