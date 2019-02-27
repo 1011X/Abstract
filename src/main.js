@@ -5,13 +5,12 @@ Math.TAU = 2 * Math.PI
 const canvas = document.getElementById("c")
 const ctx = canvas.getContext("2d")
 
-let game = new Game(canvas)
-game.load(JSON.parse(localStorage['gameData']))
+//let game = new Game(canvas)
+//game.load(JSON.parse(localStorage['gameData']))
 
 let world = null
-
 let selected = null // vertex clicked on mousedown
-let currVert = 0 // vertex type selected for placement
+let currVert = 1 // vertex type selected for placement
 let currEdge = 0 // edge type (arc or regular edge) being used
 let fps = 0 // used to save previous second's fps
 let frameCounter = 0
@@ -21,11 +20,11 @@ let canvasPos = null
 let prevCanvasPos = null
 let selectedVertices = new Set
 
-//let paused = false
+let paused = false
 var debug = false
-//let hasDragged = false
+let hasDragged = false
 let selecting = false
-let autosave = true
+let autosave = false
 
 function save() {
 	localStorage["gameData"] = JSON.stringify({
@@ -35,9 +34,28 @@ function save() {
 	})
 }
 
+function showTutorial() {
+    alert(
+`Controls:
+    T key: show this tutorial
+    S key: manually save the world
+    C key: toggle autosaving (default: enabled)
+    Z key: use arc connections
+    X key: use edge connections`)
+    alert(
+`Current selection will be shown in the bottom left corner.
+Scroll the mouse wheel to select a vertex type.
+Right click to place a vertex or (in the case of the switch) interact with it.
+Right click and drag from one vertex to another to connect them.
+Left click and drag to move a vertex or to pan the world.
+Left click a vertex to delete it.`)
+    alert("Enjoy!")
+}
+
+
 
 // Load world data, if any
-load()
+//load()
 
 // If mouse is down and dragged, record position in worldPos.
 // Also handles moving of vertex if one is selected and dragged.
@@ -85,6 +103,7 @@ function dragAction(evt) {
 canvas.addEventListener("wheel", evt => {
 	// ensure ctrl is up, otherwise browser will zoom and
 	// cycle through vertices at the same time
+	evt.preventDefault()
 	if(!evt.ctrlKey) {
 		let delta = Math.sign(evt.deltaY)
 		
@@ -120,9 +139,14 @@ canvas.addEventListener("mouseup", evt => {
 	
 	// left release
 	if(evt.button == 0) {
-		// remove if there's a vertex and there was no dragging
+		// remove vertex if there was a vertex and there was no dragging
 		if(selected !== null && !hasDragged) {
 			world.despawn(selected)
+		}
+		// TODO: remove connection
+		else {
+		    // this should be done by drawing a red line segment that, when
+		    // intersecting any connection, deletes that connection.
 		}
 	}
 	// right release
@@ -187,6 +211,9 @@ window.addEventListener("keydown", evt => {
     }
     else if(evt.key === 'c') {
         autosave = !autosave
+    }
+    else if(evt.key === 't') {
+        showTutorial()
     }
 	else if(evt.key === "Escape") {
 	    if(selectedVertices.size > 0) {
@@ -347,6 +374,11 @@ function drawLoop(time) {
 		drawArc(from, to)
 	}
 	
+	// currently creating a connection
+	if(selected !== null) {
+	    // TODO dynamically draw temporal connection, depending on game state.
+    }
+	
 	// vertex drawing procedure
 	for(let vertex of world.vertices) {
 		// get position relative to canvas
@@ -431,3 +463,5 @@ function drawLoop(time) {
 setInterval(updateLoop, 50/3)
 setInterval(() => {if(autosave) save()}, 60 * 1000)
 requestAnimationFrame(drawLoop)
+
+showTutorial()
