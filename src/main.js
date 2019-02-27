@@ -34,6 +34,18 @@ function save() {
 	})
 }
 
+// load
+if(localStorage['gameData']) {
+    let json = JSON.parse(localStorage['gameData'])
+    world = json.world
+    currVert = json.currVert
+    currEdge = json.currEdge
+}
+else {
+    world = new World
+    showTutorial()
+}
+
 function showTutorial() {
     alert(
 `Controls:
@@ -463,5 +475,3 @@ function drawLoop(time) {
 setInterval(updateLoop, 50/3)
 setInterval(() => {if(autosave) save()}, 60 * 1000)
 requestAnimationFrame(drawLoop)
-
-showTutorial()
