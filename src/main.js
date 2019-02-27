@@ -80,16 +80,18 @@ function dragAction(evt) {
 	    canvasPos = new Vec2(evt.pageX, evt.pageY)
 	}
 	else {
-	    prevCanvasPos = canvasPos
-	    
-	    canvasPos = new Vec2(evt.pageX, evt.pageY)
-	    let worldPos = canvasPos.clone().add(world.cam)
-	    
 	    // Helps to differentiate between mouse buttons in different browsers.
 	    // The reason it works is because the mouseup event for Firefox has the
 	    // releasing button information in the "buttons" attribute, but Chrome
 	    // has it on the "button" attribute.
-	    if(uaHas("Firefox") && evt.buttons == 1 || uaHas("Chrome") && evt.button == 0) {
+	    // XXX maybe not needed anymore?
+	    //if(uaHas("Firefox") && evt.buttons == 1 || uaHas("Chrome") && evt.button == 0) {
+        if(evt.buttons == 1) {
+	        prevCanvasPos = canvasPos
+	        
+	        canvasPos = new Vec2(evt.pageX, evt.pageY)
+	        let worldPos = canvasPos.clone().add(world.cam)
+	        
 		    // if a vertex was selected,
 		    // then move it according to the cursor's movement.
 		    if(selected !== null) {
@@ -106,6 +108,23 @@ function dragAction(evt) {
 			    world.cam.add(canvasMovement)
 		    }
 	    }
+	    // right mouse button
+	    else if(evt.buttons == 2) {
+	        canvasPos = new Vec2(evt.pageX, evt.pageY)
+	        //let worldPos = canvasPos.clone().add(world.cam)
+	        
+	        // if no vertex underneath
+	        if(selected === null) {
+	            // draw red line for cutting connections
+	            ctx.save()
+	            ctx.strokeStyle = "red"
+	            ctx.moveTo(prevCanvasPos)
+	            ctx.lineTo(canvasPos)
+	            ctx.restore()
+	            
+	            // TODO test for connection intersection
+	        }
+        }
     }
 }
 
