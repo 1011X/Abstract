@@ -105,6 +105,13 @@ class Vec2 extends Float64Array {
 	}
 	
 	// a: Vec2, b: Vec2
+	static cross(a, b) {
+	    console.assert(a instanceof Vec2)
+	    console.assert(b instanceof Vec2)
+		return a.x * b.y - a.y * b.x
+	}
+	
+	// a: Vec2, b: Vec2
 	static eq(a, b) {
 	    console.assert(a instanceof Vec2)
 	    console.assert(b instanceof Vec2)

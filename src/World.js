@@ -57,11 +57,110 @@ class World {
         //this.markForUpdate(u)
         //this.markForUpdate(v)
     }
-    /*
-    moveCamTo(pos) {
-        this.cam.cloneFrom(pos)
+    
+    // disconnects any connections that intersect with the line given by the
+    // 2 endpoints.
+    // for an easy explanation of how this is done, refer to this:
+    // https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect#565282
+    // Note: only the last 3 cases are checked (no collinearity is checked bc
+    // that would be *very* difficult to achieve in-game)
+    intersectingConnections(a, b) {
+        let cut_offset = a.clone().sub(b) // r
+        let intersects = new WeakSet
+        
+        for(let edge of this.graph.edges) {
+            let [from, to] = edge.toArray().map(v => v.pos)
+            let edge_offset = to.clone().sub(from) // s
+            
+            let offset_cross = Vec2.cross(cut_offset, edge_offset)
+            // parallel; no intersection
+            // you: but collinea—
+            // me: shhhhhhhhhh
+            if(offset_cross == 0) {
+                continue
+            }
+            
+            let start_offset = from.clone().sub(a)
+            let t = Vec2.cross(start_offset, edge_offset) / offset_cross
+            let u = Vec2.cross(start_offset, cut_offset) / offset_cross
+            
+            if(0 <= t && t <= 1 && 0 <= u && u <= 1) {
+                // intersects!
+                intersects.add(edge)
+            }
+        }
+        
+        for(let arc of this.graph.arcs) {
+            let arc_offset = arc.to.pos.clone().sub(arc.from.pos) // s
+            
+            let offset_cross = Vec2.cross(cut_offset, arc_offset)
+            // parallel; no intersection
+            // you: but collinea—
+            // me: shhhhhhhhhh
+            if(offset_cross == 0) {
+                continue
+            }
+            
+            let start_offset = arc.from.pos.clone().sub(a)
+            let t = Vec2.cross(start_offset, arc_offset) / offset_cross
+            let u = Vec2.cross(start_offset, cut_offset) / offset_cross
+            
+            if(0 <= t && t <= 1 && 0 <= u && u <= 1) {
+                // intersects!
+                intersects.add(arc)
+            }
+        }
+        
+        return intersects
     }
-    */
+    
+    disconnectIntersecting(a, b) {
+        let cut_offset = a.clone().sub(b) // r
+        
+        for(let edge of this.graph.edges) {
+            let [from, to] = edge.toArray().map(v => v.pos)
+            let edge_offset = to.clone().sub(from) // s
+            
+            let offset_cross = Vec2.cross(cut_offset, edge_offset)
+            // parallel; no intersection
+            // you: but collinea—
+            // me: shhhhhhhhhh
+            if(offset_cross == 0) {
+                continue
+            }
+            
+            let start_offset = from.clone().sub(a)
+            let t = Vec2.cross(start_offset, edge_offset) / offset_cross
+            let u = Vec2.cross(start_offset, cut_offset) / offset_cross
+            
+            if(0 <= t && t <= 1 && 0 <= u && u <= 1) {
+                // intersects!
+                this.graph.removeEdge(edge.from, edge.to)
+            }
+        }
+        
+        for(let arc of this.graph.arcs) {
+            let arc_offset = arc.to.pos.clone().sub(arc.from.pos) // s
+            
+            let offset_cross = Vec2.cross(cut_offset, arc_offset)
+            // parallel; no intersection
+            // you: but collinea—
+            // me: shhhhhhhhhh
+            if(offset_cross == 0) {
+                continue
+            }
+            
+            let start_offset = arc.from.pos.clone().sub(a)
+            let t = Vec2.cross(start_offset, arc_offset) / offset_cross
+            let u = Vec2.cross(start_offset, cut_offset) / offset_cross
+            
+            if(0 <= t && t <= 1 && 0 <= u && u <= 1) {
+                // intersects!
+                this.graph.removeArc(arc.from, arc.to)
+            }
+        }
+    }
+    
     calculateComponents() {
         let components = new Set
         // helper closure to see if given vertex is already accounted for

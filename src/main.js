@@ -19,6 +19,7 @@ let frameCounter = 0
 let canvasPos = null
 let prevCanvasPos = null
 let selectedVertices = new Set
+let selectedConnections = null
 
 let paused = false
 var debug = false
@@ -37,8 +38,8 @@ function save() {
 // load
 if(localStorage['gameData']) {
     let json = JSON.parse(localStorage['gameData'])
-    world = json.world
-    currVert = json.currVert
+    world = World.fromJSON(json.world)
+    currVert = Vertex.registry.getId(json.currVert)
     currEdge = json.currEdge
 }
 else {
@@ -112,18 +113,6 @@ function dragAction(evt) {
 	    else if(evt.buttons == 2) {
 	        canvasPos = new Vec2(evt.pageX, evt.pageY)
 	        //let worldPos = canvasPos.clone().add(world.cam)
-	        
-	        // if no vertex underneath
-	        if(selected === null) {
-	            // draw red line for cutting connections
-	            ctx.save()
-	            ctx.strokeStyle = "red"
-	            ctx.moveTo(prevCanvasPos)
-	            ctx.lineTo(canvasPos)
-	            ctx.restore()
-	            
-	            // TODO test for connection intersection
-	        }
         }
     }
 }
@@ -162,6 +151,13 @@ canvas.addEventListener("mousedown", evt => {
         canvasPos = new Vec2(evt.pageX, evt.pageY)
 	    let worldPos = canvasPos.clone().add(world.cam)
 	    selected = world.vertexAt(worldPos)
+	    
+	    if(selected === null) {
+	        prevCanvasPos = new Vec2(evt.pageX, evt.pageY)
+	        let prevWorldPos = prevCanvasPos.clone().add(world.cam)
+	        let worldPos = canvasPos.clone().add(world.cam)
+            selectedConnections = world.intersectingConnections(prevWorldPos, worldPos)
+        }
     }
 })
 
@@ -209,6 +205,13 @@ canvas.addEventListener("mouseup", evt => {
 				vertex.pos.cloneFrom(worldPos)
 				world.spawn(vertex)
 			}
+		}
+		// run intersection code to remove connections
+		else if(hasDragged) {
+	        let prevWorldPos = prevCanvasPos.clone().add(world.cam)
+	        let worldPos = canvasPos.clone().add(world.cam)
+            selectedConnections = world.intersectingConnections(prevWorldPos, worldPos)
+            world.disconnectIntersecting(prevWorldPos, worldPos)
 		}
 	}
 	// reset EVERYTHING
@@ -315,17 +318,21 @@ function drawVertex(pos, radius, style) {
 	ctx.restore()
 }
 
-function drawEdge(begin, end) {
+function drawEdge(begin, end, color) {
+    ctx.save()
+    ctx.strokeStyle = color
 	ctx.beginPath()
-	ctx.moveTo(...begin)
-	ctx.lineTo(...end)
+	    ctx.moveTo(...begin)
+	    ctx.lineTo(...end)
 	ctx.closePath()
 	ctx.stroke()
+	ctx.restore()
 }
 
-function drawArc(begin, end) {
+function drawArc(begin, end, color) {
     ctx.save()
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+    //ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+    ctx.fillStyle = color
     
     let start_offset = end.clone()
         .sub(begin)
@@ -357,6 +364,7 @@ function updateLoop() {
 function drawLoop(time) {
 	requestAnimationFrame(drawLoop)
 	
+	ctx.strokeStyle = "black"
 	ctx.lineWidth = 3
 	ctx.lineCap = "round"
 	
@@ -380,9 +388,13 @@ function drawLoop(time) {
         from.add(vec)
         vec.resize(edge[1].radius).reverse()
         to.add(vec)
+        
+        let color = selectedConnections !== null && selectedConnections.has(edge) ?
+            "red" : "black"
+        console.log(color)
 		
 		// adjust line start and end positions
-		drawEdge(from, to)
+		drawEdge(from, to, color)
 	}
 	
 	// arc drawing procedure
@@ -402,12 +414,27 @@ function drawLoop(time) {
         vec.resize(arc.to.radius).reverse()
         to.add(vec)
         
-		drawArc(from, to)
+        let color = selectedConnections !== null && selectedConnections.has(arc) ?
+            'rgba(255, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.5)'
+        
+		drawArc(from, to, color)
 	}
 	
 	// currently creating a connection
 	if(selected !== null) {
 	    // TODO dynamically draw temporal connection, depending on game state.
+    }
+    
+    if(selected === null && hasDragged) {
+        // draw red line for cutting connections
+        ctx.save()
+        ctx.strokeStyle = "red"
+        ctx.beginPath()
+            ctx.moveTo(...prevCanvasPos)
+            ctx.lineTo(...canvasPos)
+        ctx.closePath()
+        ctx.stroke()
+        ctx.restore()
     }
 	
 	// vertex drawing procedure
