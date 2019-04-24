@@ -8,14 +8,39 @@ class Game {
         // let vectorPool = new ObjectPool(Vec2, 10)
         this.canvasPos = null
         this.prevCanvasPos = null
+        this.selectedVertices = new Set
+        this.selectedConnections = null
+        this.fps = 0
+        this.frameCounter = 0
         
         this.hasDragged = false
         this.paused = false
         this.autosave = false
-        this.mouse = new Mouse
-        this.keyboard = new Keyboard
+        this.has_local_storage = true
+        this.selecting = false
+        this.autosave = false
         this.currVert = 1
         this.currEdge = 0
+        
+        // test if localStorage is accessible
+        try {
+            let json = JSON.parse(localStorage['gameData'])
+            this.world = World.fromJSON(json.world)
+            this.currVert = Vertex.registry.getId(json.currVert)
+            this.currEdge = json.currEdge
+        }
+        catch(e) {
+            this.has_local_storage = false
+            this.world = new World
+            showTutorial()
+        }
+        
+        // TODO register event handlers
+        canvas.
+        
+        setInterval(this.updateLoop.bind(this), 50/3)
+        setInterval(this.save, 60 * 1000)
+        requestAnimationFrame(this.drawLoop.bind(this))
     }
     
     save() {
@@ -37,26 +62,34 @@ class Game {
         }
     }
     
-    resize_handler(_) {
+    onresize(_) {
         this.canvas.width = innerWidth
         this.canvas.height = innerHeight
     }
     
-    mouse_wheel_handler(evt) {
+    onwheel(evt) {
+        evt.preventDefault()
         // ensure ctrl is up, otherwise browser will zoom and
         // cycle through vertices at the same time
-        if(!evt.ctrlKey) {
-            this.currVert += Math.sign(evt.deltaY)
-            this.currVert %= Vertex.registry.size
-        
-            if(this.currVert < 0) {
-                this.currVert += Vertex.registry.size
-            }
-        }
+	    if(!evt.ctrlKey) {
+		    let delta = Math.sign(evt.deltaY)
+		
+		    // skip the vertex type at 0 because it's the "none"
+		    // type and we don't want it.
+		    if(delta === -1 && currVert === 1) {
+			    currVert = Vertex.registry.size - 1
+		    }
+		    else if(delta === 1 && currVert === Vertex.registry.size - 1) {
+			    currVert = 1
+		    }
+		    else {
+			    currVert += delta
+		    }
+	    }
     }
     
-    mouse_up_handler() {
-        this.canvas.removeEventListener("mousemove", this.dragAction)
+    onmouseup(evt) {
+        this.canvas.removeEventListener("mousemove", this.onmousemove)
         
         // left release
         if(evt.button == 0) {
@@ -106,8 +139,8 @@ class Game {
         this.canvasPos = null
     }
     
-    mouse_down_handler(evt) {
-        this.canvas.addEventListener("mousemove", dragAction)
+    onmousedown(evt) {
+        this.canvas.addEventListener("mousemove", this.onmousemove)
         
         this.canvasPos = new Vec2(evt.pageX, evt.pageY)
         let worldPos = this.canvasPos.clone().add(this.world.cam)
@@ -117,7 +150,7 @@ class Game {
     
     // If mouse is down and dragged, record position in worldPos.
     // Also handles moving of vertex if one is selected and dragged.
-    mouse_move_handler() {
+    onmousemove() {
         let uaHas = subs => navigator.userAgent.indexOf(subs) !== -1
         this.hasDragged = true
         
@@ -149,7 +182,7 @@ class Game {
         }
     }
     
-    key_down_handler(evt) {
+    onkeydown(evt) {
         // 's' is pressed
         if(evt.keyCode == 83) {
             save()
@@ -165,216 +198,238 @@ class Game {
         }
     }
     
-    context_menu_handler(evt) {
+    oncontextmenu(evt) {
         evt.preventDefault()
     }
-}
 
+    drawVertex(pos, radius, style) {
+	    this.ctx.save()
+	
+	    if(style.gradient === VertexStyle.RADIAL_GRADIENT) {
+		    let radialGradient = this.ctx.createRadialGradient(...pos, 0, ...pos, radius)
+		
+		    radialGradient.addColorStop(0, "white")
+		    radialGradient.addColorStop(1, style.color)
 
+		    this.ctx.fillStyle = radialGradient
+	    }
+	    else {
+		    this.ctx.fillStyle = style.color
+	    }
 
+	    this.ctx.strokeStyle = style.border
 
+	    this.ctx.beginPath()
+	    this.ctx.arc(...pos, radius, 0, Math.TAU)
+	    this.ctx.closePath()
+	    this.ctx.fill()
+	    this.ctx.stroke()
 
-function drawVertex(pos, radius, style) {
-    ctx.save()
-
-    if(style.gradient === VertexStyle.RADIAL_GRADIENT) {
-        let radialGradient = ctx.createRadialGradient(...pos, 0, ...pos, radius)
-    
-        if(style.textColor === "white") {
-            radialGradient.addColorStop(0, "black")
-            radialGradient.addColorStop(1, style.color)
-        }
-        else {
-            radialGradient.addColorStop(0, "white")
-            radialGradient.addColorStop(1, style.color)
-        }
-
-        ctx.fillStyle = radialGradient
-    }
-    else {
-        ctx.fillStyle = style.color
-    }
-
-    ctx.strokeStyle = style.border
-
-    ctx.beginPath()
-    ctx.arc(...pos, radius, 0, Math.TAU)
-    ctx.closePath()
-    ctx.fill()
-    ctx.stroke()
-
-    if(style.symbol) {
-        ctx.fillStyle = style.textColor
-        ctx.textAlign = "center"
-        ctx.textBaseline = "middle"
-        ctx.font = "bold 18px sans-serif"
-        ctx.fillText(style.symbol, ...pos)
+	    if(style.symbol) {
+		    this.ctx.fillStyle = style.textColor
+		    this.ctx.textAlign = "center"
+		    this.ctx.textBaseline = "middle"
+		    this.ctx.font = "bold 20px serif"
+		    this.ctx.fillText(style.symbol, ...pos)
+	    }
+	
+	    this.ctx.restore()
     }
 
-    ctx.restore()
-}
-
-function drawEdge(begin, end) {
-    ctx.beginPath()
-    ctx.moveTo(...begin)
-    ctx.lineTo(...end)
-    ctx.closePath()
-    ctx.stroke()
-}
-
-function drawArc(begin, end, opp_head = false) {
-    // draw dashed line
-    ctx.beginPath()
-    ctx.setLineDash([15, 15])
-    ctx.moveTo(...begin)
-    ctx.lineTo(...end)
-    ctx.stroke()
-    
-    let angle = Math.TAU / 12
-    let line = begin.clone().sub(end)
-    let tip = line.clone()
-        .resize(16)
-        .rotate(angle)
-        .add(end)
-    
-    // draw arrowhead
-    ctx.beginPath()
-    ctx.setLineDash([])
-    ctx.moveTo(...end)
-    ctx.lineTo(...tip)
-    ctx.moveTo(...end)
-    
-    tip.sub(end)
-        .rotate(-2 * angle)
-        .add(end)
-    
-    ctx.lineTo(...tip)
-    ctx.moveTo(...end)
-    
-    // draw back arrowhead if told to
-    if(opp_head) {
-        line.reverse()
-        tip.cloneFrom(line)
-        tip.resize(16)
-            .rotate(angle)
-            .add(start)
-        
-        ctx.beginPath()
-        ctx.moveTo(...start)
-        ctx.lineTo(...tip)
-        ctx.moveTo(...start)
-        
-        tip.sub(start)
-            .rotate(-2 * angle)
-            .add(start)
-        
-        ctx.lineTo(...tip)
-        ctx.moveTo(...end)
+    drawEdge(begin, end, color) {
+        this.ctx.save()
+        this.ctx.strokeStyle = color
+	    this.ctx.beginPath()
+	        this.ctx.moveTo(...begin)
+	        this.ctx.lineTo(...end)
+	    this.ctx.closePath()
+	    this.ctx.stroke()
+	    this.ctx.restore()
     }
     
-    ctx.closePath()
-    ctx.stroke()
-}
-
-
-function updateLoop() {
-    world.tick()
-}
-
-function drawLoop() {
-    requestAnimationFrame(drawLoop)
-    
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.lineWidth = 3
-    ctx.lineCap = "round"
-    
-    // edge drawing procedure
-    for(let edge of world.graph.edges) {
-        edge = edge.toArray()
+    drawArc(begin, end, color) {
+        this.ctx.save()
+        //this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+        this.ctx.fillStyle = color
         
-        let from = edge[0].pos.clone()
-            .sub(world.cam)
+        let start_offset = end.clone()
+            .sub(begin)
+            .rotate(Math.TAU / 4)
+            .resize(10)
         
-        let to = edge[1].pos.clone()
-            .sub(world.cam)
-        
-        // get offset from center of vertex to its edge
-        const fromOffset = to.clone()
-            .sub(from)
-            .resize(edge[0].radius)
-        
-        const toOffset = from.clone()
-            .sub(to)
-            .resize(edge[1].radius)
-        
-        // adjust line start and end positions
-        drawEdge(from.add(fromOffset), to.add(toOffset))
+	    this.ctx.beginPath()
+	    this.ctx.moveTo(...start_offset.add(begin))
+	    this.ctx.lineTo(...end)
+	    start_offset.sub(begin).reverse()
+	    this.ctx.lineTo(...start_offset.add(begin))
+	    this.ctx.closePath()
+	    this.ctx.fill()
+	
+	    this.ctx.restore()
     }
     
-    // arc drawing procedure
-    let alreadyDrawn = new Set
-    for(let arc of world.graph.arcs) {
-        let has_opposite = world.graph.getArc(arc.to, arc.from) !== null
-        
-        if(alreadyDrawn.has(arc) || has_opposite) {
-            continue
+    updateLoop() {
+	    if(!this.paused) {
+		    this.world.tick()
+	    } else {
+	        alert(`Paused.\nAutosave: ${this.autosave ? 'enabled' : 'disabled'}`)
+	        this.paused = false
+	    }
+    }
+
+    drawLoop() {
+	    requestAnimationFrame(this.drawLoop.bind(this))
+	
+	    this.ctx.strokeStyle = "black"
+	    this.ctx.lineWidth = 3
+	    this.ctx.lineCap = "round"
+	    
+	    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+	    
+	    // edge drawing procedure
+	    for(let edge of this.world.graph.edges) {
+		    edge = edge.toArray()
+		
+		    let from = edge[0].pos.clone()
+			    .sub(this.world.cam)
+		
+		    let to = edge[1].pos.clone()
+			    .sub(this.world.cam)
+		
+		    // tmp vector to reduce allocations
+		    let vec = to.clone().sub(from)
+		
+	        // adds offsets from vertex center to its circumference respectively
+	        vec.resize(edge[0].radius)
+            from.add(vec)
+            vec.resize(edge[1].radius).reverse()
+            to.add(vec)
+            
+            let color = this.selectedConnections !== null && this.selectedConnections.has(edge) ?
+                "red" : "black"
+		
+		    // adjust line start and end positions
+		    this.drawEdge(from, to, color)
+	    }
+	
+	    // arc drawing procedure
+	    for(let arc of this.world.graph.arcs) {
+		    let from = arc.from.pos.clone()
+			    .sub(this.world.cam)
+		
+		    let to = arc.to.pos.clone()
+			    .sub(this.world.cam)
+		
+		    // tmp vector to reduce allocations
+		    let vec = to.clone().sub(from)
+	        
+	        // adds offsets from vertex center to its circumference respectively
+	        vec.resize(arc.from.radius)
+            from.add(vec)
+            vec.resize(arc.to.radius).reverse()
+            to.add(vec)
+            
+            let color = this.selectedConnections !== null && this.selectedConnections.has(arc) ?
+                'rgba(255, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.5)'
+            
+		    this.drawArc(from, to, color)
+	    }
+	
+	    // currently creating a connection
+	    if(this.selected !== null) {
+	        // TODO dynamically draw temporal connection, depending on game state.
         }
         
-        let from = arc.from.pos.clone()
-            .sub(world.cam)
-        
-        let to = arc.to.pos.clone()
-            .sub(world.cam)
-        
-        // get offset from center of vertex to its edge
-        let fromOffset = to.clone()
-            .sub(from)
-            .resize(arc.from.radius)
-        
-        let toOffset = from.clone()
-            .sub(to)
-            .resize(arc.to.radius)
-        
-        drawArc(
-            from.add(fromOffset),
-            to.add(toOffset),
-            has_opposite
-        )
-        
-        alreadyDrawn.add(arc)
-    }
-    
-    // vertex drawing procedure
-    for(let vertex of world.vertices) {
-        // get position relative to canvas
-        let pos = vertex.pos.clone().sub(world.cam)
-        drawVertex(pos, vertex.radius, vertex.style)
-    }
-    
-    ctx.save()
-    
-    // draw UI
-    let vertexClass = Vertex.registry.get(currVert)
-    
-    let {style, radius} = vertexClass.prototype
-    let pos = new Vec2(
-        /*world.RAD*/ 20 + 10,
-        innerHeight - /*world.RAD*/ 20 - 10
-    )
-    
-    drawVertex(pos, radius, style)
-    
-    let start = new Vec2(10 + 2 * 20 + 10, innerHeight - 13)
-    let end = start.clone().add([33, -33])
-    
-    if(currEdge === 0) {
-        drawEdge(start, end)
-    }
-    else {
-        drawArc(start, end, false)
+        if(this.selected === null && this.hasDragged) {
+            // draw red line for cutting connections
+            this.ctx.save()
+            this.ctx.strokeStyle = "red"
+            this.ctx.beginPath()
+                this.ctx.moveTo(...prevCanvasPos)
+                this.ctx.lineTo(...canvasPos)
+            this.ctx.closePath()
+            this.ctx.stroke()
+            this.ctx.restore()
+        }
+	
+	    // vertex drawing procedure
+	    for(let vertex of this.world.vertices) {
+		    // get position relative to canvas
+		    let pos = vertex.pos.clone().sub(this.world.cam)
+		
+		    // if inside the selection box, put in selectedVertices
+		    if(this.selecting) {
+		        let inside = this.prevCanvasPos.x < pos.x && pos.x < this.canvasPos.x
+		            && this.prevCanvasPos.y < pos.y && pos.y < this.canvasPos.y
+	            if(inside) {
+	                this.selectedVertices.add(vertex)
+	            }
+	            else {
+	                this.selectedVertices.delete(vertex)
+	            }
+		    }
+		
+		    this.drawVertex(pos, vertex.radius, vertex.style)
+		
+		    // draw rotating selection "ring"
+		    if(this.selectedVertices.has(vertex)) {
+		        let dt = (time / 1000) % Math.TAU
+		        this.ctx.save()
+		        this.ctx.lineWidth = 2.5
+            	this.ctx.lineCap = "butt"
+		        this.ctx.strokeStyle = 'rgb(255, 255, 0)'
+		        this.ctx.setLineDash([15, 15])
+		        this.ctx.beginPath()
+		        this.ctx.arc(...pos, vertex.radius, 0 + dt, Math.TAU + dt)
+		        this.ctx.closePath()
+		        this.ctx.stroke()
+		        this.ctx.restore()
+		    }
+	    }
+	
+	
+	    // draw selection box
+	    if(this.selecting) {
+	        this.ctx.save()
+	        
+	        this.ctx.fillStyle = 'rgba(230, 230, 0, 0.4)'
+	        this.ctx.strokeStyle = 'yellow'
+	        let rectSize = canvasPos.clone().sub(prevCanvasPos)
+	        
+	        this.ctx.fillRect(...prevCanvasPos, ...rectSize)
+	        this.ctx.strokeRect(...prevCanvasPos, ...rectSize)
+	        
+	        this.ctx.restore()
+	    }
+	
+	
+	    // draw UI/current selection
+	    let pos = new Vec2(10, innerHeight - 10)
+	
+	    let strings = [
+	        `vertex: ${Vertex.registry.getName(this.currVert)}`,
+	        `connection: ${this.currEdge ? 'arc' : 'edge'}`,
+        ]
+	
+	    this.ctx.font = "18px sans-serif"
+	
+	    for(let str of strings.reverse()) {
+        	this.ctx.fillText(str, ...pos)
+	        pos.y -= 18
+        }
+	
+	
+	    if(this.debug) {
+		    this.frameCounter += 1
+		    if(time % 1000 < 16.6) {
+			    this.fps = frameCounter
+			    this.frameCounter = 0
+		    }
+		
+		    this.ctx.save()
+		    this.ctx.textBaseline = "top"
+		    this.ctx.fillText(`FPS: ${fps}`, 10, 10)
+		    this.ctx.restore()
+	    }
     }
 }
-
-setInterval(updateLoop, 50/3)
-setInterval(save, 60 * 1000)
-requestAnimationFrame(drawLoop)
