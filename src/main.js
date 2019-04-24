@@ -3,11 +3,12 @@
 Math.TAU = 2 * Math.PI
 
 const canvas = document.getElementById("c")
-const ctx = canvas.getContext("2d")
+
+var game = new Game(canvas)
 
 //let game = new Game(canvas)
 //game.load(JSON.parse(localStorage['gameData']))
-
+/*
 let world = null
 let selected = null // vertex clicked on mousedown
 let currVert = 1 // vertex type selected for placement
@@ -121,6 +122,7 @@ function dragAction(evt) {
 
 // register event handlers
 canvas.addEventListener("wheel", evt => {
+    console.debug(evt)
 	// ensure ctrl is up, otherwise browser will zoom and
 	// cycle through vertices at the same time
 	evt.preventDefault()
@@ -391,7 +393,6 @@ function drawLoop(time) {
         
         let color = selectedConnections !== null && selectedConnections.has(edge) ?
             "red" : "black"
-        console.log(color)
 		
 		// adjust line start and end positions
 		drawEdge(from, to, color)
@@ -521,3 +522,4 @@ function drawLoop(time) {
 setInterval(updateLoop, 50/3)
 setInterval(() => {if(autosave) save()}, 60 * 1000)
 requestAnimationFrame(drawLoop)
+*/
