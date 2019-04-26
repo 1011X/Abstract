@@ -225,65 +225,7 @@ canvas.addEventListener("mouseup", evt => {
 	canvasPos = null
 })
 
-window.addEventListener("keydown", evt => {
-	if(evt.key === 's') { // s
-		// manually save the world
-		save()
-	}
-	else if(evt.key === 'e') {
-		// toggle current connection type
-		if(currEdge === 0) {
-			currEdge = 1
-		}
-		else {
-			currEdge = 0
-		}
-	}
-	else if(evt.key === 'z') {
-	    currEdge = 1
-    }
-    else if(evt.key === 'x') {
-        currEdge = 0
-    }
-    else if(evt.key === 'c') {
-        autosave = !autosave
-    }
-    else if(evt.key === 't') {
-        showTutorial()
-    }
-	else if(evt.key === "Escape") {
-	    if(selectedVertices.size > 0) {
-	        selectedVertices.clear()
-	    }
-	    else {
-    		paused = !paused
-		}
-	}
-	else if(evt.key === "F3") {
-		evt.preventDefault()
-		frameCounter = 0
-		fps = 0
-		debug = !debug
-	}
-	else if(evt.key === "Delete") {
-	    if(selectedVertices.size > 0) {
-	        for(let vertex of selectedVertices) {
-	            world.despawn(vertex)
-	        }
-	        selectedVertices.clear()
-	    }
-	}
-})
 
-canvas.addEventListener("contextmenu", evt => {
-	evt.preventDefault()
-})
-
-window.addEventListener("resize", evt => {
-	canvas.width = innerWidth
-	canvas.height = innerHeight
-})
-dispatchEvent(new Event("resize"))
 
 
 function drawVertex(pos, radius, style) {

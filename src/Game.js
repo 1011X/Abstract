@@ -10,6 +10,7 @@ class Game {
         this.prevCanvasPos = null
         this.selectedVertices = new Set
         this.selectedConnections = null
+        this.mousemove_handler = null
         this.fps = 0
         this.frameCounter = 0
         
@@ -35,11 +36,16 @@ class Game {
             showTutorial()
         }
         
-        // TODO register event handlers
-        canvas.
-        
+        canvas.addEventListener('wheel', this.onwheel.bind(this))
+        canvas.addEventListener('mousedown', this.onmousedown.bind(this))
+        canvas.addEventListener('mouseup', this.onmouseup.bind(this))
+        canvas.addEventListener('contextmenu', this.oncontextmenu.bind(this))
+        window.addEventListener('keydown', this.onkeydown.bind(this))
+        window.addEventListener('resize', this.onresize.bind(this))
+        this.onresize()
+
         setInterval(this.updateLoop.bind(this), 50/3)
-        setInterval(this.save, 60 * 1000)
+        setInterval(this.save.bind(this), 60 * 1000)
         requestAnimationFrame(this.drawLoop.bind(this))
     }
     
@@ -52,6 +58,22 @@ class Game {
         this.world = World.fromJSON(json.world)
         this.currVert = Vertex.registry.getId(json.currVert)
         this.currEdge = json.currEdge
+    }
+
+    showTutorial() {
+        alert(`Controls:\
+        T key: show this tutorial\
+        S key: manually save the world\
+        C key: toggle autosaving (default: enabled)\
+        Z key: use arc connections\
+        X key: use edge connections`)
+        alert(
+        `Current selection will be shown in the bottom left corner.\
+        Scroll the mouse wheel to select a vertex type.\
+        Right click to place a vertex or (in the case of the switch) interact with it.\
+        Right click and drag from one vertex to another to connect them.\
+        Left click and drag to move a vertex or to pan the world.\
+        Left click a vertex to delete it.`)
     }
     
     toJSON() {
@@ -76,26 +98,27 @@ class Game {
 		
 		    // skip the vertex type at 0 because it's the "none"
 		    // type and we don't want it.
-		    if(delta === -1 && currVert === 1) {
-			    currVert = Vertex.registry.size - 1
+		    if(delta === -1 && this.currVert === 1) {
+			    this.currVert = Vertex.registry.size - 1
 		    }
-		    else if(delta === 1 && currVert === Vertex.registry.size - 1) {
-			    currVert = 1
+		    else if(delta === 1 && this.currVert === Vertex.registry.size - 1) {
+			    this.currVert = 1
 		    }
 		    else {
-			    currVert += delta
+			    this.currVert += delta
 		    }
 	    }
     }
     
     onmouseup(evt) {
-        this.canvas.removeEventListener("mousemove", this.onmousemove)
+        this.canvas.removeEventListener("mousemove", this.mousemove_handler)
+        this.mousemove_handler = null
         
         // left release
         if(evt.button == 0) {
             // remove if there's a vertex and there was no dragging
             if(this.selected !== null && !this.hasDragged) {
-                this.world.despawn(selected)
+                this.world.despawn(this.selected)
             }
         }
         // right release
@@ -140,60 +163,122 @@ class Game {
     }
     
     onmousedown(evt) {
-        this.canvas.addEventListener("mousemove", this.onmousemove)
-        
-        this.canvasPos = new Vec2(evt.pageX, evt.pageY)
-        let worldPos = this.canvasPos.clone().add(this.world.cam)
-        
-        this.selected = this.world.vertexAt(worldPos)
+        // must save this object locally so it can be passed to
+        // `removeEventListener` later. passing `this.onmousemove.bind(this)`
+        // won't work because it creates a new, different function.
+        this.mousemove_handler = {
+            handleEvent: this.onmousemove.bind(this)
+        }
+        this.canvas.addEventListener("mousemove", this.mousemove_handler)
+
+        // determine if we want to draw a selection box or do something else.
+        if(evt.ctrlKey) {
+            this.prevCanvasPos = new Vec2(evt.clientX, evt.clientY)
+        }
+        else {
+            this.canvasPos = new Vec2(evt.clientX, evt.clientY)
+            let worldPos = this.canvasPos.clone().add(this.world.cam)
+            this.selected = this.world.vertexAt(worldPos)
+            
+            if(this.selected === null) {
+                this.prevCanvasPos = new Vec2(evt.clientX, evt.clientY)
+                let prevWorldPos = this.prevCanvasPos.clone().add(this.world.cam)
+                let worldPos = this.canvasPos.clone().add(this.world.cam)
+                this.selectedConnections = this.world.intersectingConnections(prevWorldPos, worldPos)
+            }
+        }
     }
     
     // If mouse is down and dragged, record position in worldPos.
     // Also handles moving of vertex if one is selected and dragged.
-    onmousemove() {
+    onmousemove(evt) {
         let uaHas = subs => navigator.userAgent.indexOf(subs) !== -1
         this.hasDragged = true
         
-        this.prevCanvasPos = this.canvasPos
-        
-        this.canvasPos = new Vec2(evt.pageX, evt.pageY)
-        let worldPos = this.canvasPos.clone().add(this.world.cam)
-        
-        // Helps to differentiate between mouse buttons in different browsers.
-        // The reason it works is because the mouseup event for Firefox has the
-        // releasing button information in the "buttons" attribute, but Chrome
-        // has it on the "button" attribute.
-        if(uaHas("Firefox") && evt.buttons == 1
-        || uaHas("Chrome") && evt.button == 0) {
-            // if a vertex was selected and it wasn't moving,
-            // then move it according to the cursor's movement.
-            if(this.selected !== null && this.selected.motion.isNull()) {
-                // ensure it's not the Anchor type
-                if(!(this.selected instanceof Vertex.Anchor)) {
-                    this.selected.pos.cloneFrom(worldPos)
+        if(evt.ctrlKey) {
+            this.selecting = true
+            this.canvasPos = new Vec2(evt.pageX, evt.pageY)
+        }
+        else {
+            // Helps to differentiate between mouse buttons in different browsers.
+            // The reason it works is because the mouseup event for Firefox has the
+            // releasing button information in the "buttons" attribute, but Chrome
+            // has it on the "button" attribute.
+            // XXX maybe not needed anymore?
+            //if(uaHas("Firefox") && evt.buttons == 1 || uaHas("Chrome") && evt.button == 0) {
+            if(evt.buttons == 1) {
+                this.prevCanvasPos = this.canvasPos
+                this.canvasPos = new Vec2(evt.clientX, evt.clientY)
+                let worldPos = this.canvasPos.clone().add(this.world.cam)
+                
+                // if a vertex was selected,
+                // then move it according to the cursor's movement.
+                if(this.selected !== null) {
+                    // ensure it's not the Anchor type
+                    if(!(this.selected instanceof Vertex.Anchor)) {
+                        this.selected.pos.cloneFrom(worldPos)
+                    }
+                }
+                // otherwise, move the camera
+                else {
+                    this.world.cam.x -= evt.movementX
+                    this.world.cam.y -= evt.movementY
                 }
             }
-            else {
-                let canvasMovement = this.canvasPos.clone()
-                    .sub(this.prevCanvasPos)
-                    .reverse()
-                this.world.cam.add(canvasMovement)
+            // right mouse button
+            else if(evt.buttons == 2) {
+                this.canvasPos = new Vec2(evt.clientX, evt.clientY)
+                //let worldPos = canvasPos.clone().add(world.cam)
             }
         }
     }
     
     onkeydown(evt) {
-        // 's' is pressed
-        if(evt.keyCode == 83) {
-            save()
+        if(evt.key === 's') { // s
+            // manually save the world
+            this.save()
         }
-        // 'e' is pressed
-        if(evt.keyCode == 69) {
-            if(currEdge === 0) {
-                currEdge = 1
+        else if(evt.key === 'e') {
+            // toggle current connection type
+            if(this.currEdge === 0) {
+                this.currEdge = 1
             }
             else {
-                currEdge = 0
+                this.currEdge = 0
+            }
+        }
+        else if(evt.key === 'z') {
+            this.currEdge = 1
+        }
+        else if(evt.key === 'x') {
+            this.currEdge = 0
+        }
+        else if(evt.key === 'c') {
+            this.autosave = !this.autosave
+        }
+        else if(evt.key === 't') {
+            this.showTutorial()
+        }
+        else if(evt.key === "Escape") {
+            if(this.selectedVertices.size > 0) {
+                this.selectedVertices.clear()
+            }
+            else {
+                this.paused = !this.paused
+            }
+        }
+        else if(evt.key === "F3") {
+            evt.preventDefault()
+            this.frameCounter = 0
+            this.fps = 0
+            this.debug = !this.debug
+        }
+        else if(evt.key === "Delete") {
+            if(this.selectedVertices.size > 0) {
+                for(let vertex of this.selectedVertices) {
+                    this.world.despawn(vertex)
+                }
+                this.selectedVertices.clear()
             }
         }
     }
@@ -345,8 +430,8 @@ class Game {
             this.ctx.save()
             this.ctx.strokeStyle = "red"
             this.ctx.beginPath()
-                this.ctx.moveTo(...prevCanvasPos)
-                this.ctx.lineTo(...canvasPos)
+                this.ctx.moveTo(...this.prevCanvasPos)
+                this.ctx.lineTo(...this.canvasPos)
             this.ctx.closePath()
             this.ctx.stroke()
             this.ctx.restore()
@@ -394,10 +479,10 @@ class Game {
 	        
 	        this.ctx.fillStyle = 'rgba(230, 230, 0, 0.4)'
 	        this.ctx.strokeStyle = 'yellow'
-	        let rectSize = canvasPos.clone().sub(prevCanvasPos)
+	        let rectSize = canvasPos.clone().sub(this.prevCanvasPos)
 	        
-	        this.ctx.fillRect(...prevCanvasPos, ...rectSize)
-	        this.ctx.strokeRect(...prevCanvasPos, ...rectSize)
+	        this.ctx.fillRect(...this.prevCanvasPos, ...rectSize)
+	        this.ctx.strokeRect(...this.prevCanvasPos, ...rectSize)
 	        
 	        this.ctx.restore()
 	    }
@@ -422,7 +507,7 @@ class Game {
 	    if(this.debug) {
 		    this.frameCounter += 1
 		    if(time % 1000 < 16.6) {
-			    this.fps = frameCounter
+			    this.fps = this.frameCounter
 			    this.frameCounter = 0
 		    }
 		
