@@ -7,6 +7,9 @@ class World {
         this.ticks = 0
         this.components = null
         this.needsUpdate = true
+        
+        // vertex clicked on mousedown
+        this.selected = null
     }
     
     get vertices() {
@@ -59,7 +62,7 @@ class World {
     }
     
     // disconnects any connections that intersect with the line given by the
-    // 2 endpoints.
+    // 2 endpoints. the order of the endpoints doesn't matter.
     // for an easy explanation of how this is done, refer to this:
     // https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect#565282
     // Note: only the last 3 cases are checked (no collinearity is checked bc
@@ -200,7 +203,7 @@ class World {
         return near
     }
     // TODO Change update mechanism; flip-flops don't become unstable when they
-    // are turned on at the same time.
+    // are turned on at the same time. yes, that's desired behavior.
     tick() {
         for(let vertex of this.vertices) {
             let world = this
@@ -276,13 +279,13 @@ class World {
                 
                 // make sure it's not currently being held or an Anchor
                 // TODO don't use `selected` here
-                if(vertex !== selected || vertex instanceof Vertex.Anchor) {
+                if(vertex !== this.selected || vertex instanceof Vertex.Anchor) {
                     vertex.motion.add(vec)
                 }
                 
                 vec.reverse()
                 
-                if(v !== selected || v instanceof Vertex.Anchor) {
+                if(v !== this.selected || v instanceof Vertex.Anchor) {
                     v.motion.add(vec)
                 }
             }
