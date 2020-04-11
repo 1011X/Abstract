@@ -68,8 +68,8 @@ class World {
     // Note: only the last 3 cases are checked (no collinearity is checked bc
     // that would be *very* difficult to achieve in-game)
     intersectingConnections(a, b) {
-        let cut_offset = a.clone().sub(b) // r
-        let intersects = new WeakSet
+        let cut_offset = b.clone().sub(a) // r
+        let intersects = new Set
         
         for(let edge of this.graph.edges) {
             let [from, to] = edge.toArray().map(v => v.pos)
@@ -79,9 +79,7 @@ class World {
             // parallel; no intersection
             // you: but collinea—
             // me: shhhhhhhhhh
-            if(offset_cross == 0) {
-                continue
-            }
+            if(offset_cross == 0) continue;
             
             let start_offset = from.clone().sub(a)
             let t = Vec2.cross(start_offset, edge_offset) / offset_cross
@@ -100,9 +98,7 @@ class World {
             // parallel; no intersection
             // you: but collinea—
             // me: shhhhhhhhhh
-            if(offset_cross == 0) {
-                continue
-            }
+            if(offset_cross == 0) continue;
             
             let start_offset = arc.from.pos.clone().sub(a)
             let t = Vec2.cross(start_offset, arc_offset) / offset_cross
@@ -202,6 +198,7 @@ class World {
         }
         return near
     }
+    
     // TODO Change update mechanism; flip-flops don't become unstable when they
     // are turned on at the same time. yes, that's desired behavior.
     tick() {
@@ -312,18 +309,12 @@ class World {
         graph.vertices = graph.vertices.map(v => {
             let vertex = v.toJSON()
             vertex.type = Vertex.registry.getName(v.constructor)
+            //vertex.type = Vertex
             return vertex
         })
         
         for(let arc of graph.arcs) {
-            if(arc[2] == Infinity) {
-                arc[2] = 'inf'
-            }
-            else if(arc[2] == -Infinity) {
-                arc[2] = '-inf'
-            }
-            // no nans can survive
-            else if(isNaN(arc[2])) {
+            if(! isFinite(arc[2])) {
                 arc[2] = 0
             }
         }
@@ -339,20 +330,13 @@ class World {
         // objects from the provided type in json
         let vertices = []
         for(let vertObj of json.graph.vertices) {
-            let vertexClass = Vertex.registry.get(vertObj.type)
+        	console.debug("Fetching vertex of type: " + vertObj.type)
+            let vertexClass = VertexMap[vertObj.type]
             delete vertObj.type
             let vertex = vertexClass.fromJSON(vertObj)
             vertices.push(vertex)
         }
         json.graph.vertices = vertices
-        
-        // turn back string values to numeric values
-        for(let arc of json.graph.arcs) {
-            switch(arc[2]) {
-                case "inf": arc[2] = Infinity; break;
-                case "-inf": arc[2] = -Infinity; break;
-            }
-        }
         
         world.graph = MixedGraph.fromJSON(json.graph)
         //world.calculateComponents()

@@ -27,6 +27,35 @@ Vertex.Base = class {
 		vertex.motion = new Vec2(...json.motion)
 		return vertex
 	}
+	
+	draw(ctx) {
+		if(this.style.gradient === VertexStyle.RADIAL_GRADIENT) {
+			let radialGradient = ctx.createRadialGradient(...this.pos, 0, ...this.pos, this.radius)
+		
+			radialGradient.addColorStop(0, "white")
+			radialGradient.addColorStop(1, this.style.color)
+
+			ctx.fillStyle = radialGradient
+		} else {
+			ctx.fillStyle = this.style.color
+		}
+
+		ctx.strokeStyle = this.style.border
+
+		ctx.beginPath()
+		ctx.arc(0, 0, this.radius, 0, Math.TAU)
+		ctx.closePath()
+		ctx.fill()
+		ctx.stroke()
+
+		if(this.style.symbol) {
+			ctx.fillStyle = this.style.textColor
+			ctx.textAlign = "center"
+			ctx.textBaseline = "middle"
+			ctx.font = "bold 20px serif"
+			ctx.fillText(this.style.symbol, 0, 0)
+		}
+	}
 }
 
 Vertex.Base.prototype.radius = 24
@@ -35,8 +64,8 @@ Vertex.Base.prototype.style = new VertexStyle("black")
 ////////////////////////////////////////////////////////////////////////////////
 
 Vertex.Anchor = class extends Vertex.Base {
-	update(h) {
-	    this.motion.scale(0)
+	update(_) {
+	    this.motion.scale(0);
 	    return 0
 	}
 }
@@ -78,6 +107,7 @@ Vertex.Fruit = class extends Vertex.Base {
 	}
 	
 	update(handler) {
+		// TODO handle what happens if pool goes into negatives
 		this.pool += handler.inputs.reduce((acc, val) => acc + val, 0)
 	    return 0
 	}
@@ -233,7 +263,7 @@ Vertex.Sensor.prototype.style = new VertexStyle("rgb(0, 200, 0)", {symbol: "S"})
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Vertex.Switch = class extends Vertex.Base {
+Vertex.Switch = class Switch extends Vertex.Base {
 	constructor() {
 		super()
 		this.value = 0
@@ -294,3 +324,44 @@ Vertex.Switch = class extends Vertex.Base {
 Vertex.Switch.prototype.style = new VertexStyle("black", {textColor: "white", symbol: "⏼"})
 
 ////////////////////////////////////////////////////////////////////////////////
+
+/* why am i copying minecraft again?
+well, remember that these vertices are saved in json. they each need a number to
+know which vertex a save is referring to. dynamically inserting vertices won't
+work bc if the number of a vertex changes, then any saves made before the change
+will get a different vertex when loaded, and that would be a breaking change.
+*/
+
+// FIXME: there's really no need to have a "none" vertex.
+// FIXME: also there *has* to be a better way to do this...
+Vertex.registry.add( 0, "none",    Vertex.Base)
+Vertex.registry.add( 1, "degree",  Vertex.Degree)
+Vertex.registry.add( 2, "rotator", Vertex.Rotator)
+Vertex.registry.add( 3, "anchor",  Vertex.Anchor)
+Vertex.registry.add( 4, "switch",  Vertex.Switch)
+Vertex.registry.add( 5, "meter",   Vertex.Meter)
+Vertex.registry.add( 6, "min",     Vertex.Min)
+Vertex.registry.add( 7, "max",     Vertex.Max)
+Vertex.registry.add( 8, "negate",  Vertex.Negate)
+Vertex.registry.add( 9, "sensor",  Vertex.Sensor)
+Vertex.registry.add(10, "fruit",   Vertex.Fruit)
+//Vertex.registry.add(11, "neuron",  Neuron)
+//Vertex.registry.add(12, "note", Note)
+//Vertex.registry.add(13, "charge", Charge)
+
+const VertexMap = {
+	'none':   Vertex.Base,
+	'degree': Vertex.Degree,
+	'rotate': Vertex.Rotator,
+	'anchor': Vertex.Anchor,
+	'switch': Vertex.Switch,
+	'meter':  Vertex.Meter,
+	'min':    Vertex.Min,
+	'max':    Vertex.Max,
+	'neg':    Vertex.Negate,
+	'sensor': Vertex.Sensor,
+	'fruit':  Vertex.Fruit,
+}
+
+const VertexIndex = Object.getOwnPropertyNames(VertexMap).sort();
+

@@ -12,15 +12,15 @@ class Game {
 		// frame counter for current second
 		this.frameCounter = 0
 		
-		// where player started a mouse action
-		this.startPos = null
-		// where a player's current mouse action is at
-		this.endPos = null
+		// handles all player mouse state
+		this.mouse = new Mouse
+		
 		// object for handling mousemove
+		// must save this object locally so it can be passed to
+		// `removeEventListener` later. passing `this.onmousemove.bind(this)`
+		// won't work because it creates a new, different function every time.
 		this.mousemove_handler = {handleEvent: this.onmousemove.bind(this)}
 		
-		// whether player has moved the cursor after clicking down
-		this.hasDragged = false
 		// whether player is currently selecting multiple vertices
 		this.selecting = false
 		
@@ -34,7 +34,7 @@ class Game {
 		this.debug = false
 		
 		// vertex type selected for placement
-		this.currVert = 1
+		this.currVert = 0
 		// edge type (arc or regular edge) being used
 		this.currEdge = 0
 		
@@ -43,7 +43,8 @@ class Game {
 			if(localStorage['gameData']) {
 				let json = JSON.parse(localStorage['gameData'])
 				this.world = World.fromJSON(json.world)
-				this.currVert = Vertex.registry.getId(json.currVert)
+				//this.currVert = Vertex.registry.getId(json.currVert)
+				this.currVert = VertexIndex.indexOf(json.currVert)
 				this.currEdge = json.currEdge
 			}
 			else {
@@ -52,6 +53,7 @@ class Game {
 			}
 		}
 		catch(e) {
+			console.error(e)
 			this.has_local_storage = false
 			this.world = new World
 			this.showTutorial()
@@ -72,6 +74,15 @@ class Game {
 		requestAnimationFrame(this.drawLoop.bind(this))
 	}
 	
+	// checks if given vertex is being held by the player
+	get selected() {
+		return this.world.selected
+	}
+	
+	set selected(vertex) {
+		this.world.selected = vertex
+	}
+	
 	// shows key controls and basic interactions to player
 	showTutorial() {
 		alert(`Controls:\
@@ -89,24 +100,17 @@ class Game {
 		Left click a vertex to delete it.`)
 	}
 	
-	// checks if given vertex is being held by the player
-	get selected() {
-		return this.world.selected
-	}
-	
-	set selected(vertex) {
-		this.world.selected = vertex
-	}
-	
 	save() {
 		if(this.has_local_storage) {
 			localStorage["gameData"] = JSON.stringify(this)
+			console.debug("World saved!");
 		}
 	}
 	
 	toJSON() {
 		return {
-			currVert: Vertex.registry.getName(this.currVert),
+			//currVert: Vertex.registry.getName(this.currVert),
+			currVert: VertexIndex[this.currVert],
 			currEdge: this.currEdge,
 			world: this.world,
 		}
@@ -117,21 +121,23 @@ class Game {
 		this.canvas.height = innerHeight
 	}
 	
+	// depends on:
+	// + this.currVert
+	// + VertexIndex
 	onwheel(evt) {
 		evt.preventDefault()
+		
 		// ensure ctrl is up, otherwise browser will zoom and
 		// cycle through vertices at the same time
-		
 		if(!evt.ctrlKey) {
 			let delta = Math.sign(evt.deltaY)
-		
-			// skip the vertex type at 0 because it's the "none"
-			// type and we don't want it.
-			if(delta === -1 && this.currVert === 1) {
-				this.currVert = Vertex.registry.size - 1
+			
+			// Can't use % bc it can still give a negative number.
+			if(delta == -1 && this.currVert < 0) {
+				this.currVert = VertexIndex.length - 1
 			}
-			else if(delta === 1 && this.currVert === Vertex.registry.size - 1) {
-				this.currVert = 1
+			else if(delta == +1 && this.currVert >= VertexIndex.length) {
+				this.currVert = 0
 			}
 			else {
 				this.currVert += delta
@@ -139,38 +145,44 @@ class Game {
 		}
 	}
 	
+	// depends on:
+	// + this.mousemove_handler
+	// + this.world
+	// + this.selected
+	// + this.selectedConnections
 	onmousedown(evt) {
-		this.startPos = new Vec2(evt.clientX, evt.clientY)
-		this.endPos = this.startPos
-		// must save this object locally so it can be passed to
-		// `removeEventListener` later. passing `this.onmousemove.bind(this)`
-		// won't work because it creates a new, different function.
-		this.canvas.addEventListener("mousemove", this.mousemove_handler)
-		console.log(evt)
+		this.mouse.cursor.set_to(evt.clientX, evt.clientY)
 		
-		// if we want to just draw a selection box, end here.
-		if(evt.shiftKey) {
-			return
+		// if mouse is not already being dragged, track starting drag location.
+		if(! this.mouse.is_dragging) {
+			this.mouse._drag_button = evt.button
+			this.mouse.drag = this.mouse.cursor.clone()
+			this.canvas.addEventListener("mousemove", this.mousemove_handler)
 		}
 		
-		let worldPos = this.startPos.clone().add(this.world.cam)
-		this.selected = this.world.vertexAt(worldPos)
+		// get vertex under cursor, if any.
+		this.selected = this.world.vertexAt(
+			this.mouse.cursor.clone().add(this.world.cam)
+		);
+		console.log(this.mouse.cursor, this.selected)
 		
+		/* FIXME? what does this do??
 		if(this.selected === null) {
-			let prevWorldPos = this.endPos.clone().add(this.world.cam)
-			let worldPos = this.startPos.clone().add(this.world.cam)
+			let prevWorldPos = this.mouse.cursor.clone().add(this.world.cam)
+			let worldPos = this.mouse.drag.clone().add(this.world.cam)
 			this.selectedConnections = this.world.intersectingConnections(prevWorldPos, worldPos)
 		}
+		*/
 	}
 	
 	// If mouse is down and dragged, record position in worldPos.
 	// Also handles moving of vertex if one is selected and dragged.
 	onmousemove(evt) {
-		let uaHas = subs => navigator.userAgent.indexOf(subs) !== -1
-		this.hasDragged = true
-		this.endPos = new Vec2(evt.clientX, evt.clientY)
+		this.mouse.cursor.set_to(evt.clientX, evt.clientY)
 		
-		if(evt.shiftKey) {
+		let uaHas = subs => navigator.userAgent.indexOf(subs) !== -1
+		
+		if(evt.ctrlKey) {
 			this.selecting = true
 			return
 		}
@@ -182,38 +194,45 @@ class Game {
 		// XXX maybe not needed anymore?
 		//if(uaHas("Firefox") && evt.buttons == 1 || uaHas("Chrome") && evt.button == 0) {
 		if(evt.buttons == 1) {
-			// if a vertex was selected it's not the Anchor type,
+			console.debug('world is moving')
+			// if a vertex was selected and it's not the Anchor type,
 			if(this.selected && !(this.selected instanceof Vertex.Anchor)) {
-				this.selected.pos.x += evt.movementX
-				this.selected.pos.y += evt.movementY
+				this.selected.pos.offset(evt.movementX, evt.movementY)
 			}
 			// otherwise, move the camera
 			else {
-				this.world.cam.x -= evt.movementX
-				this.world.cam.y -= evt.movementY
+				this.world.cam.offset(-evt.movementX, -evt.movementY)
 			}
 		}
-		// right mouse button
+		// secondary mouse button
 		else if(evt.buttons == 2) {
-			let end = this.endPos.clone().add(this.world.cam)
-			let start = this.startPos.clone().add(this.world.cam)
+			let end = this.mouse.cursor.clone().add(this.world.cam)
+			let start = this.mouse.drag.clone().add(this.world.cam)
 			this.selectedConnections = this.world.intersectingConnections(start, end)
 		}
 	}
 	
+	// TODO FIXME
+	// in serious need of factoring out somehow.
 	onmouseup(evt) {
-		this.canvas.removeEventListener("mousemove", this.mousemove_handler)
+		if(this.mouse._drag_button == evt.button) {
+			this.canvas.removeEventListener("mousemove", this.mousemove_handler);
+		}
 		
 		// left release
 		if(evt.button == 0) {
 			// remove if there's a vertex and there was no dragging
-			if(this.selected !== null && !this.hasDragged) {
+			//console.log(this.mouse.drag, this.mouse.cursor, this.mouse.is_dragging)
+			if(this.selected !== null && !this.mouse.is_dragging) {
 				this.world.despawn(this.selected)
+				// FIXME: vertex should not be deleted immediately after moving it.
+				console.log("Removed vertex.")
 			}
 		}
 		// right release
 		else if(evt.button == 2) {
-			let worldPos = this.endPos.clone().add(this.world.cam)
+			let worldPos = this.mouse.cursor.clone()
+				.add(this.world.cam)
 			let next = this.world.vertexAt(worldPos)
 			
 			// a vertex was present on mousedown and on mouseup
@@ -237,8 +256,9 @@ class Game {
 				}
 			}
 			// make new vertex if released in blank area and mouse wasn't dragged
-			else if(this.selected === null && next === null && !this.hasDragged) {
-				let vertexClass = Vertex.registry.get(this.currVert)
+			else if(this.selected === null && next === null && !this.mouse.is_dragging) {
+				//let vertexClass = Vertex.registry.get(this.currVert)
+				let vertexClass = VertexMap[VertexIndex[this.currVert]]
 				
 				if(vertexClass != null) {
 					let vertex = new vertexClass(this.world.graph)
@@ -249,41 +269,38 @@ class Game {
 		}
 		
 		// reset EVERYTHING
-		this.hasDragged = false
+		this.mouse.reset()
 		this.selecting = false
 		this.selected = null
-		
-		this.endPos = null
-		this.startPos = null
 	}
 	
 	onkeydown(evt) {
-		if(evt.key === 's') { // s
+		if(evt.key == 's') {
 			// manually save the world
 			this.save()
 		}
-		else if(evt.key === 'e') {
+		else if(evt.key == 'e') {
 			// toggle current connection type
-			if(this.currEdge === 0) {
+			if(this.currEdge == 0) {
 				this.currEdge = 1
 			}
 			else {
 				this.currEdge = 0
 			}
 		}
-		else if(evt.key === 'z') {
+		else if(evt.key == 'z') {
 			this.currEdge = 1
 		}
-		else if(evt.key === 'x') {
+		else if(evt.key == 'x') {
 			this.currEdge = 0
 		}
-		else if(evt.key === 'c') {
+		else if(evt.key == 'c') {
 			this.autosave = !this.autosave
 		}
-		else if(evt.key === 't') {
+		else if(evt.key == 't') {
 			this.showTutorial()
 		}
-		else if(evt.key === "Escape") {
+		else if(evt.key == "Escape") {
 			if(this.selectedVertices.size > 0) {
 				this.selectedVertices.clear()
 			}
@@ -291,58 +308,24 @@ class Game {
 				this.paused = !this.paused
 			}
 		}
-		else if(evt.key === "F3") {
+		else if(evt.key == "F3") {
 			evt.preventDefault()
+			/*
 			this.frameCounter = 0
 			this.fps = 0
 			this.debug = !this.debug
+			*/
 		}
-		else if(evt.key === "Delete") {
-			if(this.selectedVertices.size > 0) {
-				for(let vertex of this.selectedVertices) {
-					this.world.despawn(vertex)
-				}
-				this.selectedVertices.clear()
+		else if(evt.key == "Delete") {
+			for(let vertex of this.selectedVertices) {
+				this.world.despawn(vertex)
 			}
+			this.selectedVertices.clear()
 		}
 	}
 	
 	oncontextmenu(evt) {
 		evt.preventDefault()
-	}
-
-	drawVertex(pos, radius, style) {
-		this.ctx.save()
-	
-		if(style.gradient === VertexStyle.RADIAL_GRADIENT) {
-			let radialGradient = this.ctx.createRadialGradient(...pos, 0, ...pos, radius)
-		
-			radialGradient.addColorStop(0, "white")
-			radialGradient.addColorStop(1, style.color)
-
-			this.ctx.fillStyle = radialGradient
-		}
-		else {
-			this.ctx.fillStyle = style.color
-		}
-
-		this.ctx.strokeStyle = style.border
-
-		this.ctx.beginPath()
-		this.ctx.arc(...pos, radius, 0, Math.TAU)
-		this.ctx.closePath()
-		this.ctx.fill()
-		this.ctx.stroke()
-
-		if(style.symbol) {
-			this.ctx.fillStyle = style.textColor
-			this.ctx.textAlign = "center"
-			this.ctx.textBaseline = "middle"
-			this.ctx.font = "bold 20px serif"
-			this.ctx.fillText(style.symbol, ...pos)
-		}
-	
-		this.ctx.restore()
 	}
 
 	drawEdge(begin, end, color) {
@@ -367,10 +350,10 @@ class Game {
 			.resize(10)
 		
 		this.ctx.beginPath()
-		this.ctx.moveTo(...start_offset.add(begin))
-		this.ctx.lineTo(...end)
-		start_offset.sub(begin).reverse()
-		this.ctx.lineTo(...start_offset.add(begin))
+			this.ctx.moveTo(...start_offset.add(begin))
+			this.ctx.lineTo(...end)
+			start_offset.sub(begin).reverse()
+			this.ctx.lineTo(...start_offset.add(begin))
 		this.ctx.closePath()
 		this.ctx.fill()
 	
@@ -381,7 +364,7 @@ class Game {
 		if(!this.paused) {
 			this.world.tick()
 		} else {
-			alert(`Paused.\nAutosave: ${this.autosave ? 'enabled' : 'disabled'}`)
+			alert(`Paused.\nAutosave: ${this.autosave ? 'en' : 'dis'}abled`)
 			this.paused = false
 		}
 	}
@@ -395,27 +378,30 @@ class Game {
 		
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
 		
+		// scratch area
+		let from = new Vec2(0, 0)
+		let to = new Vec2(0, 0)
+		
 		// edge drawing procedure
 		for(let edge of this.world.graph.edges) {
-			edge = edge.toArray()
-		
-			let from = edge[0].pos.clone()
-				.sub(this.world.cam)
-		
-			let to = edge[1].pos.clone()
-				.sub(this.world.cam)
+			let [start, end] = edge.toArray()
+			
+			from.cloneFrom(start.pos).sub(this.world.cam)
+			to.cloneFrom(end.pos).sub(this.world.cam)
 		
 			// tmp vector to reduce allocations
 			let vec = to.clone().sub(from)
 		
 			// adds offsets from vertex center to its circumference respectively
-			vec.resize(edge[0].radius)
+			vec.resize(start.radius)
 			from.add(vec)
-			vec.resize(edge[1].radius).reverse()
+			vec.resize(end.radius).reverse()
 			to.add(vec)
 			
-			let color = this.selectedConnections !== null && this.selectedConnections.has(edge) ?
-				"red" : "black"
+			let color = 'black'
+			if(this.selectedConnections && this.selectedConnections.has(edge)) {
+				color = "red"
+			}
 		
 			// adjust line start and end positions
 			this.drawEdge(from, to, color)
@@ -423,11 +409,8 @@ class Game {
 	
 		// arc drawing procedure
 		for(let arc of this.world.graph.arcs) {
-			let from = arc.from.pos.clone()
-				.sub(this.world.cam)
-		
-			let to = arc.to.pos.clone()
-				.sub(this.world.cam)
+			from.cloneFrom(arc.from.pos).sub(this.world.cam)
+			to.cloneFrom(arc.to.pos).sub(this.world.cam)
 		
 			// tmp vector to reduce allocations
 			let vec = to.clone().sub(from)
@@ -438,85 +421,61 @@ class Game {
 			vec.resize(arc.to.radius).reverse()
 			to.add(vec)
 			
-			let color = this.selectedConnections !== null && this.selectedConnections.has(arc) ?
-				'rgba(255, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.5)'
+			let color = 'rgba(0, 0, 0, 0.5)'
+			if(this.selectedConnections && this.selectedConnections.has(arc)) {
+				color = 'rgba(255, 0, 0, 0.5)'
+			}
 			
 			this.drawArc(from, to, color)
 		}
 	
 		// currently creating a connection
 		if(this.selected !== null) {
-			// TODO dynamically draw temporal connection, depending on game state.
+			// TODO draw temporary connection, depending on game state.
 		}
 		
 		// draw red line for cutting connections
-		if(this.selected === null && this.hasDragged) {
+		if(this.selected === null && this.mouse._drag_button == 2) {
 			this.ctx.save()
 			this.ctx.strokeStyle = "red"
-			this.ctx.beginPath()
-				this.ctx.moveTo(...this.endPos)
-				this.ctx.lineTo(...this.startPos)
-			this.ctx.closePath()
+				this.ctx.setLineDash([5, 5])
+				this.ctx.moveTo(...this.mouse.drag)
+				this.ctx.lineTo(...this.mouse.cursor)
 			this.ctx.stroke()
 			this.ctx.restore()
 		}
 	
 		// vertex drawing procedure
 		for(let vertex of this.world.vertices) {
-			// get position relative to canvas
 			let pos = vertex.pos.clone().sub(this.world.cam)
-		
-			// if inside the selection box, put in selectedVertices
-			if(this.selecting) {
-				let inside = this.endPos.x < pos.x && pos.x < this.startPos.x
-					&& this.endPos.y < pos.y && pos.y < this.startPos.y
-				if(inside) {
-					this.selectedVertices.add(vertex)
-				}
-				else {
-					this.selectedVertices.delete(vertex)
-				}
-			}
-		
-			this.drawVertex(pos, vertex.radius, vertex.style)
-		
+			
+			this.ctx.save()
+			this.ctx.translate(...pos)
+			vertex.draw(this.ctx)
+			this.ctx.restore()
+			
 			// draw rotating selection "ring"
 			if(this.selectedVertices.has(vertex)) {
-				let dt = (time / 1000) % Math.TAU
+				let dt = (time / 100) % Math.TAU
 				this.ctx.save()
 				this.ctx.lineWidth = 2.5
 				this.ctx.lineCap = "butt"
 				this.ctx.strokeStyle = 'rgb(255, 255, 0)'
-				this.ctx.setLineDash([15, 15])
+				this.ctx.setLineDash([12.6, 12.6])
 				this.ctx.beginPath()
-				this.ctx.arc(...pos, vertex.radius, 0 + dt, Math.TAU + dt)
+					this.ctx.arc(...pos, vertex.radius, 0 + dt, Math.TAU + dt)
 				this.ctx.closePath()
 				this.ctx.stroke()
 				this.ctx.restore()
 			}
 		}
-	
-	
-		// draw selection box
-		if(this.selecting) {
-			this.ctx.save()
-			
-			this.ctx.fillStyle = 'rgba(230, 230, 0, 0.4)'
-			this.ctx.strokeStyle = 'yellow'
-			let rectSize = this.startPos.clone().sub(this.endPos)
-			
-			this.ctx.fillRect(...this.endPos, ...rectSize)
-			this.ctx.strokeRect(...this.endPos, ...rectSize)
-			
-			this.ctx.restore()
-		}
-	
-	
+		
+		
 		// draw UI/current selection
 		let pos = new Vec2(10, innerHeight - 10)
 	
 		let strings = [
-			`vertex: ${Vertex.registry.getName(this.currVert)}`,
+			`vertex: ${VertexIndex[this.currVert]}`,
 			`connection: ${this.currEdge ? 'arc' : 'edge'}`,
 		]
 	
@@ -531,7 +490,7 @@ class Game {
 		FIXME
 		For security reasons, Firefox is giving time stamps with only a
 		resolution of 0.1 seconds, even tho MDN says "... with a minimal
-		precesion of 1ms." As of writing this, there seems to be no way to fix
+		precision of 1ms." As of writing this, there seems to be no way to fix
 		this. All of `performance.now()`, `Date.now()`, and the above `time`
 		parameter are all rounded to the nearest 100ms. How annoying.
 		

@@ -13,11 +13,25 @@ class Vec2 extends Float64Array {
 		return this.eq(Vec2.NULL)
 	}
 	
+	// x: Number, y: Number
+	set_to(x, y) {
+		this.x = x
+		this.y = y
+		return this
+	}
+	
 	// rhs: Vec2
 	add(rhs) {
 	    console.assert(rhs instanceof Vec2)
 		this.x += rhs.x
 		this.y += rhs.y
+		return this
+	}
+	
+	// x: Number, y: Number
+	offset(x, y) {
+		this.x += x
+		this.y += y
 		return this
 	}
 	
@@ -78,7 +92,7 @@ class Vec2 extends Float64Array {
 	}
 	
 	clone() {
-		return new Vec2(...this)
+		return new Vec2(this.x, this.y)
 	}
 	
 	// source: Vec2
