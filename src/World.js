@@ -114,7 +114,7 @@ class World {
     }
     
     disconnectIntersecting(a, b) {
-        let cut_offset = a.clone().sub(b) // r
+        let cut_offset = b.clone().sub(a) // r
         
         for(let edge of this.graph.edges) {
             let [from, to] = edge.toArray().map(v => v.pos)
@@ -124,9 +124,7 @@ class World {
             // parallel; no intersection
             // you: but collinea—
             // me: shhhhhhhhhh
-            if(offset_cross == 0) {
-                continue
-            }
+            if(offset_cross == 0) continue;
             
             let start_offset = from.clone().sub(a)
             let t = Vec2.cross(start_offset, edge_offset) / offset_cross
@@ -134,7 +132,8 @@ class World {
             
             if(0 <= t && t <= 1 && 0 <= u && u <= 1) {
                 // intersects!
-                this.graph.removeEdge(edge.from, edge.to)
+                let [from, to] = edge.toArray()
+                this.graph.removeEdge(from, to)
             }
         }
         
@@ -145,9 +144,7 @@ class World {
             // parallel; no intersection
             // you: but collinea—
             // me: shhhhhhhhhh
-            if(offset_cross == 0) {
-                continue
-            }
+            if(offset_cross == 0) continue;
             
             let start_offset = arc.from.pos.clone().sub(a)
             let t = Vec2.cross(start_offset, arc_offset) / offset_cross

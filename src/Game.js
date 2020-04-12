@@ -164,7 +164,6 @@ class Game {
 		this.selected = this.world.vertexAt(
 			this.mouse.cursor.clone().add(this.world.cam)
 		);
-		console.log(this.mouse.cursor, this.selected)
 		
 		/* FIXME? what does this do??
 		if(this.selected === null) {
@@ -205,7 +204,8 @@ class Game {
 			}
 		}
 		// secondary mouse button
-		else if(evt.buttons == 2) {
+		// find connections that intersect with cutting line
+		else if(evt.buttons == 2 && this.selected === null) {
 			let end = this.mouse.cursor.clone().add(this.world.cam)
 			let start = this.mouse.drag.clone().add(this.world.cam)
 			this.selectedConnections = this.world.intersectingConnections(start, end)
@@ -255,15 +255,27 @@ class Game {
 					}
 				}
 			}
-			// make new vertex if released in blank area and mouse wasn't dragged
-			else if(this.selected === null && next === null && !this.mouse.is_dragging) {
-				//let vertexClass = Vertex.registry.get(this.currVert)
-				let vertexClass = VertexMap[VertexIndex[this.currVert]]
-				
-				if(vertexClass != null) {
-					let vertex = new vertexClass(this.world.graph)
-					vertex.pos.cloneFrom(worldPos)
-					this.world.spawn(vertex)
+			// if no vertex selected and mouse was released on blank area,
+			else if(this.selected === null && next === null) {
+				// ... and mouse wasn't dragged,
+				// make new vertex
+				if(!this.mouse.is_dragging) {
+					//let vertexClass = Vertex.registry.get(this.currVert)
+					let vertexClass = VertexMap[VertexIndex[this.currVert]]
+					
+					if(vertexClass != null) {
+						let vertex = new vertexClass(this.world.graph)
+						vertex.pos.cloneFrom(worldPos)
+						this.world.spawn(vertex)
+					}
+				}
+				// ... and mouse WAS dragged,
+				// remove connections that intersect cutting line.
+				else {
+					let start = this.mouse.cursor.clone().add(this.world.cam)
+					let end = this.mouse.drag.clone().add(this.world.cam)
+					this.world.disconnectIntersecting(start, end)
+					this.selectedConnections = null
 				}
 			}
 		}
@@ -438,9 +450,14 @@ class Game {
 		if(this.selected === null && this.mouse._drag_button == 2) {
 			this.ctx.save()
 			this.ctx.strokeStyle = "red"
-				this.ctx.setLineDash([5, 5])
+			this.ctx.lineCap = "butt"
+			this.ctx.setLineDash([5, 5])
+			this.ctx.beginPath()
 				this.ctx.moveTo(...this.mouse.drag)
 				this.ctx.lineTo(...this.mouse.cursor)
+			// removing the below line is the only way to prevent the dashed red
+			// line from "leaking" to other shapes. don't ask why bc idk.
+			//this.ctx.closePath()
 			this.ctx.stroke()
 			this.ctx.restore()
 		}
