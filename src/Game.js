@@ -133,10 +133,10 @@ class Game {
 			let delta = Math.sign(evt.deltaY)
 			
 			// Can't use % bc it can still give a negative number.
-			if(delta == -1 && this.currVert < 0) {
+			if(delta == -1 && this.currVert <= 0) {
 				this.currVert = VertexIndex.length - 1
 			}
-			else if(delta == +1 && this.currVert >= VertexIndex.length) {
+			else if(delta == +1 && this.currVert >= VertexIndex.length - 1) {
 				this.currVert = 0
 			}
 			else {
@@ -145,11 +145,6 @@ class Game {
 		}
 	}
 	
-	// depends on:
-	// + this.mousemove_handler
-	// + this.world
-	// + this.selected
-	// + this.selectedConnections
 	onmousedown(evt) {
 		this.mouse.cursor.set_to(evt.clientX, evt.clientY)
 		
@@ -165,13 +160,7 @@ class Game {
 			this.mouse.cursor.clone().add(this.world.cam)
 		);
 		
-		/* FIXME? what does this do??
-		if(this.selected === null) {
-			let prevWorldPos = this.mouse.cursor.clone().add(this.world.cam)
-			let worldPos = this.mouse.drag.clone().add(this.world.cam)
-			this.selectedConnections = this.world.intersectingConnections(prevWorldPos, worldPos)
-		}
-		*/
+		console.debug(`Clicked at ${this.mouse.cursor} with ${evt.button} button.`)
 	}
 	
 	// If mouse is down and dragged, record position in worldPos.
@@ -193,13 +182,13 @@ class Game {
 		// XXX maybe not needed anymore?
 		//if(uaHas("Firefox") && evt.buttons == 1 || uaHas("Chrome") && evt.button == 0) {
 		if(evt.buttons == 1) {
-			console.debug('world is moving')
 			// if a vertex was selected and it's not the Anchor type,
 			if(this.selected && !(this.selected instanceof Vertex.Anchor)) {
 				this.selected.pos.offset(evt.movementX, evt.movementY)
 			}
 			// otherwise, move the camera
 			else {
+				console.debug('world is moving')
 				this.world.cam.offset(-evt.movementX, -evt.movementY)
 			}
 		}
@@ -213,7 +202,7 @@ class Game {
 	}
 	
 	// TODO FIXME
-	// in serious need of factoring out somehow.
+	// in serious need of factoring somehow.
 	onmouseup(evt) {
 		if(this.mouse._drag_button == evt.button) {
 			this.canvas.removeEventListener("mousemove", this.mousemove_handler);
@@ -224,9 +213,8 @@ class Game {
 			// remove if there's a vertex and there was no dragging
 			//console.log(this.mouse.drag, this.mouse.cursor, this.mouse.is_dragging)
 			if(this.selected !== null && !this.mouse.is_dragging) {
+				console.debug("Removing vertex at ${this.selected.pos}")
 				this.world.despawn(this.selected)
-				// FIXME: vertex should not be deleted immediately after moving it.
-				console.log("Removed vertex.")
 			}
 		}
 		// right release
@@ -298,6 +286,11 @@ class Game {
 			}
 			else {
 				this.currEdge = 0
+			}
+		}
+		else if(evt.key == 'r' && !evt.ctrlKey) {
+			if(confirm('You sure you wanna reset your world?')) {
+				localStorage['gameData'] = ''
 			}
 		}
 		else if(evt.key == 'z') {

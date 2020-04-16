@@ -329,6 +329,11 @@ class World {
         for(let vertObj of json.graph.vertices) {
         	console.debug("Fetching vertex of type: " + vertObj.type)
             let vertexClass = VertexMap[vertObj.type]
+            
+            // for now, we ignore any vertices we don't know/undestand.
+            if(vertexClass === undefined) {
+            	continue;
+            }
             delete vertObj.type
             let vertex = vertexClass.fromJSON(vertObj)
             vertices.push(vertex)

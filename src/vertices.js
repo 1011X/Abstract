@@ -325,6 +325,46 @@ Vertex.Switch.prototype.style = new VertexStyle("black", {textColor: "white", sy
 
 ////////////////////////////////////////////////////////////////////////////////
 
+Vertex.Star = class extends Vertex.Base {
+	constructor() {
+		super()
+		this.sym = Math.floor(3 * Math.random())
+		this.style = new VertexStyle("black")
+		this.updateStyle()
+	}
+	
+	update(handler) {
+		this.style.border = handler.neighbors.length > 0 ? "white" : "black"
+	}
+	
+	updateStyle() {
+		if(this.sym === 0)
+			this.style.symbol = "🌟"
+		else if(this.sym === 1)
+			this.style.symbol = "⭐"
+		else
+			this.style.symbol = "✨"
+	}
+	
+	toJSON() {
+		let obj = super.toJSON()
+		delete obj.style
+		return obj
+	}
+	
+	static fromJSON(json) {
+		let vertex = super.fromJSON(json)
+		vertex.sym = json.sym
+		vertex.updateStyle()
+		return vertex
+	}
+}
+
+//Vertex.Star.prototype.radius = 24
+Vertex.Star.prototype.style = new VertexStyle("black", {symbol: "⭐"})
+
+////////////////////////////////////////////////////////////////////////////////
+
 /* why am i copying minecraft again?
 well, remember that these vertices are saved in json. they each need a number to
 know which vertex a save is referring to. dynamically inserting vertices won't
@@ -345,12 +385,12 @@ Vertex.registry.add( 7, "max",     Vertex.Max)
 Vertex.registry.add( 8, "negate",  Vertex.Negate)
 Vertex.registry.add( 9, "sensor",  Vertex.Sensor)
 Vertex.registry.add(10, "fruit",   Vertex.Fruit)
-//Vertex.registry.add(11, "neuron",  Neuron)
-//Vertex.registry.add(12, "note", Note)
-//Vertex.registry.add(13, "charge", Charge)
+Vertex.registry.add(11, "star",    Vertex.Star)
+//Vertex.registry.add(12, "neuron",  Neuron)
+//Vertex.registry.add(13, "note", Note)
+//Vertex.registry.add(14, "charge", Charge)
 
 const VertexMap = {
-	'none':   Vertex.Base,
 	'degree': Vertex.Degree,
 	'rotate': Vertex.Rotator,
 	'anchor': Vertex.Anchor,
@@ -361,6 +401,7 @@ const VertexMap = {
 	'neg':    Vertex.Negate,
 	'sensor': Vertex.Sensor,
 	'fruit':  Vertex.Fruit,
+	'star':   Vertex.Star,
 }
 
 const VertexIndex = Object.getOwnPropertyNames(VertexMap).sort();
