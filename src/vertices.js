@@ -43,7 +43,7 @@ Vertex.Base = class {
 		ctx.strokeStyle = this.style.border
 
 		ctx.beginPath()
-		ctx.arc(0, 0, this.radius, 0, Math.TAU)
+			ctx.arc(0, 0, this.radius, 0, Math.TAU)
 		ctx.closePath()
 		ctx.fill()
 		ctx.stroke()

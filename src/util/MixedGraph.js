@@ -152,6 +152,7 @@ class MixedGraph {
             edges.push([
                 vertices.indexOf(edge._a),
                 vertices.indexOf(edge._b),
+            	edge.directed,
                 edge.value
             ])
         }
@@ -189,9 +190,10 @@ class Arc {
 }
 
 class Edge {
-    constructor(a, b, val) {
-        this._a = a
-        this._b = b
+    constructor(from, to, directed, val) {
+    	this.directed = directed
+        this._a = from
+        this._b = to
         this.value = val
     }
     

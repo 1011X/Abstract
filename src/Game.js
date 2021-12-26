@@ -232,6 +232,7 @@ class Game {
 				// if they are distinct, connect vertices...
 				else {
 					// ...by edge
+					let directed = this.currEdge === 1
 					if(this.currEdge === 0) {
 						let edge = new Edge(this.selected, next)
 						this.world.edgeConnect(this.selected, next, edge)
