@@ -355,4 +355,66 @@ class World {
         
         return world
     }
+	/**
+		this.graph.addVertex(vertex)
+	}
+	
+	despawn(vertex) {
+		this.graph.removeVertex(vertex)
+	}
+	
+	connect(u, v, val) {
+		this.graph.addArc(u, v)
+	}
+	
+	disconnect(u, v) {
+		this.graph.removeArc(u, v)
+	}
+	/*
+	moveCamTo(pos) {
+		this.cam[0] = pos[0]
+		this.cam[1] = pos[1]
+	}
+	*
+	tick(selected) {
+		// Loops through all vertices. Don't do this!
+		// .markedForUpdates is there for a reason!
+		for(let vertex of this.graph.vertices) {
+			this.markedForUpdates.delete(vertex)
+			vertex.update({
+				selected,
+				send: (vert, value) => {
+					if(this.graph.adjacent(vertex, vert)) {
+						vert.inputs.push(value)
+						this.markedForUpdates.add(vert)
+					}
+				}
+			})
+		}
+	}
+	
+	toJSON(){
+		let vertices = [...this.graph.vertices]
+		let arcs = []
+		let markedForUpdates = []
+		
+		// list vertices that need updates by index of above list
+		for(let vert of this.markedForUpdates)
+			markedForUpdates.push(vertices.indexOf(vert))
+		
+		for(let arc of this.graph.arcs) {
+			let from = vertices.indexOf(arc.from)
+			let to = vertices.indexOf(arc.to)
+			
+			arcs.push({from, to, value: arc})
+		}
+		
+		return {
+			cam: this.cam,
+			vertices,
+			arcs,
+			markedForUpdates,
+		}
+	}
+	*/
 }

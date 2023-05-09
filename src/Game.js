@@ -85,19 +85,22 @@ class Game {
 	
 	// shows key controls and basic interactions to player
 	showTutorial() {
-		alert(`Controls:\
-		T key: show this tutorial\
-		S key: manually save the world\
-		C key: toggle autosaving (default: enabled)\
-		Z key: use arc connections\
-		X key: use edge connections`)
 		alert(
-		`Current selection will be shown in the bottom left corner.\
-		Scroll the mouse wheel to select a vertex type.\
-		Right click to place a vertex or (in the case of the switch) interact with it.\
-		Right click and drag from one vertex to another to connect them.\
-		Left click and drag to move a vertex or to pan the world.\
-		Left click a vertex to delete it.`)
+`Controls:
+T key: show this tutorial
+S key: manually save the world
+C key: toggle autosaving (default: enabled)
+Z key: use arc connections
+X key: use edge connections`
+		)
+		alert(
+`Current selection will be shown in the bottom left corner.
+Scroll the mouse wheel to select a vertex type.
+Right click to place a vertex or interact with it.
+Right click and drag from one vertex to another to connect them.
+Left click and drag to move a vertex or to pan the world.
+Left click a vertex to delete it.`
+		)
 	}
 	
 	save() {
@@ -316,11 +319,9 @@ class Game {
 		}
 		else if(evt.key == "F3") {
 			evt.preventDefault()
-			/*
 			this.frameCounter = 0
 			this.fps = 0
 			this.debug = !this.debug
-			*/
 		}
 		else if(evt.key == "Delete") {
 			for(let vertex of this.selectedVertices) {
@@ -497,29 +498,18 @@ class Game {
 			pos.y -= 18
 		}
 		
-		/*
-		FIXME
-		For security reasons, Firefox is giving time stamps with only a
-		resolution of 0.1 seconds, even tho MDN says "... with a minimal
-		precision of 1ms." As of writing this, there seems to be no way to fix
-		this. All of `performance.now()`, `Date.now()`, and the above `time`
-		parameter are all rounded to the nearest 100ms. How annoying.
-		
-		==========================
-		
 		this.frameCounter += 1
 		if(time % 1000 < 16.6) {
 			this.fps = this.frameCounter
 			this.frameCounter = 0
 		}
 		
-		console.log(time)
+		//console.log(time)
 		if(this.debug) {
 			this.ctx.save()
 			this.ctx.textBaseline = "top"
 			this.ctx.fillText(`FPS: ${this.fps}`, 10, 10)
 			this.ctx.restore()
 		}
-		*/
 	}
 }
