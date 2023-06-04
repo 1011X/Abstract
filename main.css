@@ -10,3 +10,27 @@ body {
 canvas {
 	cursor: default;
 }
+
+#debug-panel {
+	visibility: hidden;
+	
+	position: absolute;
+	left: 0;
+	top: 0;
+	padding: 5px 5px;
+	background: rgba(0, 0, 0, 0.8);
+	color: white;
+}
+
+#selection-panel {
+	visibility: visible;
+	
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	padding: 5px 5px;
+	background: rgba(0, 0, 0, 0.8);
+	color: white;
+	
+	line-height: 1.5;
+}

@@ -7,6 +7,8 @@ class Game {
 		//this.vectorPool = new ObjectPool(Vec2, 10)
 		this.selectedVertices = new Set
 		this.selectedConnections = null
+		
+		this.debug_panel = document.getElementById("debug-panel");
 		// previous second's fps to display in debug menu
 		this.fps = 0
 		// frame counter for current second
@@ -34,9 +36,9 @@ class Game {
 		this.debug = false
 		
 		// vertex type selected for placement
-		this.currVert = 0
+		this.currVert = document.getElementById("vertex-select")
 		// edge type (arc or regular edge) being used
-		this.currEdge = 0
+		this.currEdge = document.getElementById("connection-select")
 		
 		// test if localStorage is accessible
 		try {
@@ -44,8 +46,8 @@ class Game {
 				let json = JSON.parse(localStorage['gameData'])
 				this.world = World.fromJSON(json.world)
 				//this.currVert = Vertex.registry.getId(json.currVert)
-				this.currVert = VertexIndex.indexOf(json.currVert)
-				this.currEdge = json.currEdge
+				this.currVert.value = json.currVert
+				this.currEdge.value = json.currEdge ? 'arc' : 'edge'
 			}
 			else {
 				this.world = new World
@@ -113,8 +115,8 @@ Left click a vertex to delete it.`
 	toJSON() {
 		return {
 			//currVert: Vertex.registry.getName(this.currVert),
-			currVert: VertexIndex[this.currVert],
-			currEdge: this.currEdge,
+			currVert: this.currVert.value,
+			currEdge: this.currEdge.value,
 			world: this.world,
 		}
 	}
@@ -136,14 +138,20 @@ Left click a vertex to delete it.`
 			let delta = Math.sign(evt.deltaY)
 			
 			// Can't use % bc it can still give a negative number.
-			if(delta == -1 && this.currVert <= 0) {
-				this.currVert = VertexIndex.length - 1
+			if(delta === -1 && this.currVert.selectedIndex <= 0) {
+				this.currVert.selectedIndex = VertexIndex.length - 1;
 			}
-			else if(delta == +1 && this.currVert >= VertexIndex.length - 1) {
-				this.currVert = 0
+			else if(delta === +1 && this.currVert.selectedIndex >= VertexIndex.length - 1) {
+				this.currVert.selectedIndex = 0;
 			}
 			else {
-				this.currVert += delta
+				this.currVert.selectedIndex += delta;
+			}
+			
+			// sanity check
+			if(this.currVert.selectedIndex === -1) {
+				console.debug('did not find vertex in selection menu. did you forget to add it?');
+				console.debug('delta: ', delta);
 			}
 		}
 	}
@@ -216,7 +224,7 @@ Left click a vertex to delete it.`
 			// remove if there's a vertex and there was no dragging
 			//console.log(this.mouse.drag, this.mouse.cursor, this.mouse.is_dragging)
 			if(this.selected !== null && !this.mouse.is_dragging) {
-				console.debug("Removing vertex at ${this.selected.pos}")
+				console.debug(`Removing vertex at ${this.selected.pos}`)
 				this.world.despawn(this.selected)
 			}
 		}
@@ -235,8 +243,7 @@ Left click a vertex to delete it.`
 				// if they are distinct, connect vertices...
 				else {
 					// ...by edge
-					let directed = this.currEdge === 1
-					if(this.currEdge === 0) {
+					if(this.currEdge.value === 'edge') {
 						let edge = new Edge(this.selected, next)
 						this.world.edgeConnect(this.selected, next, edge)
 					}
@@ -253,7 +260,7 @@ Left click a vertex to delete it.`
 				// make new vertex
 				if(!this.mouse.is_dragging) {
 					//let vertexClass = Vertex.registry.get(this.currVert)
-					let vertexClass = VertexMap[VertexIndex[this.currVert]]
+					let vertexClass = VertexMap[this.currVert.value]
 					
 					if(vertexClass != null) {
 						let vertex = new vertexClass(this.world.graph)
@@ -283,25 +290,16 @@ Left click a vertex to delete it.`
 			// manually save the world
 			this.save()
 		}
-		else if(evt.key == 'e') {
-			// toggle current connection type
-			if(this.currEdge == 0) {
-				this.currEdge = 1
-			}
-			else {
-				this.currEdge = 0
-			}
-		}
 		else if(evt.key == 'r' && !evt.ctrlKey) {
 			if(confirm('You sure you wanna reset your world?')) {
 				localStorage['gameData'] = ''
 			}
 		}
 		else if(evt.key == 'z') {
-			this.currEdge = 1
+			this.currEdge.value = 'arc'
 		}
 		else if(evt.key == 'x') {
-			this.currEdge = 0
+			this.currEdge.value = 'edge'
 		}
 		else if(evt.key == 'c') {
 			this.autosave = !this.autosave
@@ -318,7 +316,16 @@ Left click a vertex to delete it.`
 			}
 		}
 		else if(evt.key == "F3") {
-			evt.preventDefault()
+			evt.preventDefault();
+			let debug_panel = document.getElementById("debug-panel");
+			debugger;
+			
+			if (debug_panel.style.visibility === "visible") {
+				debug_panel.style.visibility = "hidden";
+			} else {
+				debug_panel.style.visibility = "visible";
+			}
+			
 			this.frameCounter = 0
 			this.fps = 0
 			this.debug = !this.debug
@@ -482,34 +489,14 @@ Left click a vertex to delete it.`
 			}
 		}
 		
-		
-		// draw UI/current selection
-		let pos = new Vec2(10, innerHeight - 10)
-	
-		let strings = [
-			`vertex: ${VertexIndex[this.currVert]}`,
-			`connection: ${this.currEdge ? 'arc' : 'edge'}`,
-		]
-	
-		this.ctx.font = "18px sans-serif"
-	
-		for(let str of strings.reverse()) {
-			this.ctx.fillText(str, ...pos)
-			pos.y -= 18
-		}
-		
-		this.frameCounter += 1
-		if(time % 1000 < 16.6) {
-			this.fps = this.frameCounter
-			this.frameCounter = 0
-		}
-		
-		//console.log(time)
-		if(this.debug) {
-			this.ctx.save()
-			this.ctx.textBaseline = "top"
-			this.ctx.fillText(`FPS: ${this.fps}`, 10, 10)
-			this.ctx.restore()
+		// if debug panel is visible, update debug data
+		if(this.debug_panel.style.visibility === "visible") {
+			let fps_output = document.getElementById("debug-fps");
+			this.frameCounter += 1;
+			if(time % 1000 < 16.6) {
+				fps_output.value = this.frameCounter;
+				this.frameCounter = 0;
+			}
 		}
 	}
 }

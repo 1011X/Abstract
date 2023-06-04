@@ -17,6 +17,36 @@
 </head>
 <body>
 	<canvas id="c"></canvas>
+	<div id=hud>
+		<div id=debug-panel>
+			<form id=debug>
+			FPS: <output id=debug-fps>0</output>
+			</form>
+		</div>
+		
+		<!-- TODO: connect this to game logic -->
+		<div id=selection-panel>
+			<form id=selection>
+			vertex: <select id=vertex-select>
+				<option value=degree>Degree</option>
+				<option value=rotator>Rotator</option>
+				<option value=anchor>Anchor</option>
+				<option value=switch>Switch</option>
+				<option value=meter>Meter</option>
+				<option value=min>Min</option>
+				<option value=max>Max</option>
+				<option value=negate>Negate</option>
+				<option value=sensor>Sensor</option>
+				<option value=fruit>Fruit</option>
+				<option value=star>Star</option>
+			</select><br>
+			connection: <select id=connection-select>
+				<option value=edge>Edge</option>
+				<option value=arc>Arc</option>
+			</select>
+			</form>
+		</div>
+	</div>
 	<script src="main.js"></script>
 </body>
 </html>
