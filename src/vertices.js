@@ -52,8 +52,8 @@ Vertex.Base = class {
 			ctx.fillStyle = this.style.textColor
 			ctx.textAlign = "center"
 			ctx.textBaseline = "middle"
-			ctx.font = "bold 20px serif"
-			ctx.fillText(this.style.symbol, 0, 0)
+			ctx.font = "18px sans-serif"
+			ctx.fillText(this.style.symbol, 0.5, 2)
 		}
 	}
 }
@@ -365,6 +365,41 @@ Vertex.Star.prototype.style = new VertexStyle("black", {symbol: "⭐"})
 
 ////////////////////////////////////////////////////////////////////////////////
 
+Vertex.Label = class extends Vertex.Base {
+	constructor() {
+		super();
+		this.sym = "_";
+		this.style = new VertexStyle('white');
+		this.updateStyle();
+	}
+	
+	action() {
+		this.sym = window.prompt("label for vertex:") || "_";
+		this.updateStyle();
+	}
+	
+	updateStyle() {
+		this.style.symbol = this.sym;
+	}
+	
+	toJSON() {
+		let obj = super.toJSON();
+		delete obj.style;
+		return obj;
+	}
+	
+	static fromJSON(json) {
+		let vertex = super.fromJSON(json);
+		vertex.sym = json.sym;
+		vertex.updateStyle();
+		return vertex;
+	}
+}
+
+Vertex.Label.prototype.style = new VertexStyle("white", {symbol: "_"})
+
+////////////////////////////////////////////////////////////////////////////////
+
 /* why am i copying minecraft again?
 well, remember that these vertices are saved in json. they each need a number to
 know which vertex a save is referring to. dynamically inserting vertices won't
@@ -386,6 +421,7 @@ Vertex.registry.add( 8, "negate",  Vertex.Negate)
 Vertex.registry.add( 9, "sensor",  Vertex.Sensor)
 Vertex.registry.add(10, "fruit",   Vertex.Fruit)
 Vertex.registry.add(11, "star",    Vertex.Star)
+Vertex.registry.add(12, "label",   Vertex.Label);
 //Vertex.registry.add(12, "neuron",  Neuron)
 //Vertex.registry.add(13, "note", Note)
 //Vertex.registry.add(14, "charge", Charge)
@@ -402,6 +438,7 @@ const VertexMap = {
 	'sensor': Vertex.Sensor,
 	'fruit':  Vertex.Fruit,
 	'star':   Vertex.Star,
+	'label':  Vertex.Label,
 }
 
 const VertexIndex = Object.getOwnPropertyNames(VertexMap).sort();
