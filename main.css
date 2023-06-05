@@ -8,6 +8,7 @@ body {
 }
 
 canvas {
+	background: white;
 	cursor: default;
 }
 
@@ -33,4 +34,17 @@ canvas {
 	color: white;
 	
 	line-height: 1.5;
+}
+
+
+
+@media (prefers-color-scheme: dark) {
+	canvas {
+		background: #222;
+	}
+	
+	#selection-panel, #debug-panel {
+		background: rgba(255, 255, 255, 0.8);
+		color: black;
+	}
 }

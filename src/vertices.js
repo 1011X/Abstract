@@ -40,13 +40,10 @@ Vertex.Base = class {
 			ctx.fillStyle = this.style.color
 		}
 
-		ctx.strokeStyle = this.style.border
-
 		ctx.beginPath()
 			ctx.arc(0, 0, this.radius, 0, Math.TAU)
 		ctx.closePath()
 		ctx.fill()
-		ctx.stroke()
 
 		if(this.style.symbol) {
 			ctx.fillStyle = this.style.textColor

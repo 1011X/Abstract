@@ -4,6 +4,8 @@ class Game {
 		this.ctx = canvas.getContext("2d")
 		this.world = null
 		
+		this.dark_mode = false;
+		
 		//this.vectorPool = new ObjectPool(Vec2, 10)
 		this.selectedVertices = new Set
 		this.selectedConnections = null
@@ -68,6 +70,15 @@ class Game {
 		canvas.addEventListener('contextmenu', this.oncontextmenu.bind(this))
 		window.addEventListener('keydown', this.onkeydown.bind(this))
 		window.addEventListener('resize', this.onresize.bind(this))
+		
+		if(window.matchMedia) {
+			// make query to check if dark mode is enabled
+			let query = window.matchMedia("(prefers-color-scheme: dark)");
+			this.dark_mode = query.matches;
+			// watch for changes
+			query.addEventListener('change', e => this.dark_mode = e.matches);
+		}
+		
 		this.onresize()
 		
 		// start update loop, save loop, and animation loop.
@@ -412,7 +423,7 @@ Left click a vertex to delete it.`
 			vec.resize(end.radius).reverse()
 			to.add(vec)
 			
-			let color = 'black'
+			let color = this.dark_mode ? 'white' : 'black';
 			if(this.selectedConnections && this.selectedConnections.has(edge)) {
 				color = "red"
 			}
@@ -435,7 +446,8 @@ Left click a vertex to delete it.`
 			vec.resize(arc.to.radius).reverse()
 			to.add(vec)
 			
-			let color = 'rgba(0, 0, 0, 0.5)'
+			let color = this.dark_mode ? 'rgba(255, 255, 255, 0.5)'
+				: 'rgba(0, 0, 0, 0.5)';
 			if(this.selectedConnections && this.selectedConnections.has(arc)) {
 				color = 'rgba(255, 0, 0, 0.5)'
 			}
@@ -470,7 +482,9 @@ Left click a vertex to delete it.`
 			
 			this.ctx.save()
 			this.ctx.translate(...pos)
-			vertex.draw(this.ctx)
+			vertex.draw(this.ctx, this.dark_mode);
+			this.ctx.strokeStyle = this.dark_mode ? "white" : "black";
+			this.ctx.stroke();
 			this.ctx.restore()
 			
 			// draw rotating selection "ring"
