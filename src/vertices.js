@@ -208,11 +208,10 @@ Vertex.Meter.prototype.style = new VertexStyle("white", {symbol: "F"})
 
 /// Visually:
 ///     E_rot = 1/2 I w^2
-///           = 1/2 (1/3 m_rod l_rod^2) w^2 ; I = 1/3 m_rod l_rod^2
-///           = 1/2 (1/3 r^2) (v/r)^2       ; l_rod = r, m_rod = 1, w = v/r
-///           = 1/6 v^2
-/// Solving for v, this will give us the linear velocity for the vertex.
-///     v = sqrt(6 E_rot)
+///         I = m r^2      (for a point mass)
+/// Solving for w gives the angular velocity for the vertex:
+///     w = sqrt(2 E_rot / I)
+///       = sqrt(2 E_rot / m r^2)
 
 Vertex.Rotator = class extends Vertex.Base {
 	update(h) {
