@@ -505,12 +505,17 @@ Left click a vertex to delete it.`
 		
 		// if debug panel is visible, update debug data
 		if(this.debug_panel.style.visibility === "visible") {
+			// show fps
 			let fps_output = document.getElementById("debug-fps");
 			this.frameCounter += 1;
 			if(time % 1000 < 16.6) {
 				fps_output.value = this.frameCounter;
 				this.frameCounter = 0;
 			}
+			
+			// show cam coords
+			let cam_coords = document.getElementById("debug-cam-coords");
+			cam_coords.value = this.world.cam;
 		}
 	}
 }
