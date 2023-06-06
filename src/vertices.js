@@ -434,13 +434,13 @@ Vertex.registry.add(12, "label",   Vertex.Label);
 
 const VertexMap = {
 	'degree': Vertex.Degree,
-	'rotate': Vertex.Rotator,
+	'rotator': Vertex.Rotator,
 	'anchor': Vertex.Anchor,
 	'switch': Vertex.Switch,
 	'meter':  Vertex.Meter,
 	'min':    Vertex.Min,
 	'max':    Vertex.Max,
-	'neg':    Vertex.Negate,
+	'negate': Vertex.Negate,
 	'sensor': Vertex.Sensor,
 	'fruit':  Vertex.Fruit,
 	'star':   Vertex.Star,
