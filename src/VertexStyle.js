@@ -1,6 +1,6 @@
 class VertexStyle {
-	constructor(color, options = {}) {
-		this.color = color
+	constructor(options = {}) {
+		this.bg_color = options.bg_color || "white";
 		this.border = options.border || "black"
 		this.symbol = options.symbol || ""
 		this.textColor = options.textColor || "black"
@@ -11,7 +11,7 @@ class VertexStyle {
 	
 	toJSON() {
 		let style = {
-			color: this.color,
+			bg_color: this.bg_color,
 			gradient: this.gradient,
 		}
 		
@@ -31,7 +31,7 @@ class VertexStyle {
 	}
 	
 	static fromJSON(json) {
-		let style = new this(json.color)
+		let style = new this
 		return Object.assign(style, json)
 	}
 }

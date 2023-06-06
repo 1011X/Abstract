@@ -33,11 +33,11 @@ Vertex.Base = class {
 			let radialGradient = ctx.createRadialGradient(...this.pos, 0, ...this.pos, this.radius)
 		
 			radialGradient.addColorStop(0, "white")
-			radialGradient.addColorStop(1, this.style.color)
+			radialGradient.addColorStop(1, this.style.bg_color)
 
 			ctx.fillStyle = radialGradient
 		} else {
-			ctx.fillStyle = this.style.color
+			ctx.fillStyle = this.style.bg_color
 		}
 
 		ctx.beginPath()
@@ -56,7 +56,7 @@ Vertex.Base = class {
 }
 
 Vertex.Base.prototype.radius = 24
-Vertex.Base.prototype.style = new VertexStyle("black")
+Vertex.Base.prototype.style = new VertexStyle({bg_color: "black"});
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -67,9 +67,9 @@ Vertex.Anchor = class extends Vertex.Base {
 	}
 }
 
-Vertex.Anchor.prototype.style = new VertexStyle("lightblue", {
+Vertex.Anchor.prototype.style = new VertexStyle({
+	bg_color: "lightblue",
 	symbol: "⚓",
-	textColor: "white",
 })
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -77,7 +77,7 @@ Vertex.Anchor.prototype.style = new VertexStyle("lightblue", {
 Vertex.Degree = class extends Vertex.Base {
     constructor() {
         super()
-        this.style = new VertexStyle("white", {symbol: "0"})
+        this.style = new VertexStyle({symbol: "0"});
     }
     
     update(h) {
@@ -87,7 +87,7 @@ Vertex.Degree = class extends Vertex.Base {
     }
 }
 
-Vertex.Degree.prototype.style = new VertexStyle("white", {symbol: "deg"})
+Vertex.Degree.prototype.style = new VertexStyle({symbol: "deg"});
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -116,7 +116,7 @@ Vertex.Fruit = class extends Vertex.Base {
 	}
 }
 
-Vertex.Fruit.prototype.style = new VertexStyle("red")
+Vertex.Fruit.prototype.style = new VertexStyle({bg_color: "red"});
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -126,7 +126,7 @@ Vertex.Max = class extends Vertex.Base {
 	}
 }
 
-Vertex.Max.prototype.style = new VertexStyle("white", {symbol: "∨"})
+Vertex.Max.prototype.style = new VertexStyle({symbol: "∨"});
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -136,7 +136,7 @@ Vertex.Min = class extends Vertex.Base {
 	}
 }
 
-Vertex.Min.prototype.style = new VertexStyle("white", {symbol: "∧"})
+Vertex.Min.prototype.style = new VertexStyle({symbol: "∧"});
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -146,17 +146,18 @@ Vertex.Negate = class extends Vertex.Base {
  	}
 }
 
-Vertex.Negate.prototype.style = new VertexStyle("white", {symbol: "–"})
+Vertex.Negate.prototype.style = new VertexStyle({symbol: "–"});
 
 ////////////////////////////////////////////////////////////////////////////////
 
 Vertex.Meter = class extends Vertex.Base {
 	constructor() {
 		super()
-		this.style = new VertexStyle("gray", {
-		    symbol: "0",
-        	gradient: VertexStyle.RADIAL_GRADIENT
-    	})
+		this.style = new VertexStyle({
+			bg_color: "gray",
+			symbol: "0",
+			gradient: VertexStyle.RADIAL_GRADIENT
+		});
 	}
 
 	format(value) {
@@ -176,13 +177,13 @@ Vertex.Meter = class extends Vertex.Base {
 		    this.style.symbol = val
 		    
 		    if(energy > 0) {
-			    this.style.color = "cyan"
+			    this.style.bg_color = "cyan"
 		    }
 		    else if(energy < 0) {
-			    this.style.color = "red"
+			    this.style.bg_color = "red"
 		    }
 		    else {
-			    this.style.color = "gray"
+			    this.style.bg_color = "gray"
 		    }
 		}
 		
@@ -190,7 +191,7 @@ Vertex.Meter = class extends Vertex.Base {
 	}
 }
 
-Vertex.Meter.prototype.style = new VertexStyle("white", {symbol: "F"})
+Vertex.Meter.prototype.style = new VertexStyle({symbol: "F"});
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -235,7 +236,8 @@ Vertex.Rotator = class extends Vertex.Base {
 	}
 }
 
-Vertex.Rotator.prototype.style = new VertexStyle("lightgreen", {
+Vertex.Rotator.prototype.style = new VertexStyle({
+	bg_color: "lightgreen",
 	symbol: "⛭",
 	gradient: VertexStyle.RADIAL_GRADIENT
 })
@@ -255,7 +257,10 @@ Vertex.Sensor = class extends Vertex.Base {
     }
 }
 
-Vertex.Sensor.prototype.style = new VertexStyle("rgb(0, 200, 0)", {symbol: "S"})
+Vertex.Sensor.prototype.style = new VertexStyle({
+	bg_color: "rgb(0, 200, 0)",
+	symbol: "S"
+});
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -263,10 +268,11 @@ Vertex.Switch = class Switch extends Vertex.Base {
 	constructor() {
 		super()
 		this.value = 0
-		this.style = new VertexStyle("black", {
-            textColor: "white",
-            symbol: "⭘"
-        })
+		this.style = new VertexStyle({
+			bg_color: "black",
+			textColor: "white",
+			symbol: "⭘"
+		});
 	}
 
 	action() {
@@ -287,15 +293,15 @@ Vertex.Switch = class Switch extends Vertex.Base {
 	updateStyle() {
 	    switch(this.value) {
 	        case 0:
-                this.style.color = "black"
+                this.style.bg_color = "black"
 	            this.style.symbol = "⭘"
 	            break
 	        case 1:
-                this.style.color = "white"
+                this.style.bg_color = "white"
 	            this.style.symbol = '➕'
 	            break
 	        case -1:
-                this.style.color = "white"
+                this.style.bg_color = "white"
 	            this.style.symbol = '➖'
 	            break
 	        default:
@@ -317,7 +323,11 @@ Vertex.Switch = class Switch extends Vertex.Base {
 	}
 }
 
-Vertex.Switch.prototype.style = new VertexStyle("black", {textColor: "white", symbol: "⏼"})
+Vertex.Switch.prototype.style = new VertexStyle({
+	bg_color: "black",
+	textColor: "white",
+	symbol: "⏼"
+});
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -325,7 +335,7 @@ Vertex.Star = class extends Vertex.Base {
 	constructor() {
 		super()
 		this.sym = Math.floor(3 * Math.random())
-		this.style = new VertexStyle("black")
+		this.style = new VertexStyle({bg_color: "black"});
 		this.updateStyle()
 	}
 	
@@ -357,7 +367,7 @@ Vertex.Star = class extends Vertex.Base {
 }
 
 //Vertex.Star.prototype.radius = 24
-Vertex.Star.prototype.style = new VertexStyle("black", {symbol: "⭐"})
+Vertex.Star.prototype.style = new VertexStyle({bg_color: "black", symbol: "⭐"});
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -365,7 +375,7 @@ Vertex.Label = class extends Vertex.Base {
 	constructor() {
 		super();
 		this.sym = "_";
-		this.style = new VertexStyle('white');
+		this.style = new VertexStyle();
 		this.updateStyle();
 	}
 	
@@ -392,7 +402,7 @@ Vertex.Label = class extends Vertex.Base {
 	}
 }
 
-Vertex.Label.prototype.style = new VertexStyle("white", {symbol: "_"})
+Vertex.Label.prototype.style = new VertexStyle({symbol: "_"});
 
 ////////////////////////////////////////////////////////////////////////////////
 
