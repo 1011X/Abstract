@@ -3,12 +3,14 @@
 <head>
 	<title>Abstract</title>
 	<meta charset="utf-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 	<link rel="stylesheet" href="main.css"/>
 	
 	<script src="src/util/ObjectPool.js"></script>
 	<script src="src/util/RegistryWithDefault.js"></script>
 	<script src="src/util/Vec2.js"></script>
 	<script src="src/util/MixedGraph.js"></script>
+	<!-- <script src="src/Physics.js"></script> -->
 	<script src="src/VertexStyle.js"></script>
 	<script src="src/vertices.js"></script>
 	<script src="src/World.js"></script>
@@ -16,7 +18,10 @@
 	<script src="src/Game.js"></script>
 </head>
 <body>
-	<canvas id="c"></canvas>
+	<canvas id="c">
+	Your browser does not support the canvas element.<br>
+	Please update to a more recent browser version that supports it to play this game.
+	</canvas>
 	<div id=hud>
 		<div id=debug-panel>
 			<form id=debug>
@@ -44,10 +49,13 @@
 			connection: <select id=connection-select>
 				<option value=edge>Edge</option>
 				<option value=arc>Arc</option>
+				<!-- <option value=spring>Spring</option> -->
+				<!-- <option value=rope>Rope</option> -->
 			</select>
 			</form>
 		</div>
 	</div>
 	<script src="main.js"></script>
+	<noscript>JavaScript is disabled. Please enable it to play this game.</noscript>
 </body>
 </html>

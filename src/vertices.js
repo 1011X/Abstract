@@ -371,6 +371,7 @@ Vertex.Star.prototype.style = new VertexStyle({bg_color: "black", symbol: "⭐"}
 
 ////////////////////////////////////////////////////////////////////////////////
 
+/// A plain vertex that can be given a label.
 Vertex.Label = class extends Vertex.Base {
 	constructor() {
 		super();

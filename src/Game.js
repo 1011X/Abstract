@@ -1,3 +1,4 @@
+/// Stores information about the current game session.
 class Game {
 	constructor(canvas) {
 		this.canvas = canvas
