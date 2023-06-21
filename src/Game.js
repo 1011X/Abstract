@@ -31,7 +31,7 @@ class Game {
 		// whether game is paused
 		this.paused = false
 		// whether autosaving of game state is enabled
-		this.autosave = false
+		this.autosave_enabled = true;
 		// whether local storage is possible
 		this.has_local_storage = true
 		// whether debug mode is on
@@ -50,6 +50,7 @@ class Game {
 				//this.currVert = Vertex.registry.getId(json.currVert)
 				this.currVert.value = json.currVert
 				this.currEdge.value = json.currEdge ? 'arc' : 'edge'
+				this.autosave_enabled = json.autosave_enabled;
 			}
 			else {
 				this.world = new World
@@ -83,7 +84,7 @@ class Game {
 		
 		// start update loop, save loop, and animation loop.
 		setInterval(this.updateLoop.bind(this), 50/3)
-		setInterval(this.save.bind(this), 60 * 1000)
+		setInterval(this.autosave.bind(this), 60 * 1000)
 		requestAnimationFrame(this.drawLoop.bind(this))
 	}
 	
@@ -119,13 +120,20 @@ Left click a vertex to delete it.`
 	save() {
 		if(this.has_local_storage) {
 			localStorage["gameData"] = JSON.stringify(this)
-			console.debug("World saved!");
+			console.info("World saved!");
+		}
+	}
+	
+	autosave() {
+		if(this.autosave_enabled) {
+			this.save();
 		}
 	}
 	
 	toJSON() {
 		return {
 			//currVert: Vertex.registry.getName(this.currVert),
+			autosave_enabled: this.autosave_enabled,
 			currVert: this.currVert.value,
 			currEdge: this.currEdge.value,
 			world: this.world,
